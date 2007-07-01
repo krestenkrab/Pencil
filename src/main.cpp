@@ -23,9 +23,6 @@ int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
 	initialise();
-	//app.setStyle(new AquaStyle());
-	//app.setStyle("CleanLooks");
-	//app.setStyle("Windows");
 	/*QDir dir(QApplication::applicationDirPath());
     dir.cdUp();
     if(dir.cd("plugins")) {
