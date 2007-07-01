@@ -207,6 +207,7 @@ private:
 	Properties eraser;
 	
 	qreal currentWidth;
+	QColor currentColour;
 	/*qreal myPencilWidth, currentPencilWidth;
 	qreal myPenWidth, currentPenWidth;
 	qreal myBrushWidth, currentBrushWidth;*/

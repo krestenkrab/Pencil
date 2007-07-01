@@ -44,6 +44,7 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	pencil.colour = Qt::black;
 	pen.colour = Qt::black;
 	brush.colour = Qt::blue;
+	currentColour = pencil.colour;
 	
 	pencil.colourNumber = 0;
 	pen.colourNumber = 0;
@@ -146,13 +147,16 @@ void ScribbleArea::setColour(const int i)
 
 void ScribbleArea::setColour(const QColor colour)
 {
-	if(toolMode == EYEDROPPER) {
-		//penColourNumber = -1;
+	if(toolMode == PENCIL || toolMode == EYEDROPPER) {
 		pencil.colour = colour;
+	}
+	if(toolMode == PEN || toolMode == EYEDROPPER) {
 		pen.colour = colour;
-		//fillColourNumber = -1;
+	}
+	if(toolMode == COLOURING || toolMode == BUCKET || toolMode == EYEDROPPER) {
 		brush.colour = colour;
 	}
+	currentColour = colour;
 }
 
 void ScribbleArea::resetColours()
@@ -502,11 +506,13 @@ void ScribbleArea::tabletEvent(QTabletEvent *event)
 		currentWidth = (eraser.width*tabletPressure);
 	}
 	if(toolMode==ScribbleArea::PENCIL) {
-		if(usePressure) { pencil.colour.setAlphaF(tabletPressure); } else { pencil.colour.setAlphaF(1.0); }
+		currentColour = pencil.colour;
+		if(usePressure) {currentColour.setAlphaF(tabletPressure); } else { currentColour.setAlphaF(1.0); }
 		currentWidth = pencil.width;
 	}
 	if(toolMode==ScribbleArea::PEN) {
-		pen.colour.setAlphaF(1.0);
+		currentColour = pen.colour;
+		currentColour.setAlphaF(1.0);
 		if(usePressure) { currentWidth = 2.0*pen.width*tabletPressure; } else { currentWidth = pen.width; }
 	}
 	if(event->pointerType() == QTabletEvent::Eraser) {
@@ -695,7 +701,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 	if (toolMode == ScribbleArea::ERASER) {
 		if(event->buttons() & Qt::LeftButton) { // the user is also pressing the mouse (dragging)
 			if(layer->type == Layer::VECTOR) {
-				QList<VertexRef> nearbyVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, 10.0/myTempView.m11());
+				QList<VertexRef> nearbyVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, eraser.width/myTempView.m11());
 				for(int i=0; i< nearbyVertices.size(); i++) {
 					((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->setSelected(nearbyVertices.at(i), true);
 				}
@@ -753,7 +759,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 	}
 	// ----------------------------------------------------------------------
 	if (  (toolMode == ScribbleArea::HAND && (event->buttons() != Qt::NoButton)) || event->buttons() & Qt::RightButton) {
-		if(event->modifiers() & Qt::ControlModifier || event->modifiers() & Qt::AltModifier) {
+		if(event->modifiers() & Qt::ControlModifier || event->modifiers() & Qt::AltModifier || event->buttons() & Qt::RightButton) {
 			QPoint centralPixel(width()/2, height()/2);
 			if(lastPixel.x() != centralPixel.x()) {
 				qreal scale = 1.0;
@@ -768,7 +774,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 					sine = ( -V1.x()*V2.y() + V1.y()*V2.x()  )/(BezierCurve::eLength(V1)*BezierCurve::eLength(V2));
 					
 				}
-				if( event->modifiers() & Qt::ControlModifier) { // scale
+				if( event->modifiers() & Qt::ControlModifier || event->buttons() & Qt::RightButton) { // scale
 					scale = exp( 0.01*( currentPixel.y()-lastPixel.y() ) );
 					//transMatrix = QMatrix(scale, 0, 0,scale,(1.0-scale)*centralPixel.x(), (1.0-scale)*centralPixel.y());
 				}
@@ -1297,7 +1303,7 @@ void ScribbleArea::drawLineTo(const QPointF &endPixel, const QPointF &endPoint)
 			update(myView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
 		}
 		if(toolMode == ScribbleArea::PENCIL) {
-			QPen pen2 = QPen ( QBrush(pencil.colour), currentWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin );
+			QPen pen2 = QPen ( QBrush(currentColour), currentWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin );
 			bufferImg->drawLine(lastPoint, endPoint, pen2, QPainter::CompositionMode_SourceOver, antialiasing);
 			int rad = qRound(currentWidth / 2) + 3;
 			update(myView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
@@ -1334,7 +1340,7 @@ void ScribbleArea::drawLineTo(const QPointF &endPixel, const QPointF &endPoint)
 			update(QRect(lastPixel.toPoint(), endPixel.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad));
 		}
 		if(toolMode == ScribbleArea::PENCIL) {
-			bufferImg->drawLine(lastPixel, currentPixel, QPen(pencil.colour, 1, Qt::DotLine, Qt::RoundCap,Qt::RoundJoin), QPainter::CompositionMode_SourceOver, antialiasing);
+			bufferImg->drawLine(lastPixel, currentPixel, QPen(currentColour, 1, Qt::DotLine, Qt::RoundCap,Qt::RoundJoin), QPainter::CompositionMode_SourceOver, antialiasing);
 			int rad = qRound(  ( currentWidth/2 + 2)*qAbs( myTempView.m11() )  );
 			update(QRect(lastPixel.toPoint(), endPixel.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad));
 		}
