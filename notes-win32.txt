@@ -1,0 +1,61 @@
+These are some notes/memo about compiling Pencil on Windows
+Last edited: 2007-05-23
+Pascal Naidon
+
+====================================================================
+Qt on Windows
+Use the installer from Trolltech
+www.trolltech.com
+
+Problems encountered
+if the following message appears:
+mingw32\bin\ld.exe: cannot find -lqtmaind
+
+You are building in debug mode and haven't built the debug libraries.
+-> needs to build qmake with the debug libraries, ie:
+--> go to the QT bin folder and execute "qtvars.bat compile_debug"
+
+====================================================================
+Ming (Flash/SWF library) on Windows
+This took me some time to work out
+I roughly followed the instructions from
+http://eratosthenes.wordpress.com/tag/ming
+The MinGW (GNU compiler for Windows) was already installed during the Qt install.
+Compiling ming (Flash/SWF library) requires a UNIX-like environment to execute
+ the configure script, which is why one has to install Cygwin.
+(MinGW and cygwin were installed separately so they are separate environment :
+don't re-install mingw within cygwin. To check that you are running the correct
+gcc (=MinGW), launch cygwin and type: gcc -v
+it should say "mingw special" and not "cygwin special")
+Ming requires the zlib and libpng library.
+The point is to find these libraries for MinGW:
+http://tjaden.strangesoft.net/loadpng/mingw.html
+http://gnuwin32.sourceforge.net/downlinks/libpng.php
+http://gnuwin32.sourceforge.net/downlinks/zlib.php
+(these libraries may also be present withing cygwin (if you have chosen to
+install them) but we won't use those.)
+
+Within cygwin, make sure (in your .bash_profile) that the paths are 
+set correctly to work with mingw:
+PATH ===> /cygdrive/c/MinGW/bin
+(LD_)LIBRARY_PATH ===> /cygdrive/c/MinGW/lib
+C_INCLUDE_PATH ====> /cygdrive/c/MinGW/include
+CPLUS_INCLUDE_PATH ===> /cygdrive/c/MinGW/include
+
+Then download the ming source and go to the ming directory and type:
+autoconf (but I'm sure it's necessary)
+./configure
+mingw32-make static
+
+Then I put the libming.a, ming.h, ming_conf.h in the "libwin32" directory inside the
+ pencil directory, as well as libpng12.a libpng12.dll.a
+ and I added
+ lib
+ -Llibwin32 -lming -lpng
+ in the pencil.pro file, for the INCLUDEPATH and LIBS respectively.
+ 
+That worked (compiled pencil.exe)
+Now, a copy of the dynamic library libpng12.dll should be present next to
+ pencil.exe in order for pencil to run. This library was installed inside
+  c://MinGW/bin
+That's it.

@@ -1,0 +1,22 @@
+These are some notes/memo about compiling Pencil on Mac OS X
+Last edited: 2007-05-23
+Pascal Naidon
+
+====================================================================
+Qt on Mac
+Use the installer from Trolltech
+www.trolltech.com
+
+====================================================================
+Ming (Flash/SWF library) on Mac
+Because of some obscure library name conflict on the Mac, I couldn't
+use Ming as a dynamic library. Instead I had to use it a static library.
+I put the compiled library (libming.a) and the header files in
+the "libmacosx" directory.
+
+========================
+Deploying Pencil/Mac OS X
+I chose to ship the Qt libraries within the app.
+In order to link the pencil.app against these local Qt libraries, I made the script "linkmac"
+After Pencil is build, simply run ./linkmac
+(the very first time, please uncomment the first lines in the script in order to copy the Qt libraries from /usr/local to the pencil.app package.)

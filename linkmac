@@ -1,0 +1,23 @@
+#make clean
+#qmake -config release
+#make
+#cp -R /usr/local/Trolltech/Qt-4.2.2/lib/QtCore.framework pencil.app/Contents/Frameworks/
+#cp -R /usr/local/Trolltech/Qt-4.2.2/lib/QtGui.framework pencil.app/Contents/Frameworks/
+#cp -R /usr/local/Trolltech/Qt-4.2.2/lib/QtXml.framework pencil.app/Contents/Frameworks/
+#cp -R /usr/local/Trolltech/Qt-4.2.2/lib/QtOpenGL.framework pencil.app/Contents/Frameworks/
+#cp -R /usr/local/Trolltech/Qt-4.2.2/plugins/imageformats/libqjpeg.dylib pencil.app/Contents/plugins/imageformats/
+install_name_tool -id @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore pencil.app/Contents/Frameworks/QtCore.framework/Versions/4/QtCore
+install_name_tool -id @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui   pencil.app/Contents/Frameworks/QtGui.framework/Versions/4/QtGui
+install_name_tool -id @executable_path/../Frameworks/QtXml.framework/Versions/4/QtXml   pencil.app/Contents/Frameworks/QtXml.framework/Versions/4/QtXml
+install_name_tool -id @executable_path/../Frameworks/QtOpenGL.framework/Versions/4/QtOpenGL   pencil.app/Contents/Frameworks/QtOpenGL.framework/Versions/4/QtOpenGL
+install_name_tool -change /usr/local/Trolltech/Qt-4.2.2/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore pencil.app/Contents/MacOs/pencil
+install_name_tool -change /usr/local/Trolltech/Qt-4.2.2/lib/QtGui.framework/Versions/4/QtGui   @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui   pencil.app/Contents/MacOS/pencil
+install_name_tool -change /usr/local/Trolltech/Qt-4.2.2/lib/QtXml.framework/Versions/4/QtXml   @executable_path/../Frameworks/QtXml.framework/Versions/4/QtXml   pencil.app/Contents/MacOS/pencil
+install_name_tool -change /usr/local/Trolltech/Qt-4.2.2/lib/QtOpenGL.framework/Versions/4/QtOpenGL   @executable_path/../Frameworks/QtOpenGL.framework/Versions/4/QtOpenGL   pencil.app/Contents/MacOS/pencil
+install_name_tool -change /usr/local/Trolltech/Qt-4.2.2/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore pencil.app/Contents/Frameworks/QtGui.framework/Versions/4/QtGui
+install_name_tool -change /usr/local/Trolltech/Qt-4.2.2/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore pencil.app/Contents/Frameworks/QtXml.framework/Versions/4/QtXml
+install_name_tool -change /usr/local/Trolltech/Qt-4.2.2/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore pencil.app/Contents/Frameworks/QtOpenGL.framework/Versions/4/QtOpenGL
+install_name_tool -change /usr/local/Trolltech/Qt-4.2.2/lib/QtGui.framework/Versions/4/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui pencil.app/Contents/Frameworks/QtOpenGL.framework/Versions/4/QtOpenGL
+install_name_tool -change /usr/local/Trolltech/Qt-4.2.2/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore pencil.app/Contents/plugins/imageformats/libqjpeg.dylib
+install_name_tool -change /usr/local/Trolltech/Qt-4.2.2/lib/QtGui.framework/Versions/4/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui pencil.app/Contents/plugins/imageformats/libqjpeg.dylib
+echo ok
