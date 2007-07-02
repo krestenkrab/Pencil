@@ -73,6 +73,7 @@ public slots:
 	void changeColouringButton();
 	void changeThinLinesButton(bool);
 	void changeOutlinesButton(bool);
+	void changeSmudgeButton();
 	
 	void resetMirror();
 	void pressureClick(bool);
@@ -94,6 +95,7 @@ signals:
 	void bucketClick();
 	void eyedropperClick();
 	void colouringClick();
+	void smudgeClick();
 	
 	void lengthClick(QString);
 	void fpsClick(int);
@@ -126,6 +128,7 @@ private:
 	QToolButton *colouringButton;
 	QToolButton *eyedropperButton;
 	QToolButton *magnifyButton;
+	QToolButton *smudgeButton;
 	
 	QToolButton *thinLinesButton;
 	QToolButton *outlinesButton;

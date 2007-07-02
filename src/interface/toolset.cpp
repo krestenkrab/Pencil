@@ -151,6 +151,7 @@ ToolSet::ToolSet() {
 	newToolButton(eyedropperButton); //  = new QToolButton(this);
 	newToolButton(clearButton); //  = new QToolButton(this);
 	newToolButton(magnifyButton);
+	newToolButton(smudgeButton);
 	
 	add = new QToolButton(this);
 	rm = new QToolButton(this);
@@ -249,6 +250,9 @@ ToolSet::ToolSet() {
 	magnifyButton->setIcon(QIcon(":icons/magnify.png"));
 	magnifyButton->setToolTip("Magnify canvas");
 	magnifyButton->setEnabled(false);
+	smudgeButton->setIcon(QIcon(":icons/smudge.png"));
+	smudgeButton->setToolTip("Modify curve");
+	smudgeButton->setEnabled(true);
 	eraserButton->setIcon(QIcon(":icons/eraser.png"));
 	eraserButton->setToolTip("Erase");
 	add->setIcon(QIcon(":icons/add.png"));
@@ -284,6 +288,7 @@ ToolSet::ToolSet() {
 	polylineButton->setCheckable(true);
 	bucketButton->setCheckable(true);
 	colouringButton->setCheckable(true);
+	smudgeButton->setCheckable(true);
 	eyedropperButton->setCheckable(true);
 	selectButton->setCheckable(true);
 	moveButton->setCheckable(true);
@@ -310,7 +315,7 @@ ToolSet::ToolSet() {
 	drawLay->addWidget(moveButton,4,1); drawLay->setAlignment(moveButton, Qt::AlignLeft);
 	
 	drawLay->addWidget(handButton,5,0); drawLay->setAlignment(handButton, Qt::AlignRight);
-	drawLay->addWidget(magnifyButton,5,1); drawLay->setAlignment(magnifyButton, Qt::AlignLeft);
+	drawLay->addWidget(smudgeButton,5,1); drawLay->setAlignment(smudgeButton, Qt::AlignLeft);
 	//drawLay->addWidget(mirrorButton,5,1); drawLay->setAlignment(mirrorButton, Qt::AlignLeft);
 	
 	optionLay->setMargin(8);
@@ -403,6 +408,7 @@ ToolSet::ToolSet() {
 	connect(bucketButton, SIGNAL(clicked()), this, SIGNAL(bucketClick()));
 	connect(eyedropperButton, SIGNAL(clicked()), this, SIGNAL(eyedropperClick()));
 	connect(colouringButton, SIGNAL(clicked()), this, SIGNAL(colouringClick()));
+	connect(smudgeButton, SIGNAL(clicked()), this, SIGNAL(smudgeClick()));
 	
 	connect(thinLinesButton, SIGNAL(clicked()), this, SIGNAL(thinLinesClick()));
 	connect(outlinesButton, SIGNAL(clicked()), this, SIGNAL(outlinesClick()));
@@ -437,6 +443,7 @@ ToolSet::ToolSet() {
 	connect(bucketButton, SIGNAL(clicked()), this, SLOT(changeBucketButton()));
 	connect(eyedropperButton, SIGNAL(clicked()), this, SLOT(changeEyedropperButton()));
 	connect(colouringButton, SIGNAL(clicked()), this, SLOT(changeColouringButton()));
+	connect(smudgeButton, SIGNAL(clicked()), this, SLOT(changeSmudgeButton()));
 	
 	//connect(thinLinesButton, SIGNAL(clicked()), this, SLOT(changeThinLinesButton()));
 }
@@ -565,12 +572,18 @@ void ToolSet::changeColouringButton() {
 	colouringButton->setChecked(true);
 }
 
-void ToolSet::changeThinLinesButton(bool trueOrFalse) {
-	thinLinesButton->setChecked(trueOrFalse);
+void ToolSet::changeSmudgeButton() {
+	deselectAllTools();
+	smudgeButton->setChecked(true);
 }
 
 void ToolSet::changeOutlinesButton(bool trueOrFalse) {
-	outlinesButton->setChecked(trueOrFalse);
+	outlinesButton->setChecked(true);
+}
+
+
+void ToolSet::changeThinLinesButton(bool trueOrFalse) {
+	thinLinesButton->setChecked(trueOrFalse);
 }
 
 
@@ -589,6 +602,7 @@ void ToolSet::deselectAllTools() {
 	bucketButton->setChecked(false);
 	eyedropperButton->setChecked(false);
 	colouringButton->setChecked(false);
+	smudgeButton->setChecked(false);
 }
 
 

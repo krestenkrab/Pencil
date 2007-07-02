@@ -23,6 +23,34 @@ GNU General Public License for more details.
 
 #include "bitmapimage.h"
 
+void VectorSelection::clear() {
+	vertex.clear();
+	curve.clear();
+}
+
+void VectorSelection::add(int curveNumber) {
+	curve << curveNumber;
+}
+
+void VectorSelection::add(QList<int> list) {
+	if(list.size() > 0) add(list[0]);
+	/*for(int i=0; i<list.size(); i++) {
+		add(list[i]);
+	}*/
+}
+
+void VectorSelection::add(VertexRef point) {
+	vertex << point;
+	add(point.curveNumber);
+}
+
+void VectorSelection::add(QList<VertexRef> list) {
+	if(list.size() > 0) add(list[0]);
+	/*for(int i=0; i<list.size(); i++) {
+		add(list[i]);
+	}*/
+}
+
 ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
     : QWidget(parent)
 //ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
@@ -117,6 +145,8 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	offset.setX(0);
 	offset.setY(0);
 	selectionTransformation.reset();
+	
+	tol = 7.0;
 	
 	mouseInUse = false;
 	setMouseTracking(true); // reacts to mouse move events, even if the button is not pressed
@@ -611,10 +641,26 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 		// ----------------------------------------------------------------------
 		if(toolMode == ScribbleArea::EDIT) {
 			if(layer->type == Layer::VECTOR) {
-				if( closestVertices.size() > 0 ) {  // the user clicks near a vertex
+				closestCurves = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getCurvesCloseTo(currentPoint, tol/myTempView.m11());
+				closestVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, tol/myTempView.m11());
+				if( closestVertices.size() > 0 || closestCurves.size() > 0 ) {  // the user clicks near a vertex or a curve
+					editor->backup();
 					VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
 					if(event->modifiers() != Qt::ShiftModifier && !vectorImage->isSelected(closestVertices)) { paintTransformedSelection(); deselectAll(); }
 					vectorImage->setSelected(closestVertices, true);
+					vectorSelection.add(closestCurves);
+					vectorSelection.add(closestVertices);
+					/*calculateSelectionRect();
+					moveMode == ScribbleArea::MIDDLE;
+					if( somethingSelected ) {  // there is an area selection
+						if( BezierCurve::mLength(lastPoint - myTransformedSelection.topLeft()) < 6) moveMode = ScribbleArea::TOPLEFT;
+						if( BezierCurve::mLength(lastPoint - myTransformedSelection.topRight()) < 6) moveMode = ScribbleArea::TOPRIGHT;
+						if( BezierCurve::mLength(lastPoint - myTransformedSelection.bottomLeft()) < 6) moveMode = ScribbleArea::BOTTOMLEFT;
+						if( BezierCurve::mLength(lastPoint - myTransformedSelection.bottomRight()) < 6) moveMode = ScribbleArea::BOTTOMRIGHT;
+					}*/
+					update();
+				} else {
+					deselectAll();
 				}
 			}
 		}
@@ -712,12 +758,29 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 	// ----------------------------------------------------------------------
 	if (toolMode == ScribbleArea::EDIT) {
 		if(event->buttons() & Qt::LeftButton) { // the user is also pressing the mouse (dragging) {
+			if( layer->type == Layer::VECTOR) {
+				if( event->modifiers() != Qt::ShiftModifier) { // (and the user doesn't press shift)
+					// transforms the selection
+					selectionTransformation = QMatrix().translate(offset.x(), offset.y());
+					((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->setSelectionTransformation(selectionTransformation);
+					/*if(moveMode == ScribbleArea::MIDDLE) {
+						if(QLineF(lastPixel,currentPixel).length()>4) myTempTransformedSelection = myTransformedSelection.translated(offset);
+					}
+					if(moveMode == ScribbleArea::TOPLEFT) myTempTransformedSelection = myTransformedSelection.adjusted(offset.x(), offset.y(), 0, 0);
+					if(moveMode == ScribbleArea::TOPRIGHT) myTempTransformedSelection = myTransformedSelection.adjusted(0, offset.y(), offset.x(), 0);
+					if(moveMode == ScribbleArea::BOTTOMLEFT) myTempTransformedSelection = myTransformedSelection.adjusted(offset.x(), 0, 0, offset.y());
+					if(moveMode == ScribbleArea::BOTTOMRIGHT) myTempTransformedSelection = myTransformedSelection.adjusted(0, 0, offset.x(), offset.y());
+					calculateSelectionTransformation();*/
+					//update();
+				}
+			}
 		} else { // the user is moving the mouse without pressing it
 			if(layer->type == Layer::VECTOR)  {
-				closestVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, 10.0/myTempView.m11());
+				closestVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, tol/myTempView.m11());
 			}
-			update();
+			//update();
 		}
+		update();
 	}
 	// ----------------------------------------------------------------------
 	if (toolMode == ScribbleArea::MOVE) {
@@ -752,7 +815,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 			}
 		} else { // the user is moving the mouse without pressing it
 			if(layer->type == Layer::VECTOR)  {
-				closestCurves = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getCurvesCloseTo(currentPoint, 5.0/myTempView.m11());
+				closestCurves = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getCurvesCloseTo(currentPoint, tol/myTempView.m11());
 			}
 			update();
 		}
@@ -943,13 +1006,25 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 	
 	// ====================== for all kinds of layers =======================
 	// ----------------------------------------------------------------------
+	if ((toolMode == ScribbleArea::EDIT) && (event->button() == Qt::LeftButton)) {
+		if(layer->type == Layer::VECTOR) {
+			VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
+			vectorImage->applySelectionTransformation();
+			selectionTransformation.reset();
+			for(int k=0; k<vectorSelection.curve.size(); k++) {
+				int curveNumber = vectorSelection.curve.at(k);
+				vectorImage->curve[curveNumber].smoothCurve();
+			}
+			setModified(layer, editor->currentFrame);
+		}
+	}
 	if ((toolMode == ScribbleArea::MOVE) && (event->button() == Qt::LeftButton)) {
 		offset.setX(0);
 		offset.setY(0);
 		calculateSelectionTransformation();
 		//if(layer->type == Layer::VECTOR) {
-			//	closestCurves = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getCurvesCloseTo(currentPoint, 5.0/myTempView.m11());
-			//	closestVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, 10.0/myTempView.m11());
+			//	closestCurves = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getCurvesCloseTo(currentPoint, tol/myTempView.m11());
+			//	closestVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, tol/myTempView.m11());
 		//}	
 		//if(somethingSelected && layer->type == Layer::VECTOR) {
 			//editor->backup();
@@ -1042,36 +1117,74 @@ void ScribbleArea::paintEvent(QPaintEvent * /* event */)
 	
 	if(!editor->playing) {  // we don't need to display the following when the animation is playing
 		painter.setWorldMatrix(myTempView);
-		
-		// paints the closest curves
 		Layer* layer = (editor->object->getLayer(editor->currentLayer));
-		if(toolMode == MOVE && layer->type == Layer::VECTOR) { //  && i == editor->currentLayer
+		
+		if(layer->type == Layer::VECTOR) {
 			VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
-			bufferImg->clear();
-			QPen pen2(Qt::black, 0.5, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin);
-			QColor colour = QColor(100,100,255);
-			for(int k=0; k<closestCurves.size(); k++) {
-				qreal scale = sqrt( myTempView.m11()*myTempView.m11() + myTempView.m22()*myTempView.m22() );
-				BezierCurve myCurve = vectorImage->curve[closestCurves[k]];
-				if(myCurve.isPartlySelected()) myCurve.transform( selectionTransformation );
-				QPainterPath path = myCurve.getStrokedPath(1.2/scale, false);
-				bufferImg->drawPath( myTempView.map(path), pen2, colour, QPainter::CompositionMode_SourceOver, antialiasing);
+					
+			if(toolMode == EDIT) {
+				bufferImg->clear();
+				// ----- paints the edited elements
+				QPen pen2(Qt::black, 0.5, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin);
+				QColor colour;
+				// ------------ vertices of the edited curves
+				colour = QColor(200,200,200);
+				for(int k=0; k<vectorSelection.curve.size(); k++) {
+					int curveNumber = vectorSelection.curve.at(k);
+					//QPainterPath path = vectorImage->curve[curveNumber].getStrokedPath();
+					//bufferImg->drawPath( myTempView.map(path), pen2, colour, QPainter::CompositionMode_SourceOver, false);
+					for(int vertexNumber=0; vertexNumber<vectorImage->getCurveSize(curveNumber); vertexNumber++) {
+						QPointF vertexPoint = vectorImage->getVertex(curveNumber, vertexNumber);
+						QRectF rectangle = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSize(7,7) ); 
+						if(rect().contains( myTempView.map(vertexPoint).toPoint())) bufferImg->drawRect( rectangle.toRect(), pen2, colour, QPainter::CompositionMode_SourceOver, false);
+					}
+					
+				}
+				// ------------ selected vertices of the edited curves
+				colour = QColor(100,100,255);
+				for(int k=0; k<vectorSelection.vertex.size(); k++) {
+					VertexRef vertexRef = vectorSelection.vertex.at(k);
+					QPointF vertexPoint = vectorImage->getVertex(vertexRef);
+					QPointF c1Point = vectorImage->getC1(vertexRef.nextVertex());
+					QPointF c2Point = vectorImage->getC2(vertexRef);
+					QRectF rectangle0 = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSize(7,7) ); 
+					QRectF rectangle1 = QRectF( myTempView.map(c1Point)-QPointF(3.0,3.0), QSize(7,7) ); 
+					QRectF rectangle2 = QRectF( myTempView.map(c2Point)-QPointF(3.0,3.0), QSize(7,7) ); 
+					bufferImg->drawLine( myTempView.map(vertexPoint), myTempView.map(c1Point), colour, QPainter::CompositionMode_SourceOver, antialiasing);
+					bufferImg->drawLine( myTempView.map(vertexPoint), myTempView.map(c2Point), colour, QPainter::CompositionMode_SourceOver, antialiasing);
+					bufferImg->drawRect( rectangle0, pen2, colour, QPainter::CompositionMode_SourceOver, false);
+					bufferImg->drawEllipse( rectangle1, pen2, Qt::white, QPainter::CompositionMode_SourceOver, false);
+					bufferImg->drawEllipse( rectangle2, pen2, Qt::white, QPainter::CompositionMode_SourceOver, false);
+				}
+				// ----- paints the closest vertices
+				colour = QColor(255,0,0);
+				if( vectorSelection.curve.size() > 0 ) {
+					for(int k=0; k<closestVertices.size(); k++) {
+						VertexRef vertexRef = closestVertices.at(k);
+						QPointF vertexPoint = vectorImage->getVertex(vertexRef);
+						//if( vectorImage->isSelected(vertexRef) ) vertexPoint = selectionTransformation.map( vertexPoint );
+						QRectF rectangle = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSize(7,7) ); 
+						bufferImg->drawRect( rectangle.toRect(), pen2, colour, QPainter::CompositionMode_SourceOver, false);
+					}
+				}
 			}
-		}
-		// paints the closest vertices
-		if(toolMode == EDIT && layer->type == Layer::VECTOR) {
-			VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
-			bufferImg->clear();
-			QPen pen2(Qt::black, 0.5, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin);
-			QColor colour = QColor(100,100,255);
-			for(int k=0; k<closestVertices.size(); k++) {
-				VertexRef vertexRef = closestVertices.at(k);
-				QPointF vertexPoint = vectorImage->getVertex(vertexRef);
-				if( vectorImage->isSelected(vertexRef) ) vertexPoint = selectionTransformation.map( vertexPoint );
-				QRectF rectangle = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSize(6,6) ); 
-				bufferImg->drawRect( rectangle.toRect(), pen2, colour, QPainter::CompositionMode_SourceOver, antialiasing);
+
+			if(toolMode == MOVE) {
+				// ----- paints the closest curves
+				bufferImg->clear();
+				QPen pen2(Qt::black, 0.5, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin);
+				QColor colour = QColor(100,100,255);
+				for(int k=0; k<closestCurves.size(); k++) {
+					qreal scale = sqrt( myTempView.m11()*myTempView.m11() + myTempView.m22()*myTempView.m22() );
+					BezierCurve myCurve = vectorImage->curve[closestCurves[k]];
+					if(myCurve.isPartlySelected()) myCurve.transform( selectionTransformation );
+					QPainterPath path = myCurve.getStrokedPath(1.2/scale, false);
+					bufferImg->drawPath( myTempView.map(path), pen2, colour, QPainter::CompositionMode_SourceOver, antialiasing);
+				}
 			}
+
 		}
+		
 		// paints the  buffer image
 		if(editor->getCurrentLayer() != NULL) {
 			painter.setOpacity(1.0);
@@ -1141,6 +1254,7 @@ void ScribbleArea::paintEvent(QPaintEvent * /* event */)
 
 void ScribbleArea::paintCanvas(int frame)
 {	
+	//qDebug() << "paint canvas!" << QDateTime::currentDateTime();
 	canvas.fill(Qt::white);
 	// merge the different layers into the ScribbleArea
 	QPainter painter(&canvas);
@@ -1590,6 +1704,7 @@ void ScribbleArea::deselectAll() {
 	}
 	somethingSelected = false;
 	bufferImg->clear();
+	vectorSelection.clear();
 	while(!mousePoints.isEmpty()) mousePoints.removeAt(0); // empty the mousePoints
 	updateFrame();
 }
@@ -1704,7 +1819,7 @@ void ScribbleArea::floodFill(VectorImage* vectorImage, QPoint point, QRgb target
 	// ---- finds the points near the contourPixels -> contourPoints
 	for(int i=0; i< contourPixels.size(); i++ ) {
 		QPointF mPoint = myTempView.inverted(&invertible).map(  QPointF( contourPixels.at(i) )   );
-		vertices = vectorImage->getAndRemoveVerticesCloseTo(mPoint, tol*tol, &boxPoints);
+		vertices = vectorImage->getAndRemoveVerticesCloseTo(mPoint, tol, &boxPoints);
 		//contourPoints << vertices;
 		for(int m=0; m<vertices.size(); m++) {  // for each ?
 			contourPoints.append( vertices.at(m) );
@@ -1718,7 +1833,7 @@ void ScribbleArea::floodFill(VectorImage* vectorImage, QPoint point, QRgb target
 				contourPoints.append( theNextVertex );
 				//qDebug() << "----- found SHARP point (type 1a) ------";
 			}
-			QList<VertexRef> closePoints = vectorImage->getVerticesCloseTo( theNextVertex, tol2*tol2 );
+			QList<VertexRef> closePoints = vectorImage->getVerticesCloseTo( theNextVertex, tol2 );
 			for( int j=0; j<closePoints.size(); j++ ) {
 				if( closePoints[j] != theNextVertex ) { // ...or a point connected to the next vertex is
 					if( contourPoints.contains(closePoints[j].nextVertex()) || contourPoints.contains(closePoints[j].prevVertex()) ) {
@@ -1735,7 +1850,7 @@ void ScribbleArea::floodFill(VectorImage* vectorImage, QPoint point, QRgb target
 				contourPoints.append( thePreviousVertex );
 				//qDebug() << "----- found SHARP point (type 1b) ------";
 			}
-			QList<VertexRef> closePoints = vectorImage->getVerticesCloseTo( thePreviousVertex, tol2*tol2 );
+			QList<VertexRef> closePoints = vectorImage->getVerticesCloseTo( thePreviousVertex, tol2 );
 			for( int j=0; j<closePoints.size(); j++ ) {
 				if( closePoints[j] != thePreviousVertex ) { // ...or a point connected to the previous vertex is
 					if( contourPoints.contains(closePoints[j].nextVertex()) || contourPoints.contains(closePoints[j].prevVertex()) ) {
@@ -1772,7 +1887,7 @@ void ScribbleArea::floodFill(VectorImage* vectorImage, QPoint point, QRgb target
 	int rootIndex = -1; bool rootIndexFound = false;
 	while(!rootIndexFound && rootIndex < contourPoints.size()-1) {
 		rootIndex++;
-		if( vectorImage->getVerticesCloseTo( vectorImage->getVertex(contourPoints.at(rootIndex)), tol2*tol2, &contourPoints).size() > 1) {
+		if( vectorImage->getVerticesCloseTo( vectorImage->getVertex(contourPoints.at(rootIndex)), tol2, &contourPoints).size() > 1) {
 			// this point is connected!
 			rootIndexFound = true;
 		}
@@ -1808,7 +1923,7 @@ void ScribbleArea::floodFill(VectorImage* vectorImage, QPoint point, QRgb target
 				contourPoints.removeAt(index2);
 				j = tree.size()-1;
 			} else {
-				QList<VertexRef> pointsNearby = vectorImage->getVerticesCloseTo( vectorImage->getVertex(vertex), tol2*tol2, &contourPoints);
+				QList<VertexRef> pointsNearby = vectorImage->getVerticesCloseTo( vectorImage->getVertex(vertex), tol2, &contourPoints);
 				if(pointsNearby.size() > 0) {
 					//qDebug() << "close vertex";
 					tree << pointsNearby.at(0);
@@ -2064,6 +2179,18 @@ void ScribbleArea::colouringOn() {
 	setCursor(Qt::CrossCursor);
 }
 
+void ScribbleArea::smudgeOn() {
+	switchTool();
+	toolMode = EDIT;
+	// --- change properties ---
+	editor->setWidth(-1);
+	editor->setFeather(-1);
+	editor->setOpacity(-1);
+	editor->setPressure(-1);
+	editor->setInvisibility(-1);
+	// --- change cursor ---
+	setCursor(Qt::ArrowCursor);
+}
 
 void ScribbleArea::deleteSelection() {
 	if( somethingSelected ) {  // there is something selected

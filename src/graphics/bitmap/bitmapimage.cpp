@@ -367,7 +367,9 @@ void BitmapImage::drawEllipse( QRectF rectangle, QPen pen, QBrush brush, QPainte
 		painter.setCompositionMode(cm);
 		painter.setRenderHint(QPainter::Antialiasing, antialiasing);
 		painter.setPen(pen);
-		if(brush == Qt::NoBrush) painter.drawEllipse( rectangle.translated(-topLeft()) );
+		painter.setBrush(brush);
+		//if(brush == Qt::NoBrush)
+		painter.drawEllipse( rectangle.translated(-topLeft()) );
 		painter.end();
 	}
 }

@@ -43,8 +43,15 @@ class Properties
 
 class VectorSelection
 {
+	public:
+	QList<VertexRef> vertex;
 	QList<int> curve;
-	QList<int> area;
+	//QList<int> area;
+	void clear();
+	void add(int curveNumber);
+	void add(QList<int> curveNumbers);
+	void add(VertexRef point);
+	void add(QList<VertexRef> points);
 };
 
 /*struct Buffer {
@@ -123,6 +130,7 @@ public slots:
 	void bucketOn();
 	void eyedropperOn();
 	void colouringOn();
+	void smudgeOn();
 	
 	void setWidth(const qreal);
 	void setFeather(const qreal);
@@ -177,7 +185,7 @@ private:
 	void floodFill(VectorImage* vectorImage, QPoint point, QRgb targetColour, QRgb replacementColour, int tolerance);
 	void floodFillError(int errorType);
 	
-	enum myToolModes { PENCIL, ERASER, SELECT, MOVE, EDIT, HAND, PEN, POLYLINE, BUCKET, EYEDROPPER, COLOURING };
+	enum myToolModes { PENCIL, ERASER, SELECT, MOVE, EDIT, HAND, SMUDGE, PEN, POLYLINE, BUCKET, EYEDROPPER, COLOURING };
 	enum myMoveModes { MIDDLE, TOPLEFT, TOPRIGHT, BOTTOMLEFT, BOTTOMRIGHT };
 	myToolModes toolMode;
 	myMoveModes moveMode;
@@ -228,11 +236,12 @@ private:
 	QPointF lastBrushPoint;
 	//QBrush brush; // the current brush
 	
+	qreal tol;
 	QList<int> closestCurves;
 	QList<VertexRef> closestVertices;
 	QPointF offset;
 	
-	//VectorSelection vectorSelection;
+	VectorSelection vectorSelection;
 	//bool selectionChanged;
 	QMatrix selectionTransformation;
 	QRectF mySelection, myTransformedSelection, myTempTransformedSelection;

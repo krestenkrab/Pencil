@@ -794,7 +794,8 @@ VertexRef VectorImage::getClosestVertexTo(QPointF P1, qreal maxDistance) {
 	qreal distance = 400.0*400.0; // initial big value
 	for(int j=0; j<curve.size(); j++) {
 		for(int k=-1; k<curve.at(j).getVertexSize(); k++) {
-			QPointF P2 = selectionTransformation.map( getVertex(j, k) );
+			//QPointF P2 = selectionTransformation.map( getVertex(j, k) );
+			QPointF P2 = getVertex(j, k);
 			qreal distance2 = (P1.x()-P2.x())*(P1.x()-P2.x()) + (P1.y()-P2.y())*(P1.y()-P2.y());
 			if( distance2 < distance  && distance2 < maxDistance*maxDistance) {
 				distance = distance2;
@@ -809,9 +810,10 @@ QList<VertexRef> VectorImage::getVerticesCloseTo(QPointF P1, qreal maxDistance) 
 	QList<VertexRef> result;
 	for(int j=0; j<curve.size(); j++) {
 		for(int k=-1; k<curve.at(j).getVertexSize(); k++) {
-			QPointF P2 = selectionTransformation.map( getVertex(j, k) );
+			//QPointF P2 = selectionTransformation.map( getVertex(j, k) );
+			QPointF P2 = getVertex(j, k);
 			qreal distance = (P1.x()-P2.x())*(P1.x()-P2.x()) + (P1.y()-P2.y())*(P1.y()-P2.y());
-			if( distance < maxDistance ) {
+			if( distance < maxDistance*maxDistance ) {
 				result.append( VertexRef(j,k) );
 			}
 		}
@@ -824,7 +826,7 @@ QList<VertexRef> VectorImage::getVerticesCloseTo(QPointF P1, qreal maxDistance, 
 	for(int j=0; j<listOfPoints->size(); j++) {
 		QPointF P2 = getVertex(listOfPoints->at(j));
 		qreal distance = (P1.x()-P2.x())*(P1.x()-P2.x()) + (P1.y()-P2.y())*(P1.y()-P2.y());
-		if( distance < maxDistance ) {
+		if( distance < maxDistance*maxDistance ) {
 			result.append(listOfPoints->at(j));
 			//listOfPoints->removeAt(j);
 		}
@@ -846,7 +848,7 @@ QList<VertexRef> VectorImage::getAndRemoveVerticesCloseTo(QPointF P1, qreal maxD
 	for(int j=0; j<listOfPoints->size(); j++) {
 		QPointF P2 = getVertex(listOfPoints->at(j));
 		qreal distance = (P1.x()-P2.x())*(P1.x()-P2.x()) + (P1.y()-P2.y())*(P1.y()-P2.y());
-		if( distance < maxDistance ) {
+		if( distance < maxDistance*maxDistance ) {
 			result.append(listOfPoints->at(j));
 			listOfPoints->removeAt(j);
 		}

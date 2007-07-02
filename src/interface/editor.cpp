@@ -96,6 +96,7 @@ Editor::Editor(QMainWindow* parent)
 	connect(toolSet, SIGNAL(bucketClick()), scribbleArea, SLOT(bucketOn()));
 	connect(toolSet, SIGNAL(eyedropperClick()), scribbleArea, SLOT(eyedropperOn()));
 	connect(toolSet, SIGNAL(colouringClick()), scribbleArea, SLOT(colouringOn()));
+	connect(toolSet, SIGNAL(smudgeClick()), scribbleArea, SLOT(smudgeOn()));
 	
 	connect(toolSet, SIGNAL(pressureClick(int)), this, SLOT(applyPressure(int)));
 	connect(toolSet, SIGNAL(invisibleClick(int)), this, SLOT(applyInvisibility(int)));
