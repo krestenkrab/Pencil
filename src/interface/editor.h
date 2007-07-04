@@ -87,6 +87,7 @@ public:
 	QTimer* timer; // the timer used for animation in the editor
 	bool playing;
 	bool looping;
+	bool sound;
 	
 	Palette* getPalette() { return palette; }
 	TimeLine* getTimeLine() { return timeLine; }
@@ -122,6 +123,7 @@ public slots:
 	void changeFps(int);
 	int getFps();
 	void setLoop();
+	void setSound();
 	
 	//void scrubKF();
 	//void scrubKB();

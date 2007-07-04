@@ -119,6 +119,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	connect(timeControls, SIGNAL(playClick()), this, SIGNAL(playClick()));
 	connect(timeControls, SIGNAL(loopClick()), this, SIGNAL(loopClick()));
 	connect(timeControls, SIGNAL(soundClick()), this, SIGNAL(soundClick()));
+	connect(timeControls, SIGNAL(fpsClick(int)), this, SIGNAL(fpsClick(int)));
 	
 	QHBoxLayout* rightToolBarLayout = new QHBoxLayout();
 	//rightToolBarLayout->setAlignment(Qt::AlignLeft);
@@ -207,6 +208,7 @@ void TimeLine::updateLayerView() {
 	vScrollBar->setMinimum( 0 );
 	vScrollBar->setMaximum( qMax(0, numberOfLayers - vScrollBar->pageStep()) );
 	update();
+	updateContent();
 }
 
 void TimeLine::updateLayerNumber(int numberOfLayers) {
@@ -216,6 +218,11 @@ void TimeLine::updateLayerNumber(int numberOfLayers) {
 
 void TimeLine::updateLength(int frameLength) {
 	hScrollBar->setMaximum( frameLength );
+}
+
+void TimeLine::updateContent() {
+	list->updateContent();
+	cells->updateContent();
 }
 
 /*void TimeLine::mousePressEvent(QMouseEvent *event) {
@@ -425,6 +432,9 @@ void TimeLineCells::drawContent() {
 		painter.setRenderHint(QPainter::Antialiasing, true);
 		painter.drawEllipse(6, 4, 9, 9);
 		painter.setRenderHint(QPainter::Antialiasing, false);
+		// --- draw right border line
+		//painter.setPen( Qt::lightGray );
+		//painter.drawLine(width()/2-1,0, width()/2-1, height());
 	}
 	
 	if(type == "tracks") {
@@ -441,7 +451,7 @@ void TimeLineCells::drawContent() {
 			if(i==0 || i%fps==fps-1) painter.drawText(QPoint(getFrameX(i)+incr, 15), QString::number(i+1));
 		}
 		// --- indicates the cached images by a line ---
-		painter.setPen( Qt::red );
+		/*painter.setPen( Qt::red );
 		QList<int> frameList = editor->frameList;
 		for(int i=0; i<frameList.size(); i++) {
 			//painter.setBrush( Qt::red );
@@ -449,7 +459,7 @@ void TimeLineCells::drawContent() {
 			if( j > frameOffset ) {
 				painter.drawLine( getFrameX(j-1-frameOffset), 1, getFrameX(j-frameOffset), 1);
 			}
-		}
+		}*/
 	}
 }
 	

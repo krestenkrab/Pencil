@@ -581,7 +581,7 @@ void ToolSet::changeSmudgeButton() {
 }
 
 void ToolSet::changeOutlinesButton(bool trueOrFalse) {
-	outlinesButton->setChecked(true);
+	outlinesButton->setChecked(trueOrFalse);
 }
 
 

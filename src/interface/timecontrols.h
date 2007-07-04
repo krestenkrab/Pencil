@@ -31,6 +31,7 @@ signals:
 	void playClick();
 	void loopClick();
 	void soundClick();
+	void fpsClick(int);
 	
 public slots:
 	void updateLoopButton(bool);

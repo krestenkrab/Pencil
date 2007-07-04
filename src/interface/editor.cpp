@@ -50,6 +50,7 @@ Editor::Editor(QMainWindow* parent)
 	connect(timer, SIGNAL(timeout()), this, SLOT(playNextFrame()));
 	playing = false;
 	looping = false;
+	sound = true;
 	
 	frameList << 1;
 	currentFrame = 1;
@@ -130,9 +131,9 @@ Editor::Editor(QMainWindow* parent)
 	connect(timeLine, SIGNAL(deleteCurrentLayer()), this, SLOT(deleteCurrentLayer()));
 	
 	connect(timeLine, SIGNAL(playClick()), this, SLOT(play()));
-	//connect(timeLine, SIGNAL(fpsClick(int)), this, SLOT(changeFps(int)));
 	connect(timeLine, SIGNAL(loopClick()), this, SLOT(setLoop()));
-	//connect(timeLine, SIGNAL(soundClick()), this, SLOT(setLoop()));
+	connect(timeLine, SIGNAL(soundClick()), this, SLOT(setSound()));
+	connect(timeLine, SIGNAL(fpsClick(int)), this, SLOT(changeFps(int)));
 	
 	connect(preferences, SIGNAL(curveOpacityChange(int)), scribbleArea, SLOT(setCurveOpacity(int)));
 	connect(preferences, SIGNAL(curveSmoothingChange(int)), scribbleArea, SLOT(setCurveSmoothing(int)));
@@ -1079,7 +1080,7 @@ void Editor::importSound(QString filePath)
 				QSettings settings("Pencil","Pencil");
 				QString initialPath = settings.value("lastImportPath", QVariant(QDir::homePath())).toString();		
 				if(initialPath.isEmpty()) initialPath = QDir::homePath() + "/untitled";
-				QString filePath = QFileDialog::getOpenFileName(this, tr("Import sound..."),initialPath);
+				filePath = QFileDialog::getOpenFileName(this, tr("Import sound..."),initialPath);
 				if (!filePath.isEmpty()) settings.setValue("lastImportPath", QVariant(filePath));
 			}
 			if (!filePath.isEmpty()) {
@@ -1240,7 +1241,7 @@ void Editor::startOrStop() {
 
 void Editor::playNextFrame() {
 	if(currentFrame < maxFrame) {
-		object->playSoundIfAny(currentFrame);
+		if(sound) object->playSoundIfAny(currentFrame);
 		scrubForward();
 	} else {
 		play();
@@ -1259,8 +1260,13 @@ int Editor::getFps() {
 }
 
 void Editor::setLoop() {
-     if (looping) looping=false;
-     else looping=true;
+	if (looping) looping=false;
+	else looping=true;
+}
+
+void Editor::setSound() {
+	if(sound) sound = false;
+	else sound = true;
 }
 
 void Editor::setCurrentLayer(int layerNumber) {

@@ -68,6 +68,7 @@ signals:
 	void mouseMovedY(int);
 	
 public slots:
+	void updateContent();
 	void updateFrame(int frameNumber);
 	void lengthChange(QString);
 	void frameSizeChange(int);
@@ -79,7 +80,6 @@ public slots:
 		
 protected:
 	void drawContent();
-	void updateContent();
 	void paintEvent(QPaintEvent *event);
 	void resizeEvent(QResizeEvent *event);
 	void mousePressEvent(QMouseEvent *event);
@@ -125,13 +125,15 @@ signals:
 
 	void playClick();
 	void loopClick();
-	void listenClick();
+	void soundClick();
+	void fpsClick(int);
 	
 public slots:
 	void updateFrame(int frameNumber);
 	void updateLayerNumber(int number);
 	void updateLayerView();
 	void updateLength(int frameLength);
+	void updateContent();
 	
 public:
 	TimeLine(QWidget *parent = 0, Editor *editor = 0);

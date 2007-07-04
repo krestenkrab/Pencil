@@ -53,6 +53,7 @@ TimeControls::TimeControls(QWidget* parent) {
 	//loopButton->setFlat(true);
 	loopButton->setCheckable(true);
 	soundButton->setCheckable(true);
+	soundButton->setChecked(true);
 	
 	QHBoxLayout* frameLayout = new QHBoxLayout();
 	frameLayout->setMargin(0);
@@ -77,7 +78,8 @@ TimeControls::TimeControls(QWidget* parent) {
 	
 	connect(playButton, SIGNAL(clicked()), this, SIGNAL(playClick()));
 	connect(loopButton, SIGNAL(clicked()), this, SIGNAL(loopClick()));
-	connect(soundButton, SIGNAL(clicked()), this, SIGNAL(soundClick()));	
+	connect(soundButton, SIGNAL(clicked()), this, SIGNAL(soundClick()));
+	connect(fpsBox,SIGNAL(valueChanged(int)), this, SIGNAL(fpsClick(int)));
 }
 
 void TimeControls::updateLoopButton(bool checked) {

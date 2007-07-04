@@ -20,6 +20,7 @@ GNU General Public License for more details.
   LayerSound::LayerSound(Object* object) : LayerImage(object) {
 	type = Layer::SOUND;
 	//modified = false;
+	name = QString("Sound Layer");
 }
 
 LayerSound::~LayerSound() {
@@ -92,7 +93,7 @@ void LayerSound::loadSoundAtFrame(QString filePathString, int frameNumber) {
 	} else {
 		sound[index] = NULL;
 		soundFilepath[index] = "Wrong file";
-		framesFilename[index] = "";
+		framesFilename[index] = "Wrong file" + filePathString;
 	}
 }
 
