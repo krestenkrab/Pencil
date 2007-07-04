@@ -25,7 +25,7 @@ MainWindow::MainWindow() {
 	//object->defaultInitialisation();
 	//editor->setObject( object );
 	editor->newObject();
-	
+
 	setCentralWidget(editor);
 	addDockWidget(Qt::RightDockWidgetArea, editor->getPalette());
 	//editor->getPalette()->close();
@@ -34,10 +34,10 @@ MainWindow::MainWindow() {
 	addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->displayPalette);
 	addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->onionPalette);
 	//addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->keyPalette);
-	
+
 	//addDockWidget(Qt::BottomDockWidgetArea, editor->getToolSet()->timePalette);
 	addDockWidget(Qt::BottomDockWidgetArea, editor->getTimeLine());
-	
+
 	editor->getToolSet()->drawPalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	editor->getToolSet()->optionPalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	//editor->getToolSet()->keyPalette->setFeatures(QDockWidget::NoDockWidgetFeatures);
@@ -47,13 +47,13 @@ MainWindow::MainWindow() {
 	editor->getToolSet()->onionPalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	editor->getToolSet()->timePalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	editor->getTimeLine()->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
-	
+
 	//editor->getTimeLine()->close();
-	
+
 	newAct = new QAction(tr("&New"), this);
 	newAct->setShortcut(tr("Ctrl+N"));
 	connect(newAct, SIGNAL(triggered()), editor, SLOT(newDocument()));
-	
+
 	openAct = new QAction(tr("&Open..."), this);
     openAct->setShortcut(tr("Ctrl+O"));
     connect(openAct, SIGNAL(triggered()), editor, SLOT(openDocument()));
@@ -61,35 +61,35 @@ MainWindow::MainWindow() {
     saveAct = new QAction(tr("Save &As..."), this);
 	saveAct->setShortcut(tr("Ctrl+Shift+S"));
 	connect(saveAct, SIGNAL(triggered()), editor, SLOT(saveDocument()));
-	
+
 	savAct = new QAction(tr("&Save"), this);
 	savAct->setShortcut(tr("Ctrl+S"));
 	connect(savAct, SIGNAL(triggered()), editor, SLOT(saveForce()));
-	
+
 	exportXAct = new QAction(tr("&X-Sheet..."), this);
 	exportXAct->setShortcut(tr("Ctrl+Alt+X"));
 	connect(exportXAct, SIGNAL(triggered()), editor, SLOT(exportX()));
-	
+
 	exportAct = new QAction(tr("&Image Sequence..."), this);
 	exportAct->setShortcut(tr("Ctrl+Alt+S"));
 	connect(exportAct, SIGNAL(triggered()), editor, SLOT(exportSeq()));
-	
+
 	exportMovAct = new QAction(tr("&Movie..."), this);
 	exportMovAct->setShortcut(tr("Ctrl+Alt+M"));
 	connect(exportMovAct, SIGNAL(triggered()), editor, SLOT(exportMov()));
-	
+
 	exportFlashAct = new QAction(tr("&Flash/SWF..."), this);
 	exportFlashAct->setShortcut(tr("Ctrl+Alt+F"));
 	connect(exportFlashAct, SIGNAL(triggered()), editor, SLOT(exportFlash()));
-	
+
     exitAct = new QAction(tr("E&xit"), this);
     exitAct->setShortcut(tr("Ctrl+Q"));
     connect(exitAct, SIGNAL(triggered()), editor, SLOT(close()));
-    
+
     importAct = new QAction(tr("&Import image..."), this);
     importAct->setShortcut(tr("Ctrl+I"));
     connect(importAct, SIGNAL(triggered()), editor, SLOT(importImage()));
-	
+
     importSndAct = new QAction(tr("&Import sound..."), this);
 //    importAct->setShortcut(tr("Ctrl+I"));
     connect(importSndAct, SIGNAL(triggered()), editor, SLOT(importSound()));
@@ -100,10 +100,10 @@ MainWindow::MainWindow() {
 	helpMe = new QAction(tr("&Help"), this);
 	helpMe->setShortcut(tr("Ctrl+?"));
 	connect(helpMe, SIGNAL(triggered()), editor, SLOT(helpBox()));
-	
+
     aboutQtAct = new QAction(tr("About &Qt"), this);
     connect(aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
-	
+
 	undoAct = new QAction(tr("Undo"), this);
 	undoAct->setShortcut(tr("Ctrl+Z"));
 	connect(undoAct, SIGNAL(triggered()), editor, SLOT(undo()));
@@ -119,27 +119,27 @@ MainWindow::MainWindow() {
 	pasteAct = new QAction(tr("Paste"), this);
 	pasteAct->setShortcut(tr("Ctrl+V"));
 	connect(pasteAct, SIGNAL(triggered()), editor, SLOT(paste()));
-	
+
 	selectAllAct = new QAction(tr("Select All"), this);
 	selectAllAct->setShortcut(tr("Ctrl+A"));
 	connect(selectAllAct, SIGNAL(triggered()), editor, SIGNAL(selectAll()));
-	
+
 	configAct = new QAction(tr("Preferences"), this);
 	connect(configAct, SIGNAL(triggered()), editor, SLOT(config()));
-	
-	
+
+
 	newBitmapLayerAct = new QAction(tr("New Bitmap Layer"), this);
 	connect(newBitmapLayerAct, SIGNAL(triggered()), editor, SLOT(newBitmapLayer()));
-	
+
 	newVectorLayerAct = new QAction(tr("New Vector Layer"), this);
 	connect(newVectorLayerAct, SIGNAL(triggered()), editor, SLOT(newVectorLayer()));
-	
+
 	newSoundLayerAct = new QAction(tr("New Sound Layer"), this);
 	connect(newSoundLayerAct, SIGNAL(triggered()), editor, SLOT(newSoundLayer()));
-	
+
 	deleteLayerAct = new QAction(tr("Delete Current Layer"), this);
 	connect(deleteLayerAct, SIGNAL(triggered()), editor, SLOT(deleteCurrentLayer()));
-	
+
 
 exportMenu = new QMenu(tr("Export"), this);
 exportMenu->addAction(exportXAct);
@@ -147,7 +147,7 @@ exportMenu->addAction(exportAct);
 exportMenu->addAction(exportMovAct);
 exportMenu->addAction(exportFlashAct);
 openRecentMenu = new QMenu(tr("Open recent..."), this);
-	
+
 fileMenu = new QMenu(tr("&File"), this);
 fileMenu->addAction(newAct);
 fileMenu->addAction(openAct);
@@ -169,7 +169,7 @@ editMenu->addSeparator();
 editMenu->addAction(importAct);
 editMenu->addAction(importSndAct);
 editMenu->addSeparator();
-editMenu->addAction(configAct);	
+editMenu->addAction(configAct);
 
 layerMenu = new QMenu(tr("&Layer"), this);
 layerMenu->addAction(newBitmapLayerAct);
@@ -191,7 +191,7 @@ menuBar()->addMenu(helpMenu);
 		QSettings settings("Pencil","Pencil");
 		QString myPath = settings.value("lastFilePath", QVariant(QDir::homePath())).toString();
 		addRecentFile(myPath);
-		
+
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

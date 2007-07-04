@@ -23,7 +23,7 @@ GNU General Public License for more details.
 class TimeControls : public QWidget
 {
     Q_OBJECT
-  
+
 public:
 	TimeControls(QWidget *parent = 0);
 
@@ -32,12 +32,12 @@ signals:
 	void loopClick();
 	void soundClick();
 	void fpsClick(int);
-	
+
 public slots:
 	void updateLoopButton(bool);
-	
+
 protected:
-	
+
 private:
 	QPushButton* loopButton;
 };

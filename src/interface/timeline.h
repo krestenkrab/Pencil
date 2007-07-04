@@ -23,7 +23,7 @@ GNU General Public License for more details.
 #include <QDockWidget>
 #include <QScrollBar>
 #include <QSound>
-#include "toolset.h";
+#include "toolset.h"
 
 class Editor;
 
@@ -50,7 +50,7 @@ class TimeLine;
 class TimeLineCells : public QWidget
 {
     Q_OBJECT
-  
+
 public:
 	TimeLineCells(TimeLine *parent = 0, Editor *editor = 0, QString type = "");
 	//int currentFrame;
@@ -66,7 +66,7 @@ public:
 
 signals:
 	void mouseMovedY(int);
-	
+
 public slots:
 	void updateContent();
 	void updateFrame(int frameNumber);
@@ -77,7 +77,7 @@ public slots:
 	void hScrollChange(int);
 	void vScrollChange(int);
 	void setMouseMoveY(int x) { mouseMoveY = x;}
-		
+
 protected:
 	void drawContent();
 	void paintEvent(QPaintEvent *event);
@@ -86,11 +86,11 @@ protected:
 	void mouseMoveEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
 	void mouseDoubleClickEvent(QMouseEvent *event);
-	
+
 private:
   TimeLine *timeLine;
 	Editor* editor; // the editor for which this timeLine operates
-	
+
 	QString type;
 	QPixmap* cache;
 	bool drawFrameNumber;
@@ -127,28 +127,28 @@ signals:
 	void loopClick();
 	void soundClick();
 	void fpsClick(int);
-	
+
 public slots:
 	void updateFrame(int frameNumber);
 	void updateLayerNumber(int number);
 	void updateLayerView();
 	void updateLength(int frameLength);
 	void updateContent();
-	
+
 public:
 	TimeLine(QWidget *parent = 0, Editor *editor = 0);
 	QScrollBar *hScrollBar, *vScrollBar;
 	//int currentFrame;
 	//int currentLayer;
 	bool scrubbing;
-	
+
 protected:
 	void resizeEvent(QResizeEvent *event);
 	//void mousePressEvent(QMouseEvent *event);
 	//void mouseMoveEvent(QMouseEvent *event);
 	//void mouseReleaseEvent(QMouseEvent *event);
 	//void mouseDoubleClickEvent(QMouseEvent *event);
-	
+
 private:
 	Editor* editor; // the editor for which this timeLine operates
 	//TimeLineCells* list;
@@ -159,5 +159,3 @@ private:
 };
 
 #endif
-
-
