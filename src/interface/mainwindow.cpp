@@ -35,7 +35,7 @@ MainWindow::MainWindow() {
 	addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->onionPalette);
 	//addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->keyPalette);
 	
-	addDockWidget(Qt::BottomDockWidgetArea, editor->getToolSet()->timePalette);
+	//addDockWidget(Qt::BottomDockWidgetArea, editor->getToolSet()->timePalette);
 	addDockWidget(Qt::BottomDockWidgetArea, editor->getTimeLine());
 	
 	editor->getToolSet()->drawPalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);

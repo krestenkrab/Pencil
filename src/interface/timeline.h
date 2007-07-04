@@ -60,12 +60,22 @@ public:
 	int getLayerY(int layerNumber);
 	int getFrameNumber(int x);
 	int getFrameX(int frameNumber);
-	
-	int getOffset();
+	int getMouseMoveY() { return mouseMoveY; }
 	int getOffsetY() { return offsetY; }
 	int getLayerHeight() { return layerHeight; }
+
+signals:
+	void mouseMovedY(int);
 	
 public slots:
+	void updateFrame(int frameNumber);
+	void lengthChange(QString);
+	void frameSizeChange(int);
+	void fontSizeChange(int);
+	void labelChange(int);
+	void hScrollChange(int);
+	void vScrollChange(int);
+	void setMouseMoveY(int x) { mouseMoveY = x;}
 		
 protected:
 	void drawContent();
@@ -76,14 +86,6 @@ protected:
 	void mouseMoveEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
 	void mouseDoubleClickEvent(QMouseEvent *event);
-	
-public slots:
-	void lengthChange(QString);
-	void frameSizeChange(int);
-	void fontSizeChange(int);
-	void labelChange(int);
-	void hScrollChange(int);
-	void vScrollChange(int);
 	
 private:
   TimeLine *timeLine;
@@ -100,6 +102,7 @@ private:
 	int layerHeight;
 	int offsetX, offsetY;
 	int startY, endY, startLayerNumber;
+	int mouseMoveY;
 	int frameOffset, layerOffset;
 };
 
@@ -119,15 +122,23 @@ signals:
 	void newVectorLayer();
 	void newSoundLayer();
 	void deleteCurrentLayer();
-		
+
+	void playClick();
+	void loopClick();
+	void listenClick();
+	
+public slots:
+	void updateFrame(int frameNumber);
+	void updateLayerNumber(int number);
+	void updateLayerView();
+	void updateLength(int frameLength);
+	
 public:
 	TimeLine(QWidget *parent = 0, Editor *editor = 0);
 	QScrollBar *hScrollBar, *vScrollBar;
 	//int currentFrame;
 	//int currentLayer;
-	void updateLayerNumber(int number);
-	void updateLayerView();
-	void updateLength(int frameLength);
+	bool scrubbing;
 	
 protected:
 	void resizeEvent(QResizeEvent *event);

@@ -17,6 +17,7 @@ GNU General Public License for more details.
 #include "timeline.h"
 #include "editor.h"
 #include "toolset.h"
+#include "timecontrols.h"
 
 TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::Tool) // DockPalette("")
 {
@@ -24,6 +25,8 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	
 	list = new TimeLineCells(this, editor, "layers");
 	cells = new TimeLineCells(this, editor, "tracks");
+	connect(list, SIGNAL(mouseMovedY(int)), list, SLOT(setMouseMoveY(int)));
+	connect(list, SIGNAL(mouseMovedY(int)), cells, SLOT(setMouseMoveY(int)));
 	
 	numberOfLayers = 0;
 	hScrollBar = new QScrollBar(Qt::Horizontal);
@@ -32,33 +35,44 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	vScrollBar->setMaximum(1);
 	vScrollBar->setPageStep(1);
 	
-	QWidget* leftToolBar = new QWidget();
-	leftToolBar->setFixedHeight(22);
-	QWidget* rightToolBar = new QWidget();
-	rightToolBar->setFixedHeight(22);
-	
 	QWidget* leftWidget = new QWidget();
-	leftWidget->setMinimumWidth(100);
+	leftWidget->setMinimumWidth(120);
 	QWidget* rightWidget = new QWidget();
 	
-	QLabel* layerLabel = new QLabel(tr("Layers:"));
-	layerLabel->setFixedWidth(40);
-	layerLabel->setIndent(5);
-	QToolButton* addLayerButton = new QToolButton(this);
-	addLayerButton->setIcon(QIcon(":icons/add.png"));
-	addLayerButton->setToolTip("Add Layer");
-	addLayerButton->setFixedSize(16,16);
-	QToolButton* removeLayerButton = new QToolButton(this);
-	removeLayerButton->setIcon(QIcon(":icons/remove.png"));
-	removeLayerButton->setToolTip("Remove Layer");
-	removeLayerButton->setFixedSize(16,16);
+	QWidget* leftToolBar = new QWidget();
+	leftToolBar->setFixedHeight(32);
+	QWidget* rightToolBar = new QWidget();
+	rightToolBar->setFixedHeight(32);
+	
+	// --- left widget ---
+	// --------- key buttons ---------
+	QFrame* layerButtons = new QFrame(this);
+	layerButtons->setFixedWidth(100);
+	QHBoxLayout* layerButtonLayout = new QHBoxLayout();
+		QLabel* layerLabel = new QLabel(tr("Layers:"));
+		layerLabel->setIndent(5);
+		QToolButton* addLayerButton = new QToolButton(this);
+		addLayerButton->setIcon(QIcon(":icons/add.png"));
+		addLayerButton->setToolTip("Add Layer");
+		addLayerButton->setFixedSize(20,20);
+		QToolButton* removeLayerButton = new QToolButton(this);
+		removeLayerButton->setIcon(QIcon(":icons/remove.png"));
+		removeLayerButton->setToolTip("Remove Layer");
+		removeLayerButton->setFixedSize(20,20);
+		//QLabel* layerSpacingLabel = new QLabel(tr(" "));
+		//layerSpacingLabel->setIndent(30);
+		layerButtonLayout->addWidget(layerLabel);
+		layerButtonLayout->addWidget(addLayerButton);
+		layerButtonLayout->addWidget(removeLayerButton);
+		//layerButtonLayout->addWidget(layerSpacingLabel);
+		layerButtonLayout->setMargin(0);
+		layerButtonLayout->setSpacing(5);
+	layerButtons->setLayout(layerButtonLayout);
+	
 	QHBoxLayout* leftToolBarLayout = new QHBoxLayout();
 	leftToolBarLayout->setAlignment(Qt::AlignLeft);
-	leftToolBarLayout->addWidget(layerLabel);
-	leftToolBarLayout->addWidget(addLayerButton);
-	leftToolBarLayout->addWidget(removeLayerButton);
 	leftToolBarLayout->setMargin(0);
-	leftToolBarLayout->setSpacing(5);
+	leftToolBarLayout->addWidget(layerButtons);
 	leftToolBar->setLayout(leftToolBarLayout);
 	
 	QAction* newBitmapLayerAct = new QAction(tr("New Bitmap Layer"), this);
@@ -78,22 +92,38 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	leftLayout->setSpacing(0);
 	leftWidget->setLayout(leftLayout);
 	
-	QLabel* keyLabel = new QLabel(tr("Keys:"));
-	keyLabel->setFixedWidth(40);
-	keyLabel->setIndent(5);
-	QToolButton* addKeyButton = new QToolButton(this);
-	addKeyButton->setIcon(QIcon(":icons/add.png"));
-	addKeyButton->setToolTip("Add Key");
-	addKeyButton->setFixedSize(16,16);
-	QToolButton* removeKeyButton = new QToolButton(this);
-	removeKeyButton->setIcon(QIcon(":icons/remove.png"));
-	removeKeyButton->setToolTip("Remove Key");
-	removeKeyButton->setFixedSize(16,16);
+	// --- right widget ---
+	// --------- key buttons ---------
+	QFrame* keyButtons = new QFrame(this);
+	keyButtons->setFixedWidth(90);
+	QHBoxLayout* keyButtonLayout = new QHBoxLayout();
+		QLabel* keyLabel = new QLabel(tr("Keys:"));
+		keyLabel->setIndent(5);
+		QToolButton* addKeyButton = new QToolButton(this);
+		addKeyButton->setIcon(QIcon(":icons/add.png"));
+		addKeyButton->setToolTip("Add Key");
+		addKeyButton->setFixedSize(22,22);
+		QToolButton* removeKeyButton = new QToolButton(this);
+		removeKeyButton->setIcon(QIcon(":icons/remove.png"));
+		removeKeyButton->setToolTip("Remove Key");
+		removeKeyButton->setFixedSize(22,22);
+		keyButtonLayout->addWidget(keyLabel);
+		keyButtonLayout->addWidget(addKeyButton);
+		keyButtonLayout->addWidget(removeKeyButton);
+		keyButtonLayout->setMargin(0);
+		keyButtonLayout->setSpacing(5);
+		//keyButtonLayout->setSizeConstraint(QLayout::SetMinimumSize);
+	keyButtons->setLayout(keyButtonLayout);
+	
+	TimeControls* timeControls = new TimeControls(this);
+	connect(timeControls, SIGNAL(playClick()), this, SIGNAL(playClick()));
+	connect(timeControls, SIGNAL(loopClick()), this, SIGNAL(loopClick()));
+	connect(timeControls, SIGNAL(soundClick()), this, SIGNAL(soundClick()));
+	
 	QHBoxLayout* rightToolBarLayout = new QHBoxLayout();
-	rightToolBarLayout->setAlignment(Qt::AlignLeft);
-	rightToolBarLayout->addWidget(keyLabel);
-	rightToolBarLayout->addWidget(addKeyButton);
-	rightToolBarLayout->addWidget(removeKeyButton);
+	//rightToolBarLayout->setAlignment(Qt::AlignLeft);
+	rightToolBarLayout->addWidget(keyButtons);
+	rightToolBarLayout->addWidget(timeControls);
 	rightToolBarLayout->setMargin(0);
 	rightToolBarLayout->setSpacing(5);
 	rightToolBar->setLayout(rightToolBarLayout);
@@ -168,6 +198,9 @@ void TimeLine::resizeEvent(QResizeEvent *event) {
 	//event->accept();
 }
 
+void TimeLine::updateFrame(int frameNumber) {
+	if(cells) cells->updateFrame(frameNumber);
+}
 
 void TimeLine::updateLayerView() {
 	vScrollBar->setPageStep( (height()-cells->getOffsetY()-hScrollBar->height())/cells->getLayerHeight() -2 );
@@ -273,9 +306,10 @@ TimeLineCells::TimeLineCells(TimeLine *parent, Editor *editor, QString type) : Q
 	fps = editor->fps;
 	
 	//playing = false;
-	scrubbing = false;
+	//scrubbing = false;
 	startY = 0;
 	endY = 0;
+	mouseMoveY = 0;
 	startLayerNumber = -1;
 	offsetX = 0;
 	offsetY = 20;
@@ -295,6 +329,7 @@ TimeLineCells::TimeLineCells(TimeLine *parent, Editor *editor, QString type) : Q
 	//setMinimumWidth(500);
 	setMinimumSize(500, 4*layerHeight);
 	setSizePolicy( QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding) );
+	setAttribute(Qt::WA_OpaquePaintEvent, false);
 }
 
 int TimeLineCells::getFrameNumber(int x) {
@@ -318,8 +353,9 @@ int TimeLineCells::getLayerY(int layerNumber) {
 	return offsetY + (layerNumber-layerOffset)*layerHeight;
 }
 
-int TimeLineCells::getOffset() {
-	return endY-startY;
+void TimeLineCells::updateFrame(int frameNumber) {
+	int x = getFrameX(frameNumber);
+	update(x-frameSize,0,frameSize+1,height());
 }
 
 void TimeLineCells::updateContent() {
@@ -328,6 +364,8 @@ void TimeLineCells::updateContent() {
 }
 
 void TimeLineCells::drawContent() {
+	//qDebug() << "draw content" << QDateTime::currentDateTime() << timeLine->scrubbing;
+	if(cache == NULL) { cache = new QPixmap(size()); qDebug() << "cache null" << size(); }
 	QPainter painter( cache );
 	Object* object = editor->object;
 	Layer* layer = object->getLayer(editor->currentLayer);
@@ -359,9 +397,10 @@ void TimeLineCells::drawContent() {
 			}
 		}
 	}
-	if(scrubbing == false && abs(getOffset()) > 5) {
-		if(type == "tracks") layer->paintTrack(painter, this, offsetX, getLayerY(editor->currentLayer)+getOffset(), width()-offsetX, getLayerHeight(), true, frameSize);
-		if(type == "layers") layer->paintLabel(painter, this, 0, getLayerY(editor->currentLayer)+getOffset(), width()-1, getLayerHeight(), true, editor->allLayers());
+	//if(timeLine->scrubbing == false && abs(getMouseMoveY()) > 5) {
+	if( abs(getMouseMoveY()) > 5 ) {
+		if(type == "tracks") layer->paintTrack(painter, this, offsetX, getLayerY(editor->currentLayer)+getMouseMoveY(), width()-offsetX, getLayerHeight(), true, frameSize);
+		if(type == "layers") layer->paintLabel(painter, this, 0, getLayerY(editor->currentLayer)+getMouseMoveY(), width()-1, getLayerHeight(), true, editor->allLayers());
 		painter.setPen( Qt::black );
 		painter.drawRect(0, getLayerY( getLayerNumber(endY) ) -1, width(), 2);
 	} else {
@@ -401,7 +440,7 @@ void TimeLineCells::drawContent() {
 			else painter.drawLine( getFrameX(i), 1, getFrameX(i), 3);
 			if(i==0 || i%fps==fps-1) painter.drawText(QPoint(getFrameX(i)+incr, 15), QString::number(i+1));
 		}
-		// --- draw the cached images ---
+		// --- indicates the cached images by a line ---
 		painter.setPen( Qt::red );
 		QList<int> frameList = editor->frameList;
 		for(int i=0; i<frameList.size(); i++) {
@@ -420,7 +459,7 @@ void TimeLineCells::paintEvent(QPaintEvent *event) {
 	if(layer == NULL) return;
 	
 	QPainter painter( this );
-	if(!editor->playing) drawContent();
+	if( (!editor->playing && !timeLine->scrubbing) || cache == NULL) drawContent();
 	if(cache) painter.drawPixmap(QPoint(0,0), *cache); 
 	
 	if(type == "tracks") {
@@ -440,13 +479,14 @@ void TimeLineCells::paintEvent(QPaintEvent *event) {
 			painter.drawText(QPoint(getFrameX(editor->currentFrame-1)+incr, 15), QString::number(editor->currentFrame));
 		}
 	}
-	event->accept();
+	//event->accept();
 }
 
 void TimeLineCells::resizeEvent(QResizeEvent *event) {
 	//QWidget::resizeEvent(event);
 	if(cache) delete cache;
 	cache = new QPixmap(size());
+	updateContent();
 	event->accept();
 }
 
@@ -463,7 +503,7 @@ void TimeLineCells::mousePressEvent(QMouseEvent *event) {
 				editor->switchVisibilityOfLayer(layerNumber);
 			} else {
 				editor->setCurrentLayer(layerNumber);
-				updateContent();
+				update();
 			}
 		}
 		if(layerNumber == -1) {
@@ -475,17 +515,17 @@ void TimeLineCells::mousePressEvent(QMouseEvent *event) {
 	
 	if(type == "tracks") {
 		if(frameNumber == editor->currentFrame) {
-			scrubbing = true;
+			timeLine->scrubbing = true;
 		} else {
 			if( (layerNumber != -1) && layerNumber < editor->object->getLayerCount()) {
 				editor->object->getLayer(layerNumber)->mousePress(event, frameNumber);
 				//if(event->pos().x() > 15) editor->setCurrentLayer(layerNumber);
 				editor->setCurrentLayer(layerNumber);
-				updateContent();
+				update();
 			} else {
 				if(frameNumber > 0) {
 					editor->scrubTo(frameNumber);
-					scrubbing = true;
+					timeLine->scrubbing = true;
 				}
 			}
 		}
@@ -495,22 +535,26 @@ void TimeLineCells::mousePressEvent(QMouseEvent *event) {
 
 void TimeLineCells::mouseMoveEvent(QMouseEvent *event) {
 	//if(event->pos().x() < offsetX) endY = event->pos().y();
-	if(type == "layers") endY = event->pos().y();
+	if(type == "layers") {
+		endY = event->pos().y();
+		emit mouseMovedY(endY-startY);
+	}
 	int frameNumber = getFrameNumber(event->pos().x());
 	int layerNumber = getLayerNumber(event->pos().y());
-	if(scrubbing) {
+	if(timeLine->scrubbing && type == "tracks") {
 		editor->scrubTo(frameNumber);
 	} else {
 		if(layerNumber != -1 && layerNumber < editor->object->getLayerCount()) {
 			editor->object->getLayer(layerNumber)->mouseMove(event, frameNumber);
 		}
 	}
-	updateContent();
+	timeLine->update();
 }
 
 void TimeLineCells::mouseReleaseEvent(QMouseEvent *event) {
 	endY = startY;
-	scrubbing = false;
+	emit mouseMovedY(0);
+	timeLine->scrubbing = false;
 	int frameNumber = getFrameNumber(event->pos().x());
 	if(frameNumber < 1) frameNumber = -1;
 	int layerNumber = getLayerNumber(event->pos().y());
@@ -521,7 +565,7 @@ void TimeLineCells::mouseReleaseEvent(QMouseEvent *event) {
 	if(type == "layers" && layerNumber != startLayerNumber && startLayerNumber != -1 && layerNumber != -1) {
 		editor->moveLayer(startLayerNumber, layerNumber);
 	}
-	updateContent();
+	update();
 }
 
 void TimeLineCells::mouseDoubleClickEvent(QMouseEvent *event) {
@@ -582,11 +626,11 @@ void TimeLineCells::lengthChange(QString x) {
 
 void TimeLineCells::hScrollChange(int x) {
 	frameOffset = x;
-	updateContent();
+	update();
 }
 
 void TimeLineCells::vScrollChange(int x) {
 	layerOffset = x;
-	updateContent();
+	update();
 }
 

@@ -129,6 +129,11 @@ Editor::Editor(QMainWindow* parent)
 	connect(timeLine, SIGNAL(newSoundLayer()), this, SLOT(newSoundLayer()));
 	connect(timeLine, SIGNAL(deleteCurrentLayer()), this, SLOT(deleteCurrentLayer()));
 	
+	connect(timeLine, SIGNAL(playClick()), this, SLOT(play()));
+	//connect(timeLine, SIGNAL(fpsClick(int)), this, SLOT(changeFps(int)));
+	connect(timeLine, SIGNAL(loopClick()), this, SLOT(setLoop()));
+	//connect(timeLine, SIGNAL(soundClick()), this, SLOT(setLoop()));
+	
 	connect(preferences, SIGNAL(curveOpacityChange(int)), scribbleArea, SLOT(setCurveOpacity(int)));
 	connect(preferences, SIGNAL(curveSmoothingChange(int)), scribbleArea, SLOT(setCurveSmoothing(int)));
 	connect(preferences, SIGNAL(highResPositionChange(int)), scribbleArea, SLOT(setHighResPosition(int)));
@@ -1100,11 +1105,13 @@ void Editor::updateFrameAndVector(int frameNumber) {
 }
 
 void Editor::scrubTo(int frameNumber) {
+	int oldFrame = currentFrame;
 	if(frameNumber < 1) frameNumber = 1;
 	currentFrame = frameNumber;
 	//toolSet->setCounter(frameNumber);
 	//timeLine->setCurrentFrame(currentFrame);
-	timeLine->update();
+	timeLine->updateFrame(oldFrame);
+	timeLine->updateFrame(currentFrame);
 	scribbleArea->update();
 }
 

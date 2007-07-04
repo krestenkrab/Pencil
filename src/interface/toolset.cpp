@@ -86,7 +86,9 @@ ToolSet::ToolSet() {
 	onionPalette = new QDockWidget(tr("Onion skin"));
 	timePalette = new QDockWidget(tr("Controls"));
 	
-	drawPalette->setAutoFillBackground(false);
+	//drawPalette->setAutoFillBackground(false);
+	//drawPalette->setAttribute(Qt::WA_NoSystemBackground, true);
+	
 	/*QPalette optionPalettePalette(optionPalette->palette());
 	optionPalettePalette.setColor(QPalette::Light, Qt::red);
 	optionPalettePalette.setColor(QPalette::Midlight, Qt::red);
@@ -426,8 +428,9 @@ ToolSet::ToolSet() {
 	
 	connect(choseColour, SIGNAL(clicked()), this, SIGNAL(colourClick()));
 	connect(clearButton, SIGNAL(clicked()), this, SIGNAL(clearClick()));
-	connect(play, SIGNAL(clicked()), this, SIGNAL(playClick()));
 	connect(mirrorButton, SIGNAL(clicked()), this, SIGNAL(mirrorClick()));
+	
+	connect(play, SIGNAL(clicked()), this, SIGNAL(playClick()));
 	connect(loopBox, SIGNAL(stateChanged(int)), this, SIGNAL(loopClick()));
 	connect(soundBox, SIGNAL(stateChanged(int)), this, SIGNAL(soundClick()));	
 	

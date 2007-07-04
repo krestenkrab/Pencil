@@ -38,6 +38,7 @@ HEADERS += src/external/flash/flash.h \
            src/interface/preferences.h \
            src/interface/scribblearea.h \
 					 src/interface/timeline.h \
+           src/interface/timecontrols.h \
            src/interface/toolset.h
 SOURCES += src/external/flash/flash.cpp \
            src/graphics/bitmap/bitmapimage.cpp \
@@ -59,6 +60,7 @@ SOURCES += src/external/flash/flash.cpp \
            src/interface/preferences.cpp \
            src/interface/scribblearea.cpp \
            src/interface/timeline.cpp \
+           src/interface/timecontrols.cpp \
            src/interface/toolset.cpp \
            src/main.cpp
 win32 {

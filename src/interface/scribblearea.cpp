@@ -62,11 +62,11 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	pencil.width = settings.value("pencilWidth").toDouble();
 	if (pencil.width == 0) { pencil.width = 1; settings.setValue("pencilWidth", pencil.width); }
 	pen.width = settings.value("penWidth").toDouble();
-	if (pen.width == 0) { pen.width = 4; settings.setValue("penWidth", pen.width); }
+	if (pen.width == 0) { pen.width = 2; settings.setValue("penWidth", pen.width); }
 	brush.width = settings.value("brushWidth").toDouble();
 	if (brush.width == 0) { brush.width = 48; settings.setValue("brushWidth", brush.width); }
 	eraser.width = settings.value("eraserWidth").toDouble();
-	if (eraser.width == 0) { eraser.width = 48; settings.setValue("brushWidth", brush.width); }
+	if (eraser.width == 0) { eraser.width = 24; settings.setValue("brushWidth", brush.width); }
 	currentWidth = pencil.width;
 	
 	pencil.colour = Qt::black;
@@ -109,7 +109,7 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	if( settings.value("antialiasing").toString() == "false") antialiasing = false;
 	shadows = true; // default value is true (because it's prettier)
 	if( settings.value("shadows").toString() == "false") antialiasing = false;
-	gradients = 1;
+	gradients = 2;
 	if( settings.value("gradients").toString() != "") gradients = settings.value("gradients").toInt();;
 	
 	toolMode = PENCIL;
@@ -133,7 +133,7 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	centralPoint = NULL;
 	
 	QString background = settings.value("background").toString();
-	if(background == "") background = "checkerboard";
+	if(background == "") background = "white";
 	setBackgroundBrush(background);
 	bufferImg = new BitmapImage(NULL);
 	eyedropperCursor = NULL;
@@ -155,7 +155,8 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	
 	setSizePolicy( QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding) );
 	QPixmapCache::setCacheLimit(30*2*1024);
-	
+	setAttribute(Qt::WA_OpaquePaintEvent, false);
+	setAttribute(Qt::WA_NoSystemBackground, true);
 }
 
 void ScribbleArea::setColour(const int i)
@@ -1086,8 +1087,9 @@ void ScribbleArea::mouseDoubleClickEvent(QMouseEvent *event)
 	}
 }
 
-void ScribbleArea::paintEvent(QPaintEvent * /* event */)
+void ScribbleArea::paintEvent(QPaintEvent* event)
 {
+	//qDebug() << "paint event!" << editor->currentFrame << QDateTime::currentDateTime();
 	QPainter painter(this);
 	// draws the canvas
 	if(!mouseInUse) {
@@ -1145,16 +1147,18 @@ void ScribbleArea::paintEvent(QPaintEvent * /* event */)
 				for(int k=0; k<vectorSelection.vertex.size(); k++) {
 					VertexRef vertexRef = vectorSelection.vertex.at(k);
 					QPointF vertexPoint = vectorImage->getVertex(vertexRef);
+					QRectF rectangle0 = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSize(7,7) ); 
+					bufferImg->drawRect( rectangle0, pen2, colour, QPainter::CompositionMode_SourceOver, false);
+					/* --- draws the control points -- maybe editable in a future version (although not recommended)
 					QPointF c1Point = vectorImage->getC1(vertexRef.nextVertex());
 					QPointF c2Point = vectorImage->getC2(vertexRef);
-					QRectF rectangle0 = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSize(7,7) ); 
 					QRectF rectangle1 = QRectF( myTempView.map(c1Point)-QPointF(3.0,3.0), QSize(7,7) ); 
 					QRectF rectangle2 = QRectF( myTempView.map(c2Point)-QPointF(3.0,3.0), QSize(7,7) ); 
 					bufferImg->drawLine( myTempView.map(vertexPoint), myTempView.map(c1Point), colour, QPainter::CompositionMode_SourceOver, antialiasing);
 					bufferImg->drawLine( myTempView.map(vertexPoint), myTempView.map(c2Point), colour, QPainter::CompositionMode_SourceOver, antialiasing);
 					bufferImg->drawRect( rectangle0, pen2, colour, QPainter::CompositionMode_SourceOver, false);
 					bufferImg->drawEllipse( rectangle1, pen2, Qt::white, QPainter::CompositionMode_SourceOver, false);
-					bufferImg->drawEllipse( rectangle2, pen2, Qt::white, QPainter::CompositionMode_SourceOver, false);
+					bufferImg->drawEllipse( rectangle2, pen2, Qt::white, QPainter::CompositionMode_SourceOver, false);*/
 				}
 				// ----- paints the closest vertices
 				colour = QColor(255,0,0);
@@ -1250,6 +1254,7 @@ void ScribbleArea::paintEvent(QPaintEvent * /* event */)
 		painter.setBrush(shadow);
 		painter.drawRect(QRect(width()-radius2,0, width(), height()));
 	}
+	event->accept();
 }
 
 void ScribbleArea::paintCanvas(int frame)
