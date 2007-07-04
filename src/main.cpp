@@ -22,6 +22,7 @@ void initialise();
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
+        app.setWindowIcon(QIcon(":/icons/pencil.png"));
 	initialise();
 	/*QDir dir(QApplication::applicationDirPath());
     dir.cdUp();

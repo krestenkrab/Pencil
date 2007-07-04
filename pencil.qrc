@@ -1,7 +1,7 @@
 <!DOCTYPE RCC><RCC version="1.0">
 	<qresource>
 		<file>icons/arrow.png</file>
-        
+
 		<file>icons/clear.png</file>
 		<file>icons/remove.png</file>
 		<file>icons/add.png</file>
@@ -22,23 +22,24 @@
 		<file>icons/mirror.png</file>
 		<file>icons/magnify.png</file>
 		<file>icons/smudge.png</file>
-			
+
 		<file>icons/controls/play.png</file>
 		<file>icons/controls/loop.png</file>
 		<file>icons/controls/sound.png</file>
 		<file>icons/controls/sound2.png</file>
 		<file>icons/controls/separator.png</file>
-		
+
 		<file>icons/prefspencil.png</file>
 		<file>icons/prefstimeline.png</file>
-			
+
 		<file>background/weave.jpg</file>
 		<file>background/dots.png</file>
-			
+
 		<file>icons/logo.png</file>
-		
+		<file>icons/pencil.png</file>
+
 		<file>icons/TitleBarNormalButton.png</file>
 		<file>icons/TitleBarCloseButton.png</file>
-	
+
 	</qresource>
 </RCC>
