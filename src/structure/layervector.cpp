@@ -41,7 +41,7 @@ QImage* LayerVector::getImageAtIndex(int index, QSize size, bool simplified, boo
 		if(vectorImage->isModified() || size != image->size() ) {
 			if( image->size() != size) {
 				delete image;
-				image = new QImage(size, QImage::Format_ARGB32_Premultiplied);
+				framesImage[index] = image = new QImage(size, QImage::Format_ARGB32_Premultiplied);
 			}
 			vectorImage->outputImage(image, size, myView, simplified, showThinLines, curveOpacity, antialiasing, gradients);
 			vectorImage->setModified(false);
@@ -152,7 +152,7 @@ bool LayerVector::addImageAtFrame(int frameNumber) {
 		//framesVector.append(new VectorImage(imageSize, QImage::Format_ARGB32_Premultiplied, object));
 		framesVector.append(new VectorImage(object));
 		framesImage.append(new QImage( QSize(2,2), QImage::Format_ARGB32_Premultiplied)); // very small image to begin with
-		
+
 		framesPosition.append(frameNumber);
 		framesSelected.append(false);
 		framesFilename.append("");
@@ -170,10 +170,10 @@ void LayerVector::removeImageAtFrame(int frameNumber) {
 	if(index != -1 && framesPosition.size() != 1) {
 		delete framesVector.at(index);
 		framesVector.removeAt(index);
-		
+
 		delete framesImage.at(index);
 		framesImage.removeAt(index);
-		
+
 		framesPosition.removeAt(index);
 		framesSelected.removeAt(index);
 		framesFilename.removeAt(index);
@@ -224,7 +224,7 @@ void LayerVector::loadDomElement(QDomElement element, QString filePath) {
 	name = element.attribute("name");
 	visible = (element.attribute("visibility") == "1");
 	type = element.attribute("type").toInt();
-	
+
 	QDomNode imageTag = element.firstChild();
 	while(!imageTag.isNull()) {
 		QDomElement imageElement = imageTag.toElement();
