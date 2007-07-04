@@ -37,7 +37,7 @@ HEADERS += src/external/flash/flash.h \
            src/interface/palette.h \
            src/interface/preferences.h \
            src/interface/scribblearea.h \
-					 src/interface/timeline.h \
+ 	   src/interface/timeline.h \
            src/interface/timecontrols.h \
            src/interface/toolset.h
 SOURCES += src/external/flash/flash.cpp \
@@ -72,10 +72,10 @@ macx {
 	INCLUDEPATH += . libmacosx
 	HEADERS += src/external/macosx/style.h
 	SOURCES += src/external/macosx/macosx.cpp \
-						 src/external/macosx/style.cpp
+	 	   src/external/macosx/style.cpp
 	LIBS += libmacosx/libming.a
 }
-linux {
+linux-g++ {
 	INCLUDEPATH += . liblinux
 	SOURCES += src/external/linux/linux.cpp
 	LIBS += -Lliblinux -lming -lpng
