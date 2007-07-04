@@ -73,7 +73,7 @@ BitmapImage &BitmapImage::operator=(const BitmapImage &a) {
 }
 
 QDomElement BitmapImage::createDomElement(QDomDocument &doc) {
-	// nothing
+	return QDomElement();  // empty
 }
 
 void BitmapImage::loadDomElement(QDomElement imageElement, QString filePath) {
@@ -95,11 +95,12 @@ void BitmapImage::modification() {
 }
 
 bool BitmapImage::isModified() {
+	return false;
 }
 
 void BitmapImage::setModified(bool) {
 }
-	
+
 void BitmapImage::paintImage(QPainter &painter) {
 	painter.drawImage(topLeft(), *image);
 }
@@ -190,51 +191,51 @@ void BitmapImage::add(BitmapImage* bitmapImage) {
 			a = (a1*(255-a2) + a2*a)/255;*/
 			QRgb p1  = image->pixel(offset.x()+x,offset.y()+y);
 			QRgb p2 = image2->pixel(x,y);
-			
+
 			int a1 = qAlpha(p1); int a2 = qAlpha(p2);
 			int r1 = qRed(p1);   int r2 = qRed(p2); // remember that the bitmap format is RGB32 Premultiplied
 			int g1 = qGreen(p1); int g2 = qGreen(p2);
 			int b1 = qBlue(p1);  int b2 = qBlue(p2);
-			
+
 			/*qreal a1 = qAlpha(p1); qreal a2 = qAlpha(p2);
 			qreal r1 = qRed(p1);   qreal r2 = qRed(p2); // remember that the bitmap format is RGB32 Premultiplied
 			qreal g1 = qGreen(p1); qreal g2 = qGreen(p2);
 			qreal b1 = qBlue(p1);  qreal b2 = qBlue(p2);*/
-			
+
 			// unite
 			int a = qMax(a1, a2);
 			int r = qMax(r1, r2);
 			int g = qMax(g1, g2);
 			int b = qMax(b1, b2);
-			
+
 			// blend
 			/*int a = a2 + a1*(255-a2)/255;
 			int r = r2 + r1*(255-a2)/255;
 			int g = g2 + g1*(255-a2)/255;
 			int b = b2 + b1*(255-a2)/255;*/
-			
+
 			// source
 			/*int a = a2;
 			int r = r2;
 			int g = g2;
 			int b = b2;*/
-			
+
 			/*int a = qRound(a1+a2);
 			int r = qRound((a1+a2)*((r1+0.)/a1+(r2+0.)/a2)/1);
 			int g = qRound((a1+a2)*((g1+0.)/a1+(g2+0.)/a2)/1);
 			int b = qRound((a1+a2)*((b1+0.)/a1+(b2+0.)/a2)/1);*/
-			
+
 			// add
 			/*int a = qMin(255, qRound(1.0*(a1+a2)));
 			int r = qMin(255, qRound(0.5*(r1+r2)));
 			int g = qMin(255, qRound(0.5*(g1+g2)));
 			int b = qMin(255, qRound(0.5*(b1+b2)));*/
-			
+
 			/*int a = qMin(255, qRound((1.0*a1+0.32*a2)));
 			int r = qMin(255, qRound((1.0*r1+0.32*r2)));
 			int g = qMin(255, qRound((1.0*g1+0.32*g2)));
 			int b = qMin(255, qRound((1.0*b1+0.32*b2)));*/
-			
+
 			QRgb mix = qRgba(r, g, b, a);
 			/*qDebug() << "------";
 			qDebug() << r1 << g1 << b1 << a1;
@@ -242,7 +243,7 @@ void BitmapImage::add(BitmapImage* bitmapImage) {
 			qDebug() << r << g << b << a;
 			qDebug() << qRed(mix) << qGreen(mix) << qBlue(mix) << qAlpha(mix);*/
 			//QRgb mix = qRgba(r2, g2, b2, a);
-			if(a2 != 0) 
+			if(a2 != 0)
 				image->setPixel(offset.x()+x,offset.y()+y, mix);
 		}
 	}
@@ -432,7 +433,7 @@ void BitmapImage::blur(qreal radius) {  // please someone implement a fast gauss
 	int rad = qRound(radius);
 	//extend( boundaries.adjusted(-rad, -rad, rad, rad) );
 	boundaries.adjust(-rad, -rad, rad, rad);
-	
+
 	QList<int> gaussian;
 	int sum = 0;
 	for(int u=0; u<rad; u++) {
@@ -444,7 +445,7 @@ void BitmapImage::blur(qreal radius) {  // please someone implement a fast gauss
 	sum = 2*sum;
 	//qDebug() << gaussian;
 	//qDebug() << sum;
-	
+
 	QImage* newImage;
 	// --- x blur
 	newImage = new QImage(image->width()+2*rad, image->height()+2*rad, QImage::Format_ARGB32_Premultiplied);
@@ -473,7 +474,7 @@ void BitmapImage::blur(qreal radius) {  // please someone implement a fast gauss
 	}
 	delete image;
 	image = newImage;
-	
+
 	// --- y blur
 	newImage = new QImage(image->size(), QImage::Format_ARGB32_Premultiplied);
 	newImage->fill( qRgba(0,0,0,0) );
@@ -499,7 +500,7 @@ void BitmapImage::blur(qreal radius) {  // please someone implement a fast gauss
 			newImage->setPixel(QPoint(i,j), qRgba(r,g,b,a));
 		}
 	}
-	
+
 	delete image;
 	image = newImage;
 }
@@ -537,7 +538,7 @@ void BitmapImage::floodFill(BitmapImage* targetImage, BitmapImage* fillImage, QP
 	//painter1.setPen( QColor(replacementColour) );
 	QPen myPen;
 	myPen = QPen( QColor(replacementColour) , 1.0, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin);
-	
+
 	targetColour = targetImage->pixel(point.x(), point.y());
 	//if(  rgbDistance(targetImage->pixel(point.x(), point.y()), targetColour) > tolerance ) return;
 	queue.append( point );
@@ -549,24 +550,24 @@ void BitmapImage::floodFill(BitmapImage* targetImage, BitmapImage* fillImage, QP
 		point = queue.at(i);
 		if(  replaceImage->pixel(point.x(), point.y()) != replacementColour  && rgbDistance(targetImage->pixel(point.x(), point.y()), targetColour) < tolerance ) {
 			j = -1; condition =  (point.x() + j > targetImage->left());
-			while( replaceImage->pixel(point.x()+j, point.y()) != replacementColour  && rgbDistance(targetImage->pixel( point.x()+j, point.y() ), targetColour) < tolerance && condition) { 
+			while( replaceImage->pixel(point.x()+j, point.y()) != replacementColour  && rgbDistance(targetImage->pixel( point.x()+j, point.y() ), targetColour) < tolerance && condition) {
 				j = j - 1;
 				condition =  (point.x() + j > targetImage->left());
 			}
-			
+
 			k = 1; condition = ( point.x() + k < targetImage->right()-1);
 			while( replaceImage->pixel(point.x()+k, point.y()) != replacementColour  && rgbDistance(targetImage->pixel( point.x()+k, point.y() ), targetColour) < tolerance && condition) {
 				k = k + 1;
 				condition = ( point.x() + k < targetImage->right()-1);
 			}
-			
+
 			//painter1.drawLine( point.x()+j, point.y(), point.x()+k+1, point.y() );
-			
+
 			replaceImage->drawLine( QPointF(point.x()+j, point.y()), QPointF(point.x()+k, point.y()), myPen, QPainter::CompositionMode_SourceOver, false);
 			//for(int l=0; l<=k-j+1 ; l++) {
 			//	replaceImage->setPixel( point.x()+j, point.y(), replacementColour );
 			//}
-			
+
 			for(int x = j+1; x < k; x++) {
 				//replaceImage->setPixel( point.x()+x, point.y(), replacementColour);
 				if(point.y() - 1 > targetImage->top() && queue.size() < targetImage->height() * targetImage->width() ) {
