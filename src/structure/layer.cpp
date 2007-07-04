@@ -74,7 +74,7 @@ void Layer::paintTrack(QPainter &painter, TimeLineCells *cells, int x, int y, in
 	}
 }
 
-void Layer::paintLabel(QPainter &painter, TimeLineCells *cells, int x, int y, int width, int height, bool selected, bool allLayers) {
+void Layer::paintLabel(QPainter &painter, TimeLineCells *cells, int x, int y, int width, int height, bool selected, int allLayers) {
 	painter.setBrush(Qt::lightGray);
 	painter.setPen(QPen(QBrush(QColor(100,100,100)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
 	painter.drawRect(x, y-1, width, height); // empty rectangle  by default
@@ -82,7 +82,9 @@ void Layer::paintLabel(QPainter &painter, TimeLineCells *cells, int x, int y, in
 	painter.setPen(Qt::black);
 	painter.drawText(QPoint(20, y+(2*height)/3), name);
 	if(visible) {
-		if(selected || allLayers) { painter.setBrush(Qt::black); } else { painter.setBrush(Qt::darkGray);}
+		if(allLayers==0)  painter.setBrush(Qt::NoBrush);
+		if(allLayers==1)   painter.setBrush(Qt::darkGray);
+		if((allLayers==2) || selected)  painter.setBrush(Qt::black);
 	} else {
 		painter.setBrush(Qt::NoBrush);
 	}

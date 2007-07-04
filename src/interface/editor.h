@@ -95,7 +95,7 @@ public:
 	Layer* getCurrentLayer(int incr) { if(object != NULL) { return object->getLayer(currentLayer+incr); } else { return NULL; } }
 	Layer* getCurrentLayer() { return getCurrentLayer(0); }
 	bool isModified() { return modified; }
-	bool allLayers() { return scribbleArea->allLayers(); }
+	int allLayers() { return scribbleArea->allLayers(); }
 	static QMatrix map(QRectF, QRectF);
 	
 protected:

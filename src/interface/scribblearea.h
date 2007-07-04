@@ -86,7 +86,7 @@ public:
 	//double penWidth() const { return myPenWidth; }
 	//double brushWidth() const { return myBrushWidth; }
 	bool thinLines() const { return showThinLines; }
-	bool allLayers() const { return showAllLayers; }
+	int allLayers() const { return showAllLayers; }
 	QMatrix getView();
 	QPointF getCentralPoint();
 	
@@ -199,7 +199,7 @@ private:
 	bool simplified;
 	
 	bool showThinLines;
-	bool showAllLayers;
+	int showAllLayers;
 	bool usePressure, makeInvisible;
 	bool highResPosition;
 	bool antialiasing;

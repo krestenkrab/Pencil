@@ -126,7 +126,7 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	onionPrev = true;
 	onionNext = false;
 	showThinLines = false;
-	showAllLayers = false;
+	showAllLayers = 1;
 	myView = QMatrix(); // identity matrix
 	myTempView = myView;
 	transMatrix = myView;
@@ -1318,9 +1318,9 @@ void ScribbleArea::paintCanvas(int frame)
 	qreal opacity;
 	for(int i=0; i < object->getLayerCount(); i++) {
 		opacity = 1.0;
-		if(i != editor->currentLayer && !showAllLayers) { opacity = 0.4; }
+		if(i != editor->currentLayer && (showAllLayers == 1)) { opacity = 0.4; }
 		Layer* layer = (object->getLayer(i));
-		if(layer->visible) {
+		if(layer->visible && (showAllLayers>0 || i == editor->currentLayer)) {
 			// paints the bitmap images
 			if(layer->type == Layer::BITMAP) {
 				LayerBitmap* layerBitmap = (LayerBitmap*)layer;
@@ -2267,7 +2267,8 @@ void ScribbleArea::toggleMirror() {
 }
 
 void ScribbleArea::toggleShowAllLayers() {
-	showAllLayers = !showAllLayers;
+	showAllLayers++;
+	if(showAllLayers==3) showAllLayers = 0;
 	//emit showAllLayersChanged(showAllLayers);
 	setView(myView);
 	updateAllFrames();

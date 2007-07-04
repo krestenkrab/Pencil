@@ -170,7 +170,7 @@ ToolSet::ToolSet() {
 	penButton->setWhatsThis("Pen");
 	polylineButton->setWhatsThis("Polyline");
 	bucketButton->setWhatsThis("Paint bucket");
-	colouringButton->setWhatsThis("Colouring tool");
+	colouringButton->setWhatsThis("Brush");
 	usePressureBox = new QCheckBox("Pressure");
 	usePressureBox->setFont( QFont("Helvetica", 10) );
   usePressureBox->setChecked(true);

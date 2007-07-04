@@ -373,7 +373,7 @@ void TimeLineCells::updateContent() {
 
 void TimeLineCells::drawContent() {
 	//qDebug() << "draw content" << QDateTime::currentDateTime() << timeLine->scrubbing;
-	if(cache == NULL) { cache = new QPixmap(size()); qDebug() << "cache null" << size(); }
+	if(cache == NULL) { cache = new QPixmap(size()); }
 	QPainter painter( cache );
 	Object* object = editor->object;
         if(object == NULL) return;
@@ -430,7 +430,9 @@ void TimeLineCells::drawContent() {
 	if(type == "layers") {
 		// --- draw circle
 		painter.setPen(Qt::black);
-		if(editor->allLayers()) { painter.setBrush(Qt::black); } else { painter.setBrush(Qt::darkGray); }
+		if(editor->allLayers() == 0) { painter.setBrush(Qt::NoBrush); }
+		if(editor->allLayers() == 1) { painter.setBrush(Qt::darkGray); }
+		if(editor->allLayers() == 2) { painter.setBrush(Qt::black); }
 		painter.setRenderHint(QPainter::Antialiasing, true);
 		painter.drawEllipse(6, 4, 9, 9);
 		painter.setRenderHint(QPainter::Antialiasing, false);

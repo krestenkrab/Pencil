@@ -53,7 +53,7 @@ class Layer : public QObject
 		
 		// graphic representation -- could be put in another class
 		virtual void paintTrack(QPainter &painter, TimeLineCells *cells, int x, int y, int height, int width, bool selected, int frameSize);
-		virtual void paintLabel(QPainter &painter, TimeLineCells *cells, int x, int y, int height, int width, bool selected, bool allLayers);
+		virtual void paintLabel(QPainter &painter, TimeLineCells *cells, int x, int y, int height, int width, bool selected, int allLayers);
 		virtual void paintSelection(QPainter &painter, int x, int y, int height, int width);
 		virtual void mousePress(QMouseEvent *event, int frameNumber);
 		virtual void mouseMove(QMouseEvent *event, int frameNumber);
