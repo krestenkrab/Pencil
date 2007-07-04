@@ -223,6 +223,7 @@ void TimeLine::updateLength(int frameLength) {
 void TimeLine::updateContent() {
 	list->updateContent();
 	cells->updateContent();
+	update();
 }
 
 /*void TimeLine::mousePressEvent(QMouseEvent *event) {
@@ -461,6 +462,9 @@ void TimeLineCells::drawContent() {
 				painter.drawLine( getFrameX(j-1-frameOffset), 1, getFrameX(j-frameOffset), 1);
 			}
 		}*/
+		// --- draw left border line
+		painter.setPen( Qt::darkGray );
+		painter.drawLine(0,0, 0, height());
 	}
 }
 

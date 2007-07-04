@@ -403,17 +403,23 @@ void Editor::backup(int backupLayer, int backupFrame) {
 			BackupBitmapElement* element = new BackupBitmapElement();
 			element->layer = backupLayer;
 			element->frame = backupFrame;
-			element->bitmapImage =  ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(backupFrame, 0)->copy();  // copy the image
-			backupList.append(element);
-			backupIndex++;
+			BitmapImage* bitmapImage = ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(backupFrame, 0);
+			if(bitmapImage != NULL) {
+				element->bitmapImage =  bitmapImage->copy();  // copy the image
+				backupList.append(element);
+				backupIndex++;
+			}
 		}
 		if(layer->type == Layer::VECTOR) {
 			BackupVectorElement* element = new BackupVectorElement();
 			element->layer = backupLayer;
 			element->frame = backupFrame;
-			element->vectorImage = *(  ((LayerVector*)layer)->getLastVectorImageAtFrame(backupFrame, 0)  );  // copy the image (that works but I should also provide a copy() method)
-			backupList.append(element);
-			backupIndex++;
+			VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(backupFrame, 0);
+			if(vectorImage != NULL) {
+				element->vectorImage = *vectorImage;  // copy the image (that works but I should also provide a copy() method)
+				backupList.append(element);
+				backupIndex++;
+			}
 		}
 	}
 }
@@ -587,7 +593,7 @@ void Editor::toggleMirror() {
 
 void Editor::toggleShowAllLayers() {
 	scribbleArea->toggleShowAllLayers();
-	timeLine->update();
+	timeLine->updateContent();
 }
 
 void Editor::resetMirror() {
@@ -1054,7 +1060,7 @@ void Editor::importImage(QString filePath)
 				bitmapImage->paste( importedBitmapImage );
 				
 				scribbleArea->updateFrame();
-				timeLine->update();
+				timeLine->updateContent();
 			}
 		}  else {
 			// create a new Bitmap layer ?
@@ -1085,7 +1091,7 @@ void Editor::importSound(QString filePath)
 			}
 			if (!filePath.isEmpty()) {
 				((LayerSound*)layer)->loadSoundAtFrame(filePath, currentFrame);
-				timeLine->update();
+				timeLine->updateContent();
 			}	
 		} else {
 			// create a new Sound layer ?
@@ -1135,14 +1141,14 @@ void Editor::scrubKB() {
 void Editor::previousLayer() {
 	currentLayer--;
 	if(currentLayer<0) currentLayer = 0;
-	timeLine->update();
+	timeLine->updateContent();
 	scribbleArea->updateAllFrames();
 }
 
 void Editor::nextLayer() {
 	currentLayer++;
 	if(currentLayer == object->getLayerCount()) currentLayer = object->getLayerCount()-1;
-	timeLine->update();
+	timeLine->updateContent();
 	scribbleArea->updateAllFrames();
 }
 
@@ -1158,7 +1164,7 @@ void Editor::addKey(int layerNumber, int &frameNumber) {
 			if(layer->type == Layer::BITMAP) success = ((LayerBitmap*)layer)->addImageAtFrame(frameNumber);
 			if(layer->type == Layer::VECTOR) success = ((LayerVector*)layer)->addImageAtFrame(frameNumber);
 			if(success) {
-				timeLine->update();
+				timeLine->updateContent();
 				//scribbleArea->addFrame(frameNumber);
 			} else {
 				frameNumber++;
@@ -1173,7 +1179,7 @@ void Editor::removeKey() {
 	if(layer != NULL) {
 		if(layer->type == Layer::BITMAP) ((LayerBitmap*)layer)->removeImageAtFrame(currentFrame);
 		if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->removeImageAtFrame(currentFrame);
-		timeLine->update();
+		timeLine->updateContent();
 		scribbleArea->updateFrame();
 	}
 }
@@ -1271,7 +1277,7 @@ void Editor::setSound() {
 
 void Editor::setCurrentLayer(int layerNumber) {
 	currentLayer = layerNumber;
-	timeLine->update();
+	timeLine->updateContent();
 	scribbleArea->updateAllFrames();
 }
 
@@ -1279,13 +1285,13 @@ void Editor::switchVisibilityOfLayer(int layerNumber) {
 	Layer* layer = object->getLayer(layerNumber);
 	if(layer != NULL) layer->switchVisibility();
 	scribbleArea->updateAllFrames();
-	timeLine->update();
+	timeLine->updateContent();
 }
 
 void Editor::moveLayer(int i, int j) {
 	object->moveLayer(i, j);
 	if(j<i) { currentLayer = j; } else { currentLayer = j-1; }
-	timeLine->update();
+	timeLine->updateContent();
 	scribbleArea->updateAllFrames();
 }
 

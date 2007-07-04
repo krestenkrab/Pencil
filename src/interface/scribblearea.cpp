@@ -571,9 +571,15 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 		return;
 	}
 	if(layer->type == Layer::VECTOR) {
+		VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
+		if (vectorImage == NULL) return;
 		if(toolMode == ScribbleArea::PENCIL) editor->selectColour(pencil.colourNumber);
 		if(toolMode == ScribbleArea::PEN) editor->selectColour(pen.colourNumber);
 		if(toolMode == ScribbleArea::COLOURING || toolMode == ScribbleArea::BUCKET) editor->selectColour(brush.colourNumber);
+	}
+	if(layer->type == Layer::BITMAP) {
+		BitmapImage* bitmapImage = ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
+		if (bitmapImage == NULL) return;
 	}
 	// --- end checks ----
 	
@@ -591,9 +597,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 			
 			editor->backup();
 			
-			// deselect all vector curves
 			if(layer->type == Layer::VECTOR) {
-				((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->deselectAll();
 				if(toolMode == ScribbleArea::PENCIL && !showThinLines) toggleThinLines();
 			}
 			mousePath.append(lastPoint);
@@ -720,7 +724,18 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
 	Layer* layer = editor->getCurrentLayer();
+	// ---- checks ------
 	if(layer==NULL) return;
+	if(layer->type == Layer::VECTOR) {
+		VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
+		if (vectorImage == NULL) return;
+	}
+	if(layer->type == Layer::BITMAP) {
+		BitmapImage* bitmapImage = ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
+		if (bitmapImage == NULL) return;
+	}
+	// ---- end checks ------
+	
 	if(tabletInUse  && highResPosition) { currentPixel = QPointF(event->pos()) + tabletPosition - QPointF(event->globalPos()); } else { currentPixel = event->pos(); }
 	bool invertible = true;
 	currentPoint = myView.inverted(&invertible).map(QPointF(currentPixel));
@@ -884,8 +899,18 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 	transMatrix.reset();
 	
 	Layer* layer = editor->getCurrentLayer();
+	// ---- checks ------
 	if(layer==NULL) return;
-	
+	if(layer->type == Layer::VECTOR) {
+		VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
+		if (vectorImage == NULL) return;
+	}
+	if(layer->type == Layer::BITMAP) {
+		BitmapImage* bitmapImage = ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
+		if (bitmapImage == NULL) return;
+	}
+	// ---- end checks ------
+
 	//currentWidth = myPenWidth;
 	if ((event->button() == Qt::LeftButton) && (toolMode == ScribbleArea::PENCIL || toolMode == ScribbleArea::ERASER || toolMode == ScribbleArea::PEN)) {
 		drawLineTo(currentPixel, currentPoint);
