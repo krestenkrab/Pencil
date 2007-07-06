@@ -57,6 +57,7 @@ class VectorImage
 		bool isAreaSelected(int areaNumber);
 		
 		int getFirstSelectedCurve();
+		int getFirstSelectedArea();
 		void selectAll();
 		void deselectAll();
 		QRectF getSelectionRect() { return selectionRect; }

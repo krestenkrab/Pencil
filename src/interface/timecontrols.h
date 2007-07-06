@@ -34,12 +34,15 @@ signals:
 	void fpsClick(int);
 
 public slots:
-	void updateLoopButton(bool);
+	//void updateLoopButton(bool);
+	void updateButtons(bool);
 
 protected:
 
 private:
+	QPushButton* playButton;
 	QPushButton* loopButton;
+	QPushButton* soundButton;
 };
 
 #endif

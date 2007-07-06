@@ -19,7 +19,6 @@ GNU General Public License for more details.
 #include "object.h"
 
 MainWindow::MainWindow() {
-	readSettings();
 	editor = new Editor(this);
 	//Object* object = new Object();
 	//object->defaultInitialisation();
@@ -188,10 +187,7 @@ menuBar()->addMenu(editMenu);
 menuBar()->addMenu(layerMenu);
 menuBar()->addMenu(helpMenu);
 
-		QSettings settings("Pencil","Pencil");
-		QString myPath = settings.value("lastFilePath", QVariant(QDir::homePath())).toString();
-		addRecentFile(myPath);
-
+		readSettings();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -255,8 +251,67 @@ void MainWindow::readSettings() {
 	QSettings settings("Pencil", "Pencil");
 	QPoint pos = settings.value("editorPosition", QPoint(100, 100)).toPoint();
 	QSize size = settings.value("editorSize", QSize(800, 600)).toSize();
-	resize(size);
 	move(pos);
+	resize(size);
+	
+	Palette* colourPalette = editor->getPalette();
+	if(colourPalette != NULL) {
+		QPoint pos = settings.value("colourPalettePosition", QPoint(800, 100)).toPoint();
+		QSize size = settings.value("colourPaletteSize", QSize(800, 600)).toSize();
+		bool floating = settings.value("colourPaletteFloating", false).toBool();
+		colourPalette->move(pos);
+		colourPalette->resize(size);
+		colourPalette->setFloating(floating);
+		colourPalette->show();
+	}
+	
+	TimeLine* timelinePalette = editor->getTimeLine();
+	if(timelinePalette != NULL) {
+		QPoint pos = settings.value("timelinePalettePosition", QPoint(800, 100)).toPoint();
+		QSize size = settings.value("timelinePaletteSize", QSize(800, 600)).toSize();
+		bool floating = settings.value("timelinePaletteFloating", false).toBool();
+		timelinePalette->move(pos);
+		timelinePalette->resize(size);
+		timelinePalette->setFloating(floating);
+		timelinePalette->show();
+	}
+	
+	QDockWidget* drawPalette = editor->getToolSet()->drawPalette;
+	if(drawPalette != NULL) {
+		QPoint pos = settings.value("drawPalettePosition", QPoint(800, 100)).toPoint();
+		QSize size = settings.value("drawPaletteSize", QSize(800, 600)).toSize();
+		bool floating = settings.value("drawPaletteFloating", false).toBool();
+		drawPalette->move(pos);
+		drawPalette->resize(size);
+		drawPalette->setFloating(floating);
+		drawPalette->show();
+	}
+	
+	QDockWidget* optionPalette = editor->getToolSet()->optionPalette;
+	if(optionPalette != NULL) {
+		QPoint pos = settings.value("optionPalettePosition", QPoint(800, 100)).toPoint();
+		QSize size = settings.value("optionPaletteSize", QSize(800, 600)).toSize();
+		bool floating = settings.value("optionPaletteFloating", false).toBool();
+		optionPalette->move(pos);
+		optionPalette->resize(size);
+		optionPalette->setFloating(floating);
+		optionPalette->show();
+	}
+
+	QDockWidget* displayPalette = editor->getToolSet()->displayPalette;
+	if(optionPalette != NULL) {
+		QPoint pos = settings.value("displayPalettePosition", QPoint(800, 100)).toPoint();
+		QSize size = settings.value("displayPaletteSize", QSize(800, 600)).toSize();
+		bool floating = settings.value("displayPaletteFloating", false).toBool();
+		displayPalette->move(pos);
+		displayPalette->resize(size);
+		displayPalette->setFloating(floating);
+		displayPalette->show();
+	}
+	
+	QString myPath = settings.value("lastFilePath", QVariant(QDir::homePath())).toString();
+	addRecentFile(myPath);
+
 	//initialiseStyle();
 }
 
@@ -264,6 +319,42 @@ void MainWindow::writeSettings() {
 	QSettings settings("Pencil", "Pencil");
 	settings.setValue("editorPosition", pos());
 	settings.setValue("editorSize", size());
+	
+	Palette* colourPalette = editor->getPalette();
+	if(colourPalette != NULL) {
+		settings.setValue("colourPalettePosition", colourPalette->pos());
+		settings.setValue("colourPaletteSize", colourPalette->size());
+		settings.setValue("colourPaletteFloating", colourPalette->isFloating());
+	}
+	
+	TimeLine* timelinePalette = editor->getTimeLine();
+	if(timelinePalette != NULL) {
+		settings.setValue("timelinePalettePosition", timelinePalette->pos());
+		settings.setValue("timelinePaletteSize", timelinePalette->size());
+		settings.setValue("timelinePaletteFloating", timelinePalette->isFloating());
+	}
+	
+	QDockWidget* drawPalette = editor->getToolSet()->drawPalette;
+	if(drawPalette != NULL) {
+		settings.setValue("drawPalettePosition", drawPalette->pos());
+		settings.setValue("drawPaletteSize", drawPalette->size());
+		settings.setValue("drawPaletteFloating", drawPalette->isFloating());
+	}
+
+	QDockWidget* optionPalette = editor->getToolSet()->optionPalette;
+	if(optionPalette != NULL) {
+		settings.setValue("optionPalettePosition", optionPalette->pos());
+		settings.setValue("optionPaletteSize", optionPalette->size());
+		settings.setValue("optionPaletteFloating", optionPalette->isFloating());
+	}
+
+	QDockWidget* displayPalette = editor->getToolSet()->displayPalette;
+	if(optionPalette != NULL) {
+		settings.setValue("displayPalettePosition", displayPalette->pos());
+		settings.setValue("displayPaletteSize", displayPalette->size());
+		settings.setValue("displayPaletteFloating", displayPalette->isFloating());
+	}
+			
 }
 
 void MainWindow::addRecentFile(QString filePath) {

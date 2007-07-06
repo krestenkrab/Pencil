@@ -538,12 +538,12 @@ void ScribbleArea::tabletEvent(QTabletEvent *event)
 	}
 	if(toolMode==ScribbleArea::PENCIL) {
 		currentColour = pencil.colour;
-		if(usePressure) {currentColour.setAlphaF(tabletPressure); } else { currentColour.setAlphaF(1.0); }
+		if(usePressure) {currentColour.setAlphaF(pencil.colour.alphaF()*tabletPressure); } else { currentColour.setAlphaF(pencil.colour.alphaF()); }
 		currentWidth = pencil.width;
 	}
 	if(toolMode==ScribbleArea::PEN) {
 		currentColour = pen.colour;
-		currentColour.setAlphaF(1.0);
+		currentColour.setAlphaF(pen.colour.alphaF());
 		if(usePressure) { currentWidth = 2.0*pen.width*tabletPressure; } else { currentWidth = pen.width; }
 	}
 	if(event->pointerType() == QTabletEvent::Eraser) {
@@ -1401,17 +1401,17 @@ void ScribbleArea::setGaussianGradient(QGradient &gradient, QColor colour, qreal
 	int r = colour.red();
 	int g = colour.green();
 	int b = colour.blue();
-	qreal a = opacity;
-			gradient.setColorAt(0.0, QColor(r, g, b, qRound(a*255)) );
-			gradient.setColorAt(0.1, QColor(r, g, b, qRound(a*245)) );
-			gradient.setColorAt(0.2, QColor(r, g, b, qRound(a*217)) );
-			gradient.setColorAt(0.3, QColor(r, g, b, qRound(a*178)) );
-			gradient.setColorAt(0.4, QColor(r, g, b, qRound(a*134)) );
-			gradient.setColorAt(0.5, QColor(r, g, b, qRound(a*94)) );
-			gradient.setColorAt(0.6, QColor(r, g, b, qRound(a*60)) );
-			gradient.setColorAt(0.7, QColor(r, g, b, qRound(a*36)) );
-			gradient.setColorAt(0.8, QColor(r, g, b, qRound(a*20)) );
-			gradient.setColorAt(0.9, QColor(r, g, b, qRound(a*10)) );
+	qreal a = colour.alphaF();
+			gradient.setColorAt(0.0, QColor(r, g, b, qRound(a*255*opacity)) );
+			gradient.setColorAt(0.1, QColor(r, g, b, qRound(a*245*opacity)) );
+			gradient.setColorAt(0.2, QColor(r, g, b, qRound(a*217*opacity)) );
+			gradient.setColorAt(0.3, QColor(r, g, b, qRound(a*178*opacity)) );
+			gradient.setColorAt(0.4, QColor(r, g, b, qRound(a*134*opacity)) );
+			gradient.setColorAt(0.5, QColor(r, g, b, qRound(a*94*opacity)) );
+			gradient.setColorAt(0.6, QColor(r, g, b, qRound(a*60*opacity)) );
+			gradient.setColorAt(0.7, QColor(r, g, b, qRound(a*36*opacity)) );
+			gradient.setColorAt(0.8, QColor(r, g, b, qRound(a*20*opacity)) );
+			gradient.setColorAt(0.9, QColor(r, g, b, qRound(a*10*opacity)) );
 			gradient.setColorAt(1.0, QColor(r, g, b, 0) );
 }
 
@@ -1680,6 +1680,10 @@ void ScribbleArea::setSelection(QRectF rect) {
 	myTransformedSelection = rect;
 	myTempTransformedSelection = rect;
 	somethingSelected = true;
+	displaySelectionProperties();
+}
+
+void ScribbleArea::displaySelectionProperties() {
 	Layer* layer = editor->getCurrentLayer();
 	if(layer == NULL) return;
 	if(layer->type == Layer::VECTOR) {
@@ -1695,6 +1699,13 @@ void ScribbleArea::setSelection(QRectF rect) {
 				editor->setOpacity(0);
 				editor->setInvisibility(vectorImage->curve[selectedCurve].isInvisible());
 				editor->setPressure(vectorImage->curve[selectedCurve].getVariableWidth());
+				editor->selectColour(vectorImage->curve[selectedCurve].getColourNumber());
+			}
+			
+			int selectedArea = vectorImage->getFirstSelectedArea();
+			if(selectedArea != -1) {
+				editor->selectColour(vectorImage->area[selectedArea].colourNumber);
+				//editor->setFeather(vectorImage->area[selectedArea].getFeather());
 			}
 		}
 	}

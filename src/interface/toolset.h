@@ -22,7 +22,7 @@ class SpinSlider : public QWidget
 {
     Q_OBJECT
 	public:
-    SpinSlider(QString text, QString type, qreal min, qreal max, QWidget *parent = 0);
+    SpinSlider(QString text, QString type, QString dataType, qreal min, qreal max, QWidget *parent = 0);
 	public slots:
 		void changeValue(qreal);
 		void changeValue(int);
@@ -35,7 +35,7 @@ class SpinSlider : public QWidget
 		QLabel* valueLabel;
 		QSlider* slider;
 		qreal value, min, max;
-		QString type;
+		QString type, dataType;
 };
 
 class ToolSet : public QWidget

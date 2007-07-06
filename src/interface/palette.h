@@ -31,22 +31,32 @@ class Palette : public QDockWidget
 	Q_OBJECT
 			
   public:
-	Palette(Editor*);
-	void updateList();
-	void selectColour(int i) { listOfColours->setCurrentRow(i); }
-	int currentColour() { return listOfColours->currentRow(); }
+		Palette(Editor*);
+		void updateList();
+		int currentColour() { return listOfColours->currentRow(); }
 	
   protected:
-	Editor* editor;
-	QListWidget* listOfColours;
-	QToolButton *addButton, *rmButton;
+		QSize sizeHint() const;
+		
+		Editor* editor;
+		QListWidget* listOfColours;
+		QToolButton *addButton, *rmButton;
+		QSlider *sliderRed, *sliderGreen, *sliderBlue, *sliderAlpha;
 	
+	public slots:
+		void selectColour(int i) { listOfColours->setCurrentRow(i); }
+		void setColour(QColor);
+		void setColour(int, int, int, int);
+		
   private slots:
-	void selectColour(QListWidgetItem*, QListWidgetItem*);
-	void changeColour(QListWidgetItem*);
-	void addClick();
-	void rmClick();
-	void closeIfDocked(bool);
+		void selectColour(QListWidgetItem*, QListWidgetItem*);
+		void selectAndApplyColour(QListWidgetItem*);
+		void updateColour();
+		void changeColour();
+		void changeColour(QListWidgetItem*);
+		void addClick();
+		void rmClick();
+		void closeIfDocked(bool);
 };
 
 #endif

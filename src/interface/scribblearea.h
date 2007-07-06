@@ -75,6 +75,7 @@ public:
   
 	void deleteSelection();
 	void setSelection(QRectF rect);
+	void displaySelectionProperties();
 	QRectF getSelection() { return mySelection; }
 	bool somethingSelected;
 	

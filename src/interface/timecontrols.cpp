@@ -34,7 +34,7 @@ TimeControls::TimeControls(QWidget* parent) {
 
 	QPushButton* playButton = new QPushButton();
 	loopButton = new QPushButton();
-	QPushButton* soundButton = new QPushButton();
+	soundButton = new QPushButton();
 	QLabel* separator = new QLabel();
 	separator->setPixmap(QPixmap(":icons/controls/separator.png"));
 	QLabel* spacingLabel = new QLabel(""); spacingLabel->setIndent(6);
@@ -48,9 +48,6 @@ TimeControls::TimeControls(QWidget* parent) {
 	loopButton->setToolTip(tr("Loop"));
 	soundButton->setToolTip(tr("Sound on/off"));
 
-	loopButton->setFixedSize(QSize(26,17));
-	soundButton->setFixedSize(QSize(26,17));
-	//loopButton->setFlat(true);
 	loopButton->setCheckable(true);
 	soundButton->setCheckable(true);
 	soundButton->setChecked(true);
@@ -80,12 +77,24 @@ TimeControls::TimeControls(QWidget* parent) {
 	connect(loopButton, SIGNAL(clicked()), this, SIGNAL(loopClick()));
 	connect(soundButton, SIGNAL(clicked()), this, SIGNAL(soundClick()));
 	connect(fpsBox,SIGNAL(valueChanged(int)), this, SIGNAL(fpsClick(int)));
+	
+	updateButtons(false);
 }
 
-void TimeControls::updateLoopButton(bool checked) {
+void TimeControls::updateButtons(bool floating) {
+	if(floating) {
+		loopButton->setFixedSize(QSize(45,22));
+		soundButton->setFixedSize(QSize(45,22));
+	} else {
+		loopButton->setFixedSize(QSize(26,17));
+		soundButton->setFixedSize(QSize(26,17));
+	}
+}
+
+/*void TimeControls::updateLoopButton(bool checked) {
 	if(checked) {
 		loopButton->setIcon(QIcon(":icons/controls/loopOn.png"));
 	} else {
 		loopButton->setIcon(QIcon(":icons/controls/loopOff.png"));
 	}
-}
+}*/

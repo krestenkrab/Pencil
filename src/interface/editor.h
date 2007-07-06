@@ -163,8 +163,11 @@ public slots:
 	void setPressure(int);
 	void applyPressure(int);
 	void selectColour(int);
+	void selectAndApplyColour(int);
 	void setColour(QColor);
 	void changeColour(int);
+	void changeColour(int,QColor);
+	void updateColour(int, QColor);
 	void addColour();
 	void removeColour(int);
 	

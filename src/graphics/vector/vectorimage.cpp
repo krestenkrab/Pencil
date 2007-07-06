@@ -397,6 +397,14 @@ int VectorImage::getFirstSelectedCurve() {
 	return result;
 }
 
+int VectorImage::getFirstSelectedArea() {
+	int result = -1;
+	for(int i=0; i<area.size() && result == -1; i++) {
+		if( isAreaSelected(i) ) result = i;
+	}
+	return result;
+}
+
 void VectorImage::selectAll() {
 	for(int i=0; i< curve.size(); i++) {
 		//curve[i].setSelected(true);

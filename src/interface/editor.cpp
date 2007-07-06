@@ -316,12 +316,17 @@ void Editor::applyPressure(int pressure)
 
 void Editor::selectColour(int i)
 {
-	//currentColour = i;
 	if(i > -1) {
 		scribbleArea->setColour(i);
 		toolSet->setColour(object->getColour(i).colour);
 		palette->selectColour(i);
+		palette->setColour(object->getColour(i).colour);
 	}
+}
+
+void Editor::selectAndApplyColour(int i)
+{
+	selectColour(i);
 	Layer* layer = getCurrentLayer(); if(layer == NULL) return;
 	if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->getLastVectorImageAtFrame(currentFrame, 0)->applyColourToSelection(i);
 }
@@ -330,20 +335,39 @@ void Editor::setColour(QColor colour)
 {
 	scribbleArea->setColour(colour);
 	toolSet->setColour(colour);
+	palette->setColour(colour);
 }
 
 void Editor::changeColour(int i)
 {
 	QColor newColour = QColorDialog::getColor(object->getColour(i).colour);
+	changeColour(i, newColour);
+}
+
+void Editor::changeColour(int i, QColor newColour)
+{
 	if (newColour.isValid()) {
+		/*object->setColour(i, newColour);
+		Layer* layer = object->getLayer(currentLayer);
+		if(layer != NULL) {
+			if(layer->type == Layer::VECTOR) scribbleArea->setModified(layer, currentFrame);
+		}*/
+		updateColour(i, newColour);
+		palette->updateList();
+		selectColour(i);
+	}
+}
+
+void Editor::updateColour(int i, QColor newColour)
+{
+	if( newColour.isValid() ) {
 		object->setColour(i, newColour);
 		Layer* layer = object->getLayer(currentLayer);
 		if(layer != NULL) {
-			//if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->getLastVectorImageAtFrame(currentFrame, 0)->setModified(true);
 			if(layer->type == Layer::VECTOR) scribbleArea->setModified(layer, currentFrame);
 		}
-		palette->updateList();
-		selectColour(i);
+		toolSet->setColour(object->getColour(i).colour);
+		scribbleArea->setColour(i);
 	}
 }
 

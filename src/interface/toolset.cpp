@@ -17,9 +17,10 @@ GNU General Public License for more details.
 #include "toolset.h"
 #include <math.h>
 
-SpinSlider::SpinSlider(QString text, QString type, qreal min, qreal max, QWidget* parent) : QWidget(parent) {
+SpinSlider::SpinSlider(QString text, QString type, QString dataType, qreal min, qreal max, QWidget* parent) : QWidget(parent) {
 	value = 1.0;
 	this->type = type;
+	this->dataType = dataType;
 	this->min = min;
 	this->max = max;
 	QLabel* label = new QLabel(text+": ");
@@ -31,7 +32,7 @@ SpinSlider::SpinSlider(QString text, QString type, qreal min, qreal max, QWidget
 	slider = new QSlider(Qt::Horizontal, this);
 	slider->setMinimum(0);
 	slider->setMaximum(100);
-	//slider->setFixedHeight(16);
+				//slider->setFixedHeight(16);
 	QGridLayout *lay = new QGridLayout();
 	lay->setMargin(0);
 	lay->setSpacing(0);
@@ -49,7 +50,11 @@ SpinSlider::SpinSlider(QString text, QString type, qreal min, qreal max, QWidget
 
 void SpinSlider::changeValue(qreal value) {
 	this->value = value;
-	valueLabel->setText( QLocale::system().toString(value,'f',1) );
+	if(dataType == "integer") {
+		valueLabel->setText( QString::number(qRound(value)) );
+	} else {
+		valueLabel->setText( QLocale::system().toString(value,'f',1) );
+	}
 }
 
 void SpinSlider::changeValue(int value) {
@@ -194,13 +199,13 @@ ToolSet::ToolSet() {
 	sizeSlider->setFixedWidth(50);
 	sizeSlider->setFixedHeight(22);*/
 
-	sizeSlider = new SpinSlider("Size", "log", 0.2, 200.0, this);
+	sizeSlider = new SpinSlider("Size", "log", "real", 0.2, 200.0, this);
 	sizeSlider->setValue(settings.value("pencilWidth").toDouble());
 
-	featherSlider = new SpinSlider("Feather", "log", 0.2, 200.0, this);
+	featherSlider = new SpinSlider("Feather", "log", "real", 0.2, 200.0, this);
 	featherSlider->setValue(settings.value("pencilFeather").toDouble());
 
-	opacitySlider = new SpinSlider("Opacity", "linear", 0.0, 1.0, this);
+	opacitySlider = new SpinSlider("Opacity", "linear", "real", 0.0, 1.0, this);
 	opacitySlider->setValue(settings.value("pencilOpacity").toDouble());
 
 	/*featherSlider = new QSlider(Qt::Horizontal, this);

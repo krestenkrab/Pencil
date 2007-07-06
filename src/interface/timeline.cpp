@@ -120,6 +120,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	connect(timeControls, SIGNAL(loopClick()), this, SIGNAL(loopClick()));
 	connect(timeControls, SIGNAL(soundClick()), this, SIGNAL(soundClick()));
 	connect(timeControls, SIGNAL(fpsClick(int)), this, SIGNAL(fpsClick(int)));
+	connect(this, SIGNAL(topLevelChanged(bool)), timeControls, SLOT(updateButtons(bool))); // when the windows is docked or made floatable
 
 	QHBoxLayout* rightToolBarLayout = new QHBoxLayout();
 	//rightToolBarLayout->setAlignment(Qt::AlignLeft);
@@ -159,7 +160,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	setWidget(timeLineContent);
 
 	setWindowFlags(Qt::WindowStaysOnTopHint);
-	setWindowTitle("TimeLine");
+	setWindowTitle("Time Line");
 	//setWindowFlags(Qt::SubWindow);
 	setFloating(true);
 	//setMinimumSize(100, 300);
