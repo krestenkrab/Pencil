@@ -56,6 +56,7 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 	sliderLayout->addWidget(sliderAlpha, 3, 1);
 	
 	listOfColours = new QListWidget();
+	
 	QWidget *buttons = new QWidget();
 	addButton = new QToolButton(this);
 	rmButton = new QToolButton(this);
@@ -64,9 +65,17 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 	rmButton->setIcon(QIcon(":icons/remove.png"));
 	rmButton->setToolTip("Remove Colour");
 	
+	colourSwatch = new QLabel();
+	colourSwatch->setFixedSize( 36, 36 );
+	QPixmap colourPixmap(36,36);
+	colourPixmap.fill( Qt::black );
+	colourSwatch->setPixmap(colourPixmap);
+	colourSwatch->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+	
 	QGridLayout *buttonLayout = new QGridLayout();
-	buttonLayout->addWidget(addButton,0,0);
-	buttonLayout->addWidget(rmButton,0,1);
+	buttonLayout->addWidget(colourSwatch,0,0);
+	buttonLayout->addWidget(addButton,0,1);
+	buttonLayout->addWidget(rmButton,0,2);
 	buttons->setLayout(buttonLayout);
 	
 	listOfColours->setFrameStyle(QFrame::Panel | QFrame::Sunken);
@@ -89,7 +98,10 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 	setFloating(true);
 	//setAllowedAreas(Qt::NoDockWidgetArea);
 	//setMinimumSize(100, 300);
-	//setMaximumWidth(130);
+	paletteContent->setFixedWidth(150);  /// otherwise the palette is naturally too wide. Someone please fix this.
+	//setFloating(false);
+	//setFixedWidth(130);
+	
 	//setGeometry(10,60,100, 300);
 	//setFocusPolicy(Qt::NoFocus);
 	//setWindowOpacity(0.7);
@@ -115,9 +127,9 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 	connect(this, SIGNAL(topLevelChanged(bool)), this, SLOT(closeIfDocked(bool)));
 }
 
-QSize Palette::sizeHint() const {
+/*QSize Palette::sizeHint() {
 	return QSize(150,600);
-}
+}*/
 
 void Palette::updateList() {
 	
@@ -154,6 +166,12 @@ void Palette::changeColour() {
 void Palette::updateColour() {
 	QColor newColour = QColor( sliderRed->value(), sliderGreen->value(), sliderBlue->value(), sliderAlpha->value() );
 	editor->updateColour(currentColour(), newColour);
+}
+
+void Palette::updateSwatch(QColor x) {
+	QPixmap colourPixmap(36,36);
+	colourPixmap.fill( x );
+	if(colourSwatch != NULL) colourSwatch->setPixmap(colourPixmap);
 }
 
 void Palette::changeColour( QListWidgetItem * item ) {

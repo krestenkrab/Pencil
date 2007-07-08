@@ -38,6 +38,23 @@ class SpinSlider : public QWidget
 		QString type, dataType;
 };
 
+
+class TitleBar : public QWidget
+{
+		Q_OBJECT
+	public:
+		TitleBar(QWidget *parent = 0);
+		
+		QSize sizeHint() const { return minimumSizeHint(); }
+		QSize minimumSizeHint() const;
+	protected:
+		void paintEvent(QPaintEvent *event);
+		void mousePressEvent(QMouseEvent *event);
+	private:
+		QPixmap leftPm, centerPm, rightPm;
+};
+
+
 class ToolSet : public QWidget
 {
     Q_OBJECT

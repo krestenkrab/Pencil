@@ -17,10 +17,11 @@ GNU General Public License for more details.
 #define TIMECONTROL_H
 
 #include <QWidget>
+#include <QToolBar>
 #include <QPushButton>
 #include <QToolButton>
 
-class TimeControls : public QWidget
+class TimeControls : public QToolBar
 {
     Q_OBJECT
 

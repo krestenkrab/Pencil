@@ -4,7 +4,7 @@
 
 CONFIG += qt release
 TEMPLATE = app
-TARGET = pencil
+TARGET = Pencil
 DEPENDPATH += . src
 INCLUDEPATH += . 	src \
 			src/external/flash \

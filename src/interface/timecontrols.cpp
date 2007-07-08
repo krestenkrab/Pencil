@@ -16,13 +16,13 @@ GNU General Public License for more details.
 #include <QtGui>
 #include "timecontrols.h"
 
-TimeControls::TimeControls(QWidget* parent) {
+TimeControls::TimeControls(QWidget* parent) : QToolBar(parent) {
 
 	QSettings settings("Pencil","Pencil");
 
-	QFrame* frame = new QFrame();
+	//QFrame* frame = new QFrame();
 
-	QSpinBox* fpsBox = new QSpinBox(this);
+	QSpinBox* fpsBox = new QSpinBox();
 	//fpsBox->setFixedWidth(50);
 	fpsBox->setFont( QFont("Helvetica", 10) );
 	fpsBox->setFixedHeight(22);
@@ -37,12 +37,26 @@ TimeControls::TimeControls(QWidget* parent) {
 	soundButton = new QPushButton();
 	QLabel* separator = new QLabel();
 	separator->setPixmap(QPixmap(":icons/controls/separator.png"));
+	separator->setFixedSize(QSize(37,31));
 	QLabel* spacingLabel = new QLabel(""); spacingLabel->setIndent(6);
 	QLabel* fpsLabel = new QLabel(tr("Fps: ")); fpsLabel->setIndent(6);
 
-	playButton->setIcon(QIcon(":icons/controls/play.png"));
-	loopButton->setIcon(QIcon(":icons/controls/loop.png"));
-	soundButton->setIcon(QIcon(":icons/controls/sound.png"));
+	QIcon playIcon(":icons/controls/play.png");
+	QIcon loopIcon(":icons/controls/loop.png");
+	QIcon soundIcon(":icons/controls/sound.png");
+#ifdef Q_WS_MAC
+	/*loopButton->setFixedSize( QSize(35,30) );
+	loopButton->setIconSize( QSize(35,30) );
+	loopIcon.addFile (":icons/controls/loopOn.png", QSize(35,20), QIcon::Normal, QIcon::On );
+	loopIcon.addFile (":icons/controls/loopOff.png", QSize(35,20), QIcon::Normal, QIcon::Off);
+	loopIcon.addFile (":icons/controls/loopOn.png", QSize(35,20), QIcon::Disabled, QIcon::On );
+	loopIcon.addFile (":icons/controls/loopOff.png", QSize(35,20), QIcon::Disabled, QIcon::Off);
+	loopIcon.addFile (":icons/controls/loopOn.png", QSize(35,20), QIcon::Active, QIcon::On );
+	loopIcon.addFile (":icons/controls/loopOff.png", QSize(35,20), QIcon::Active, QIcon::Off);*/
+#endif
+	playButton->setIcon(playIcon);
+	loopButton->setIcon(loopIcon);
+	soundButton->setIcon(soundIcon);
 
 	playButton->setToolTip(tr("Play"));
 	loopButton->setToolTip(tr("Loop"));
@@ -52,9 +66,16 @@ TimeControls::TimeControls(QWidget* parent) {
 	soundButton->setCheckable(true);
 	soundButton->setChecked(true);
 
-	QHBoxLayout* frameLayout = new QHBoxLayout();
+	addWidget(separator);
+	addWidget(playButton);
+	addWidget(loopButton);
+	addWidget(soundButton);
+	addWidget(fpsLabel);
+	addWidget(fpsBox);
+	
+	/*QHBoxLayout* frameLayout = new QHBoxLayout();
 	frameLayout->setMargin(0);
-	frameLayout->setSpacing(5);
+	frameLayout->setSpacing(0);
 	frameLayout->addWidget(separator);
 	frameLayout->addWidget(playButton);
 	frameLayout->addWidget(loopButton);
@@ -62,33 +83,34 @@ TimeControls::TimeControls(QWidget* parent) {
 	frameLayout->addWidget(fpsLabel);
 	frameLayout->addWidget(fpsBox);
 	frameLayout->addWidget(spacingLabel);
-	frame->setLayout(frameLayout);
-
-	QHBoxLayout* layout = new QHBoxLayout();
-	layout->setAlignment(Qt::AlignRight);
-	layout->addWidget(frame);
-	layout->setMargin(0);
+	
+	setLayout(frameLayout);
+	setFixedSize(300,32);*/
+	
+	//QHBoxLayout* layout = new QHBoxLayout();
+	//layout->setAlignment(Qt::AlignRight);
+	//layout->addWidget(frame);
+	//layout->setMargin(0);
 	//layout->setSizeConstraint(QLayout::SetNoConstraint);
-	setLayout(layout);
-	//setBackgroundRole(QPalette::Dark);
-	//setFixedWidth(200);
-
+	
+	//setLayout(frameLayout);
+	
 	connect(playButton, SIGNAL(clicked()), this, SIGNAL(playClick()));
 	connect(loopButton, SIGNAL(clicked()), this, SIGNAL(loopClick()));
 	connect(soundButton, SIGNAL(clicked()), this, SIGNAL(soundClick()));
 	connect(fpsBox,SIGNAL(valueChanged(int)), this, SIGNAL(fpsClick(int)));
 	
-	updateButtons(false);
+	//updateButtons(false);
 }
 
 void TimeControls::updateButtons(bool floating) {
-	if(floating) {
+	/*if(floating) {
 		loopButton->setFixedSize(QSize(45,22));
 		soundButton->setFixedSize(QSize(45,22));
 	} else {
 		loopButton->setFixedSize(QSize(26,17));
 		soundButton->setFixedSize(QSize(26,17));
-	}
+	}*/
 }
 
 /*void TimeControls::updateLoopButton(bool checked) {

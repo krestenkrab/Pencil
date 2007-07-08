@@ -191,6 +191,10 @@ public slots:
 	
 	void openRecent();
 	
+	void dockAllPalettes();
+	void detachAllPalettes();
+	void restorePalettesSettings(bool, bool, bool);
+	
 private slots:
 	void newDocument();
 	void openDocument();

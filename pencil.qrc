@@ -23,8 +23,13 @@
 		<file>icons/magnify.png</file>
 		<file>icons/smudge.png</file>
 
+		<file>icons/onionPrev.png</file>
+		<file>icons/onionNext.png</file>
+		
 		<file>icons/controls/play.png</file>
 		<file>icons/controls/loop.png</file>
+		<file>icons/controls/loopOn.png</file>
+		<file>icons/controls/loopOff.png</file>
 		<file>icons/controls/sound.png</file>
 		<file>icons/controls/separator.png</file>
 
@@ -37,8 +42,6 @@
 		<file>icons/logo.png</file>
 		<file>icons/icon.png</file>
 
-		<file>icons/TitleBarNormalButton.png</file>
-		<file>icons/TitleBarCloseButton.png</file>
-
+		<file>icons/aqua.png</file>
 	</qresource>
 </RCC>

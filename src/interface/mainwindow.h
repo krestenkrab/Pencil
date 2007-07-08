@@ -40,7 +40,8 @@ private:
     QMenu *editMenu;
     QMenu *layerMenu;
     QMenu *helpMenu;
-	
+		QMenu *windowsMenu;
+		
     QAction *newAct;
 	QAction *openAct;
     QAction *saveAct;
@@ -66,6 +67,9 @@ private:
 	QAction *newVectorLayerAct;
 	QAction *newSoundLayerAct;
 	QAction *deleteLayerAct;
+	
+	QAction *dockAllPalettesAct;
+	QAction *detachAllPalettesAct;
 };
 
 

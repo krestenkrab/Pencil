@@ -34,8 +34,8 @@ SpinSlider::SpinSlider(QString text, QString type, QString dataType, qreal min, 
 	slider->setMaximum(100);
 				//slider->setFixedHeight(16);
 	QGridLayout *lay = new QGridLayout();
-	lay->setMargin(0);
-	lay->setSpacing(0);
+	lay->setMargin(2);
+	lay->setSpacing(2);
         //lay->setColumnStretch(0,1);
 	lay->addWidget(label,0,0,1,1);
 	lay->addWidget(valueLabel,0,1,1,1);
@@ -81,7 +81,103 @@ void SpinSlider::sliderMoved(int value) {
 	emit valueChanged(this->value);
 }
 
-// -------------------------------
+// ----------------------------------------------------------------------------------
+
+ QSize TitleBar::minimumSizeHint() const
+ {
+     QDockWidget *dw = qobject_cast<QDockWidget*>(parentWidget());
+     Q_ASSERT(dw != 0);
+     QSize result(leftPm.width() + rightPm.width(), centerPm.height());
+     if (dw->features() & QDockWidget::DockWidgetVerticalTitleBar)
+         result.transpose();
+     return result;
+ }
+
+ TitleBar::TitleBar(QWidget *parent) : QWidget(parent)
+ {
+     leftPm = QPixmap(":icons/titleBar/floatButton.png");
+     centerPm = QPixmap(":icons/titleBar/floatButton.png");
+     rightPm = QPixmap(":icons/titleBar/closeButton.png");
+ }
+
+ void TitleBar::paintEvent(QPaintEvent*)
+ {
+     QPainter painter(this);
+     QRect rect = this->rect();
+
+     QDockWidget *dw = qobject_cast<QDockWidget*>(parentWidget());
+     Q_ASSERT(dw != 0);
+
+     if (dw->features() & QDockWidget::DockWidgetVerticalTitleBar) {
+         QSize s = rect.size();
+         s.transpose();
+         rect.setSize(s);
+
+         painter.translate(rect.left(), rect.top() + rect.width());
+         painter.rotate(-90);
+         painter.translate(-rect.left(), -rect.top());
+     }
+
+     painter.drawPixmap(rect.topLeft(), leftPm);
+     painter.drawPixmap(rect.topRight() - QPoint(rightPm.width() - 1, 0), rightPm);
+     painter.drawPixmap(rect.topRight() - QPoint(2*rightPm.width() - 1, 0), rightPm);
+     
+		 //QBrush brush(centerPm);
+     painter.fillRect(rect.left() + leftPm.width(), rect.top(),
+                         rect.width() - leftPm.width() - rightPm.width(),
+                         centerPm.height(), QColor(200,200,255));
+ }
+
+ void TitleBar::mousePressEvent(QMouseEvent *event)
+ {
+     QPoint pos = event->pos();
+
+     QRect rect = this->rect();
+
+     QDockWidget *dw = qobject_cast<QDockWidget*>(parentWidget());
+     Q_ASSERT(dw != 0);
+
+     if (dw->features() & QDockWidget::DockWidgetVerticalTitleBar) {
+         QPoint p = pos;
+         pos.setX(rect.left() + rect.bottom() - p.y());
+         pos.setY(rect.top() + p.x() - rect.left());
+
+         QSize s = rect.size();
+         s.transpose();
+         rect.setSize(s);
+     }
+
+     const int buttonRight = 7;
+     const int buttonWidth = rightPm.width();
+     int right = rect.right() - pos.x();
+     int button = (right - buttonRight)/buttonWidth;
+     switch (button) {
+         case 0:
+             event->accept();
+             dw->close();
+             break;
+         case 1:
+             event->accept();
+             dw->setFloating(!dw->isFloating());
+             break;
+         case 2: {
+             event->accept();
+             QDockWidget::DockWidgetFeatures features = dw->features();
+             if (features & QDockWidget::DockWidgetVerticalTitleBar)
+                 features &= ~QDockWidget::DockWidgetVerticalTitleBar;
+             else
+                 features |= QDockWidget::DockWidgetVerticalTitleBar;
+             dw->setFeatures(features);
+             break;
+         }
+         default:
+             event->ignore();
+             break;
+     }
+ }
+
+
+// ----------------------------------------------------------------------------------
 
 ToolSet::ToolSet() {
 
@@ -92,6 +188,9 @@ ToolSet::ToolSet() {
 	onionPalette = new QDockWidget(tr("Onion skin"));
 	timePalette = new QDockWidget(tr("Controls"));
 
+#ifdef Q_WS_MAC
+	//drawPalette->setTitleBarWidget(new TitleBar(drawPalette));
+#endif
 	//drawPalette->setAutoFillBackground(false);
 	//drawPalette->setAttribute(Qt::WA_NoSystemBackground, true);
 
@@ -123,11 +222,11 @@ ToolSet::ToolSet() {
 	//onionGroup->setFrameStyle(QFrame::Panel | QFrame::Raised);
 	//timeGroup->setFrameStyle(QFrame::Panel | QFrame::Raised);
 
-	optionGroup->setLineWidth(2);
-	keyGroup->setLineWidth(2);
-	displayGroup->setLineWidth(2);
-	onionGroup->setLineWidth(2);
-	timeGroup->setLineWidth(2);
+	//optionGroup->setLineWidth(2);
+	//keyGroup->setLineWidth(2);
+	//displayGroup->setLineWidth(2);
+	//onionGroup->setLineWidth(2);
+	//timeGroup->setLineWidth(2);
 
 	drawPalette->setWidget(drawGroup);
 	optionPalette->setWidget(optionGroup);
@@ -327,7 +426,7 @@ ToolSet::ToolSet() {
 	//drawLay->addWidget(mirrorButton,5,1); drawLay->setAlignment(mirrorButton, Qt::AlignLeft);
 
 	optionLay->setMargin(8);
-	optionLay->setSpacing(5);
+	optionLay->setSpacing(8);
 	optionLay->addWidget(colourLabel,6,0);
 	optionLay->addWidget(choseColour,6,1);
  //optionLay->addWidget(thinLinesButton,6,2);
@@ -346,8 +445,8 @@ ToolSet::ToolSet() {
 	optionLay->addWidget(featherSlider,9,0,1,2);
 	//optionLay->addWidget(opacitySlider,10,0,1,2);
 
-	optionLay->addWidget(usePressureBox,11,0,1,-1);
-	optionLay->addWidget(makeInvisibleBox,12,0,1,-1);
+	optionLay->addWidget(usePressureBox,11,0,1,2);
+	optionLay->addWidget(makeInvisibleBox,12,0,1,2);
         optionLay->setRowStretch(13,1);
 
 	displayLay->setMargin(4);

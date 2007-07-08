@@ -31,7 +31,7 @@ MainWindow::MainWindow() {
 	addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->drawPalette);
 	addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->optionPalette);
 	addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->displayPalette);
-	addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->onionPalette);
+	//addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->onionPalette);
 	//addDockWidget(Qt::LeftDockWidgetArea, editor->getToolSet()->keyPalette);
 
 	//addDockWidget(Qt::BottomDockWidgetArea, editor->getToolSet()->timePalette);
@@ -140,6 +140,13 @@ MainWindow::MainWindow() {
 	connect(deleteLayerAct, SIGNAL(triggered()), editor, SLOT(deleteCurrentLayer()));
 
 
+	dockAllPalettesAct = new QAction(tr("Dock All Palettes"), this);
+	connect(dockAllPalettesAct, SIGNAL(triggered()), editor, SLOT(dockAllPalettes()));
+
+	detachAllPalettesAct = new QAction(tr("Detach All Palettes"), this);
+	connect(detachAllPalettesAct, SIGNAL(triggered()), editor, SLOT(detachAllPalettes()));
+	
+
 exportMenu = new QMenu(tr("Export"), this);
 exportMenu->addAction(exportXAct);
 exportMenu->addAction(exportAct);
@@ -182,10 +189,15 @@ helpMenu->addAction(helpMe);
 helpMenu->addAction(aboutAct);
 helpMenu->addAction(aboutQtAct);
 
+windowsMenu = new QMenu(tr("Windows"), this);
+windowsMenu->addAction(dockAllPalettesAct);
+windowsMenu->addAction(detachAllPalettesAct);
+
 menuBar()->addMenu(fileMenu);
 menuBar()->addMenu(editMenu);
 menuBar()->addMenu(layerMenu);
 menuBar()->addMenu(helpMenu);
+menuBar()->addMenu(windowsMenu);
 
 		readSettings();
 }
@@ -250,64 +262,11 @@ void MainWindow::keyReleaseEvent( QKeyEvent *e ) {
 void MainWindow::readSettings() {
 	QSettings settings("Pencil", "Pencil");
 	QPoint pos = settings.value("editorPosition", QPoint(100, 100)).toPoint();
-	QSize size = settings.value("editorSize", QSize(800, 600)).toSize();
+	QSize size = settings.value("editorSize", QSize(400, 300)).toSize();
 	move(pos);
 	resize(size);
 	
-	Palette* colourPalette = editor->getPalette();
-	if(colourPalette != NULL) {
-		QPoint pos = settings.value("colourPalettePosition", QPoint(800, 100)).toPoint();
-		QSize size = settings.value("colourPaletteSize", QSize(800, 600)).toSize();
-		bool floating = settings.value("colourPaletteFloating", false).toBool();
-		colourPalette->move(pos);
-		colourPalette->resize(size);
-		colourPalette->setFloating(floating);
-		colourPalette->show();
-	}
-	
-	TimeLine* timelinePalette = editor->getTimeLine();
-	if(timelinePalette != NULL) {
-		QPoint pos = settings.value("timelinePalettePosition", QPoint(800, 100)).toPoint();
-		QSize size = settings.value("timelinePaletteSize", QSize(800, 600)).toSize();
-		bool floating = settings.value("timelinePaletteFloating", false).toBool();
-		timelinePalette->move(pos);
-		timelinePalette->resize(size);
-		timelinePalette->setFloating(floating);
-		timelinePalette->show();
-	}
-	
-	QDockWidget* drawPalette = editor->getToolSet()->drawPalette;
-	if(drawPalette != NULL) {
-		QPoint pos = settings.value("drawPalettePosition", QPoint(800, 100)).toPoint();
-		QSize size = settings.value("drawPaletteSize", QSize(800, 600)).toSize();
-		bool floating = settings.value("drawPaletteFloating", false).toBool();
-		drawPalette->move(pos);
-		drawPalette->resize(size);
-		drawPalette->setFloating(floating);
-		drawPalette->show();
-	}
-	
-	QDockWidget* optionPalette = editor->getToolSet()->optionPalette;
-	if(optionPalette != NULL) {
-		QPoint pos = settings.value("optionPalettePosition", QPoint(800, 100)).toPoint();
-		QSize size = settings.value("optionPaletteSize", QSize(800, 600)).toSize();
-		bool floating = settings.value("optionPaletteFloating", false).toBool();
-		optionPalette->move(pos);
-		optionPalette->resize(size);
-		optionPalette->setFloating(floating);
-		optionPalette->show();
-	}
-
-	QDockWidget* displayPalette = editor->getToolSet()->displayPalette;
-	if(optionPalette != NULL) {
-		QPoint pos = settings.value("displayPalettePosition", QPoint(800, 100)).toPoint();
-		QSize size = settings.value("displayPaletteSize", QSize(800, 600)).toSize();
-		bool floating = settings.value("displayPaletteFloating", false).toBool();
-		displayPalette->move(pos);
-		displayPalette->resize(size);
-		displayPalette->setFloating(floating);
-		displayPalette->show();
-	}
+	editor->restorePalettesSettings(true, true, true);
 	
 	QString myPath = settings.value("lastFilePath", QVariant(QDir::homePath())).toString();
 	addRecentFile(myPath);

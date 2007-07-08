@@ -29,24 +29,6 @@ class Editor;
 
 class TimeLine;
 
-/*class TimeLineList : public QWidget
-{
-    Q_OBJECT
-	public:
-		TimeLineList(TimeLine *parent = 0, Editor *editor = 0);
-		int offsetY;
-		int startY, endY, startLayerNumber;
-	protected:
-		void paintEvent(QPaintEvent *event);
-		void mousePressEvent(QMouseEvent *event);
-		void mouseMoveEvent(QMouseEvent *event);
-		void mouseReleaseEvent(QMouseEvent *event);
-		void mouseDoubleClickEvent(QMouseEvent *event);
-	private:
-		TimeLine *timeLine;
-		Editor* editor; // the editor for which this timeLine operates
-};*/
-
 class TimeLineCells : public QWidget
 {
     Q_OBJECT
@@ -127,6 +109,9 @@ signals:
 	void loopClick();
 	void soundClick();
 	void fpsClick(int);
+	void onionPrevClick();
+	void onionNextClick();
+	
 
 public slots:
 	void updateFrame(int frameNumber);

@@ -135,6 +135,9 @@ Editor::Editor(QMainWindow* parent)
 	connect(timeLine, SIGNAL(soundClick()), this, SLOT(setSound()));
 	connect(timeLine, SIGNAL(fpsClick(int)), this, SLOT(changeFps(int)));
 	
+	connect(timeLine, SIGNAL(onionPrevClick()), scribbleArea, SLOT(onionPrevSlot()));
+	connect(timeLine, SIGNAL(onionNextClick()), scribbleArea, SLOT(onionNextSlot()));
+	
 	connect(preferences, SIGNAL(curveOpacityChange(int)), scribbleArea, SLOT(setCurveOpacity(int)));
 	connect(preferences, SIGNAL(curveSmoothingChange(int)), scribbleArea, SLOT(setCurveSmoothing(int)));
 	connect(preferences, SIGNAL(highResPositionChange(int)), scribbleArea, SLOT(setHighResPosition(int)));
@@ -367,6 +370,7 @@ void Editor::updateColour(int i, QColor newColour)
 			if(layer->type == Layer::VECTOR) scribbleArea->setModified(layer, currentFrame);
 		}
 		toolSet->setColour(object->getColour(i).colour);
+		palette->updateSwatch(object->getColour(i).colour);
 		scribbleArea->setColour(i);
 	}
 }
@@ -1324,5 +1328,83 @@ void Editor::updateMaxFrame() {
 	for(int i=0; i < object->getLayerCount(); i++) {
 		int frameNumber = object->getLayer(i)->getMaxFrame();
 		if( frameNumber > maxFrame) maxFrame = frameNumber;
+	}
+}
+
+void Editor::dockAllPalettes() {
+	getToolSet()->drawPalette->setFloating(false);
+	getToolSet()->optionPalette->setFloating(false);
+	getToolSet()->displayPalette->setFloating(false);
+	getToolSet()->onionPalette->setFloating(false);
+	getTimeLine()->setFloating(false);
+	getPalette()->setFloating(false);
+}
+
+void Editor::detachAllPalettes() {
+	getToolSet()->drawPalette->setFloating(true);
+	getToolSet()->optionPalette->setFloating(true);
+	getToolSet()->displayPalette->setFloating(true);
+	getToolSet()->onionPalette->setFloating(true);
+	getTimeLine()->setFloating(true);
+	getPalette()->setFloating(true);
+	restorePalettesSettings(false, true, true);
+}
+
+void Editor::restorePalettesSettings(bool restoreFloating, bool restorePosition, bool restoreSize) {
+	QSettings settings("Pencil", "Pencil");
+	
+	Palette* colourPalette = getPalette();
+	if(colourPalette != NULL) {
+		QPoint pos = settings.value("colourPalettePosition", QPoint(100, 100)).toPoint();
+		QSize size = settings.value("colourPaletteSize", QSize(400, 300)).toSize();
+		bool floating = settings.value("colourPaletteFloating", false).toBool();
+		if(restoreFloating) colourPalette->setFloating(floating);
+		if(restorePosition) colourPalette->move(pos);
+		if(restoreSize) colourPalette->resize(size);
+		colourPalette->show();
+	}
+	
+	TimeLine* timelinePalette = getTimeLine();
+	if(timelinePalette != NULL) {
+		QPoint pos = settings.value("timelinePalettePosition", QPoint(100, 100)).toPoint();
+		QSize size = settings.value("timelinePaletteSize", QSize(400, 300)).toSize();
+		bool floating = settings.value("timelinePaletteFloating", false).toBool();
+		if(restoreFloating) timelinePalette->setFloating(floating);
+		if(restorePosition) timelinePalette->move(pos);
+		if(restoreSize) timelinePalette->resize(size);
+		timelinePalette->show();
+	}
+	
+	QDockWidget* drawPalette = getToolSet()->drawPalette;
+	if(drawPalette != NULL) {
+		QPoint pos = settings.value("drawPalettePosition", QPoint(100, 100)).toPoint();
+		QSize size = settings.value("drawPaletteSize", QSize(400, 300)).toSize();
+		bool floating = settings.value("drawPaletteFloating", false).toBool();
+		if(restoreFloating) drawPalette->setFloating(floating);
+		if(restorePosition) drawPalette->move(pos);
+		if(restoreSize) drawPalette->resize(size);
+		drawPalette->show();
+	}
+	
+	QDockWidget* optionPalette = getToolSet()->optionPalette;
+	if(optionPalette != NULL) {
+		QPoint pos = settings.value("optionPalettePosition", QPoint(100, 100)).toPoint();
+		QSize size = settings.value("optionPaletteSize", QSize(400, 300)).toSize();
+		bool floating = settings.value("optionPaletteFloating", false).toBool();
+		if(restoreFloating) optionPalette->setFloating(floating);
+		if(restorePosition) optionPalette->move(pos);
+		if(restoreSize) optionPalette->resize(size);
+		optionPalette->show();
+	}
+
+	QDockWidget* displayPalette = getToolSet()->displayPalette;
+	if(optionPalette != NULL) {
+		QPoint pos = settings.value("displayPalettePosition", QPoint(100, 100)).toPoint();
+		QSize size = settings.value("displayPaletteSize", QSize(400, 300)).toSize();
+		bool floating = settings.value("displayPaletteFloating", false).toBool();
+		if(restoreFloating) displayPalette->setFloating(floating);
+		if(restorePosition) displayPalette->move(pos);
+		if(restoreSize) displayPalette->resize(size);
+		displayPalette->show();
 	}
 }
