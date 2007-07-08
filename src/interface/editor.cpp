@@ -350,7 +350,7 @@ void Editor::changeColour(int i)
 
 void Editor::changeColour(int i, QColor newColour)
 {
-	if (newColour.isValid()) {
+	if (newColour.isValid() && i>-1) {
 		/*object->setColour(i, newColour);
 		Layer* layer = object->getLayer(currentLayer);
 		if(layer != NULL) {
@@ -364,7 +364,7 @@ void Editor::changeColour(int i, QColor newColour)
 
 void Editor::updateColour(int i, QColor newColour)
 {
-	if( newColour.isValid() ) {
+	if( newColour.isValid() && i>-1) {
 		object->setColour(i, newColour);
 		Layer* layer = object->getLayer(currentLayer);
 		if(layer != NULL) {

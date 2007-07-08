@@ -103,19 +103,50 @@ void Layer::paintLabel(QPainter &painter, TimeLineCells *cells, int x, int y, in
 
 void Layer::paintSelection(QPainter &painter, int x, int y, int width, int height) {
 			QLinearGradient linearGrad(QPointF(0, y), QPointF(0, y + height));
-			//linearGrad.setColorAt(0, QColor(255,255,255,128) );
-			//linearGrad.setColorAt(0.40, QColor(255,255,255,0) );
-			//linearGrad.setColorAt(0.60, QColor(0,0,0,0) );
-			//linearGrad.setColorAt(1, QColor(0,0,0,64) );
-			linearGrad.setColorAt(0, QColor(255,255,255,128) );
-			linearGrad.setColorAt(0.10, QColor(255,255,255,64) );
-			linearGrad.setColorAt(0.20, QColor(0,0,0,32) );
-			linearGrad.setColorAt(0.40, QColor(0,0,0,0) );
-			linearGrad.setColorAt(0.41, QColor(255,255,255,0) );
-			linearGrad.setColorAt(1, QColor(255,255,255,128) );
+			QSettings settings("Pencil","Pencil");
+			QString style = settings.value("style").toString();
+			if(style == "aqua") {
+				linearGrad.setColorAt(0, QColor(225,225,255,200) );
+				linearGrad.setColorAt(0.01, QColor(225,225,255,90) );
+				linearGrad.setColorAt(0.10, QColor(225,225,255,64) );
+				linearGrad.setColorAt(0.35, QColor(225,225,255,20) );
+				linearGrad.setColorAt(0.351, QColor(0,0,0,32) );
+				linearGrad.setColorAt(0.75, QColor(245,255,235,32) );
+				linearGrad.setColorAt(1, QColor(245,255,235,128) );
+			} else {
+				linearGrad.setColorAt(0, QColor(255,255,255,128) );
+				linearGrad.setColorAt(0.49, QColor(255,255,255,0) );
+				linearGrad.setColorAt(0.50, QColor(0,0,0,0) );
+				linearGrad.setColorAt(1, QColor(0,0,0,48) );
+				
+				/*linearGrad.setColorAt(0, QColor(255,255,255,128) );
+				linearGrad.setColorAt(0.10, QColor(255,255,255,64) );
+				linearGrad.setColorAt(0.49, QColor(0,0,0,32) );
+				linearGrad.setColorAt(0.50, QColor(0,0,0,32) );
+				linearGrad.setColorAt(0.70, QColor(245,255,245,32) );
+				linearGrad.setColorAt(1, QColor(245,255,245,128) );*/
+				
+				/*linearGrad.setColorAt(0, QColor(255,255,255,128) );
+				linearGrad.setColorAt(0.10, QColor(255,255,255,64) );
+				linearGrad.setColorAt(0.20, QColor(0,0,0,32) );
+				linearGrad.setColorAt(0.40, QColor(0,0,0,0) );
+				linearGrad.setColorAt(0.41, QColor(255,255,255,0) );
+				linearGrad.setColorAt(1, QColor(255,255,255,128) );*/
+			}
 			painter.setBrush( linearGrad );
-			painter.setPen(QPen(QBrush(QColor(70,70,70)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
-			painter.drawRect(x, y-1, width, height);
+			painter.setPen( Qt::NoPen );
+			painter.drawRect(x, y, width, height-1);
+			//painter.setBrush( Qt::NoBrush );
+			//painter.setPen(QPen(QBrush(QColor(0,0,0,100)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
+			//painter.drawRect(x, y-1, width, height);
+			/*if(style == "aqua") {
+				QColor col;
+				if(type == BITMAP) col = QColor(65,65,122);
+				if(type == VECTOR) col = QColor(50,102,75);
+				if(type == SOUND) col = QColor(122,65,65);
+				painter.setPen(col);
+				painter.drawLine(x,y-1, x+width, y-1);
+			}*/
 }
 
 void Layer::mousePress(QMouseEvent *event, int frameNumber) {
