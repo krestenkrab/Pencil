@@ -108,7 +108,7 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	antialiasing = true; // default value is true (because it's prettier)
 	if( settings.value("antialiasing").toString() == "false") antialiasing = false;
 	shadows = true; // default value is true (because it's prettier)
-	if( settings.value("shadows").toString() == "false") antialiasing = false;
+	if( settings.value("shadows").toString() == "false") shadows = false;
 	gradients = 2;
 	if( settings.value("gradients").toString() != "") gradients = settings.value("gradients").toInt();;
 	
@@ -1259,7 +1259,7 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 	painter.setBrush(Qt::NoBrush);
 	painter.drawRect(QRect(0,0, width(), height()));
 	// shadow
-	if(shadows) {
+	if(shadows && (!mouseInUse || toolMode == HAND)) {
 		int radius1 = 12;
 		int radius2 = 8;
 		QLinearGradient shadow = QLinearGradient( 0, 0, 0, radius1);

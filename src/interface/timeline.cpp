@@ -51,6 +51,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	QHBoxLayout* layerButtonLayout = new QHBoxLayout();
 		QLabel* layerLabel = new QLabel(tr("Layers:"));
 		layerLabel->setIndent(5);
+		layerLabel->setFont( QFont("Helvetica", 10) );
 		QToolButton* addLayerButton = new QToolButton(this);
 		addLayerButton->setIcon(QIcon(":icons/add.png"));
 		addLayerButton->setToolTip("Add Layer");
@@ -99,6 +100,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	//keyButtons->setFixedWidth(90);
 	//QHBoxLayout* keyButtonsLayout = new QHBoxLayout();
 		QLabel* keyLabel = new QLabel(tr("Keys:"));
+		keyLabel->setFont( QFont("Helvetica", 10) );
 		keyLabel->setIndent(5);
 		QToolButton* addKeyButton = new QToolButton(this);
 		addKeyButton->setIcon(QIcon(":icons/add.png"));
@@ -125,6 +127,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	//onionButtons->setFixedWidth(90);
 	//QHBoxLayout* onionButtonsLayout = new QHBoxLayout();
 		QLabel* onionLabel = new QLabel(tr("Onion skin:"));
+		onionLabel->setFont( QFont("Helvetica", 10) );
 		onionLabel->setIndent(5);
 		QToolButton* onionPrevButton = new QToolButton(this);
 		onionPrevButton->setIcon(QIcon(":icons/onionPrev.png"));
@@ -153,11 +156,12 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	// --------- Time controls ---------
 	TimeControls* timeControls = new TimeControls(this);
 	
-	QGridLayout* rightToolBarLayout = new QGridLayout();
+	QHBoxLayout* rightToolBarLayout = new QHBoxLayout();
 	//rightToolBarLayout->setAlignment(Qt::AlignLeft);
-	rightToolBarLayout->addWidget(keyButtons, 0, 1);
-	rightToolBarLayout->addWidget(onionButtons, 0, 2);
-	rightToolBarLayout->addWidget(timeControls, 0, 3);
+	rightToolBarLayout->addWidget(keyButtons);
+	rightToolBarLayout->addWidget(onionButtons);
+	rightToolBarLayout->addStretch(1);
+	rightToolBarLayout->addWidget(timeControls);
 	rightToolBarLayout->setMargin(0);
 	rightToolBarLayout->setSpacing(0);
 	rightToolBar->setLayout(rightToolBarLayout);
@@ -202,6 +206,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	connect(this,SIGNAL(fontSizeChange(int)), cells, SLOT(fontSizeChange(int)));
 	connect(this,SIGNAL(frameSizeChange(int)), cells, SLOT(frameSizeChange(int)));
 	connect(this,SIGNAL(labelChange(int)), cells, SLOT(labelChange(int)));
+	connect(this,SIGNAL(scrubChange(int)), cells, SLOT(scrubChange(int)));
 
 	connect(hScrollBar,SIGNAL(valueChanged(int)), cells, SLOT(hScrollChange(int)));
 	connect(vScrollBar,SIGNAL(valueChanged(int)), cells, SLOT(vScrollChange(int)));
@@ -353,6 +358,8 @@ TimeLineCells::TimeLineCells(TimeLine *parent, Editor *editor, QString type) : Q
 	frameLength = settings.value("length").toInt();
 	if (frameLength==0) { frameLength=240; settings.setValue("length", frameLength); }
 
+	shortScrub = settings.value("shortScrub").toBool();
+	
 	fps = editor->fps;
 
 	//playing = false;
@@ -531,6 +538,7 @@ void TimeLineCells::paintEvent(QPaintEvent *event) {
 			QRect scrubRect;
 			scrubRect.setTopLeft(QPoint( getFrameX(editor->currentFrame-1), 0));
 			scrubRect.setBottomRight(QPoint( getFrameX(editor->currentFrame), height()));
+			if(shortScrub) scrubRect.setBottomRight(QPoint( getFrameX(editor->currentFrame), 19));
 			painter.drawRect(scrubRect);
 			painter.setPen( QColor(70,70,70,255) );
 			int incr = 0;
@@ -573,7 +581,7 @@ void TimeLineCells::mousePressEvent(QMouseEvent *event) {
 	}
 
 	if(type == "tracks") {
-		if(frameNumber == editor->currentFrame) {
+		if(frameNumber == editor->currentFrame && (!shortScrub || (shortScrub && startY < 20)) ) {
 			timeLine->scrubbing = true;
 		} else {
 			if( (layerNumber != -1) && layerNumber < editor->object->getLayerCount()) {
@@ -634,6 +642,9 @@ void TimeLineCells::mouseDoubleClickEvent(QMouseEvent *event) {
 	if(type == "tracks" && (layerNumber != -1) && (frameNumber > 0) && layerNumber < editor->object->getLayerCount()) {
 		editor->object->getLayer(layerNumber)->mouseDoubleClick(event, frameNumber);
 	}
+	if(event->pos().y() < 20) {
+		if(shortScrub) scrubChange(0); else scrubChange(1);
+	}
 	/*int layerNumber = getLayerNumber(event->pos().y());
 	if(layerNumber != -1 && layerNumber < editor->object->getLayerCount() ) {
 		editor->switchVisibilityOfLayer(layerNumber);
@@ -662,6 +673,13 @@ void TimeLineCells::frameSizeChange(int x) {
 		frame[i].setWidth(frameSize);
 	}*/
 	updateContent();
+}
+
+void TimeLineCells::scrubChange(int x) {
+	QSettings settings("Pencil","Pencil");
+	if (x==0) { shortScrub=false; settings.setValue("shortScrub","false"); }
+	else { shortScrub=true; settings.setValue("shortScrub","true"); }
+	update();
 }
 
 void TimeLineCells::labelChange(int x) {

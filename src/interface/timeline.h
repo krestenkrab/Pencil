@@ -55,6 +55,7 @@ public slots:
 	void lengthChange(QString);
 	void frameSizeChange(int);
 	void fontSizeChange(int);
+	void scrubChange(int);
 	void labelChange(int);
 	void hScrollChange(int);
 	void vScrollChange(int);
@@ -76,6 +77,7 @@ private:
 	QString type;
 	QPixmap* cache;
 	bool drawFrameNumber;
+	bool shortScrub;
 	int frameLength;
 	int frameSize;
 	int fontSize;
@@ -98,6 +100,7 @@ signals:
 	void frameSizeChange(int);
 	void fontSizeChange(int);
 	void labelChange(int);
+	void scrubChange(int);
 	void addKeyClick();
 	void removeKeyClick();
 	void newBitmapLayer();

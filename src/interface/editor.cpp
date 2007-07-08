@@ -151,6 +151,7 @@ Editor::Editor(QMainWindow* parent)
 	connect(preferences, SIGNAL(fontSizeChange(int)), timeLine, SIGNAL(fontSizeChange(int)));
 	connect(preferences, SIGNAL(frameSizeChange(int)), timeLine, SIGNAL(frameSizeChange(int)));
 	connect(preferences, SIGNAL(labelChange(int)), timeLine, SIGNAL(labelChange(int)));
+	connect(preferences, SIGNAL(scrubChange(int)), timeLine, SIGNAL(scrubChange(int)));
 	
 	connect(QApplication::clipboard(), SIGNAL(dataChanged()), this, SLOT(clipboardChanged()) );
 	

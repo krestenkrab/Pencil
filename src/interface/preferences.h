@@ -42,6 +42,7 @@ class Preferences : public QDialog {
 		void fontSizeChange(int);
 		void frameSizeChange(int);
 		void labelChange(int);
+		void scrubChange(int);
 	
 	private:
 		void createIcons();

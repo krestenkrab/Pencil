@@ -222,7 +222,9 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 	
 	lay->addWidget(backgroundBox);
 	lay->addWidget(shadowsBox);
+#ifdef Q_WS_MAC	
 	lay->addWidget(aquaBox);
+#endif
 	lay->addWidget(displayBox);
 	lay->addWidget(editingBox);
 	
@@ -247,7 +249,10 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 
 TimelinePage::TimelinePage(QWidget *parent) : QWidget(parent) {
 	QSettings settings("Pencil","Pencil");
+	
 	QVBoxLayout *lay = new QVBoxLayout();
+	
+	QGroupBox* timeLineBox = new QGroupBox(tr("Time Line"));
 	QCheckBox *drawLabel = new QCheckBox(tr("Draw timeline labels"));
 	QLabel *fontSizeLabel = new QLabel(tr("Labels font size"));
 	QSpinBox *fontSize = new QSpinBox();
@@ -257,6 +262,10 @@ TimelinePage::TimelinePage(QWidget *parent) : QWidget(parent) {
 	QLineEdit *lengthSize = new QLineEdit(this);
 	lengthSize->setInputMask("9999");
 
+	QCheckBox *scrubBox = new QCheckBox(tr("Short scrub"));
+	scrubBox->setChecked(false); // default
+	if (settings.value("shortScrub").toBool()) scrubBox->setChecked(true);
+	
 	fontSize->setMinimum(4);
 	fontSize->setMaximum(20);
 	frameSize->setMinimum(4);
@@ -279,6 +288,7 @@ TimelinePage::TimelinePage(QWidget *parent) : QWidget(parent) {
 	connect(frameSize, SIGNAL(valueChanged(int)), parent, SIGNAL(frameSizeChange(int)));
 	connect(lengthSize, SIGNAL(textChanged(QString)), parent, SIGNAL(lengthSizeChange(QString)));
 	connect(drawLabel, SIGNAL(stateChanged(int)), parent, SIGNAL(labelChange(int)));
+	connect(scrubBox, SIGNAL(stateChanged(int)), parent, SIGNAL(scrubChange(int)));
 	
 	//lay->addWidget(drawLabel);
 	//lay->addWidget(fontSizeLabel);
@@ -287,7 +297,13 @@ TimelinePage::TimelinePage(QWidget *parent) : QWidget(parent) {
 	lay->addWidget(frameSize);
 	lay->addWidget(lengthSizeLabel);
 	lay->addWidget(lengthSize);
-	setLayout(lay);
+	lay->addWidget(scrubBox);
+	timeLineBox->setLayout(lay);
+	
+	QVBoxLayout *lay2 = new QVBoxLayout();
+	lay2->addWidget(timeLineBox);
+	lay2->addStretch(1);
+	setLayout(lay2);
 }
 
 
