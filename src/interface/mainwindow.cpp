@@ -48,6 +48,10 @@ MainWindow::MainWindow() {
 	editor->getTimeLine()->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 
 	//editor->getTimeLine()->close();
+	
+	exitAct = new QAction(tr("E&xit"), this);
+	exitAct->setShortcut(tr("Ctrl+Q"));
+	connect(exitAct, SIGNAL(triggered()), editor, SLOT(close()));
 
 	newAct = new QAction(tr("&New"), this);
 	newAct->setShortcut(tr("Ctrl+N"));
@@ -81,10 +85,16 @@ MainWindow::MainWindow() {
 	exportFlashAct->setShortcut(tr("Ctrl+Alt+F"));
 	connect(exportFlashAct, SIGNAL(triggered()), editor, SLOT(exportFlash()));
 
-    exitAct = new QAction(tr("E&xit"), this);
-    exitAct->setShortcut(tr("Ctrl+Q"));
-    connect(exitAct, SIGNAL(triggered()), editor, SLOT(close()));
-
+	exportFlashAct = new QAction(tr("&Flash/SWF..."), this);
+	exportFlashAct->setShortcut(tr("Ctrl+Alt+F"));
+	connect(exportFlashAct, SIGNAL(triggered()), editor, SLOT(exportFlash()));
+	
+	exportPaletteAct = new QAction(tr("Palette..."), this);
+	connect(exportPaletteAct, SIGNAL(triggered()), editor, SLOT(exportPalette()));
+	
+	importPaletteAct = new QAction(tr("Palette..."), this);
+	connect(importPaletteAct, SIGNAL(triggered()), editor, SLOT(importPalette()));
+	
     importAct = new QAction(tr("&Import image..."), this);
     importAct->setShortcut(tr("Ctrl+I"));
     connect(importAct, SIGNAL(triggered()), editor, SLOT(importImage()));
@@ -146,12 +156,17 @@ MainWindow::MainWindow() {
 	detachAllPalettesAct = new QAction(tr("Detach All Palettes"), this);
 	connect(detachAllPalettesAct, SIGNAL(triggered()), editor, SLOT(detachAllPalettes()));
 	
+importMenu = new QMenu(tr("Import"), this);
+importMenu->addAction(importPaletteAct);
 
 exportMenu = new QMenu(tr("Export"), this);
 exportMenu->addAction(exportXAct);
 exportMenu->addAction(exportAct);
 exportMenu->addAction(exportMovAct);
 exportMenu->addAction(exportFlashAct);
+exportMenu->addSeparator();
+exportMenu->addAction(exportPaletteAct);
+
 openRecentMenu = new QMenu(tr("Open recent..."), this);
 
 fileMenu = new QMenu(tr("&File"), this);
@@ -161,6 +176,7 @@ fileMenu->addMenu(openRecentMenu);
 fileMenu->addAction(savAct);
 fileMenu->addAction(saveAct);
 fileMenu->addSeparator();
+fileMenu->addMenu(importMenu);
 fileMenu->addMenu(exportMenu);
 
 editMenu = new QMenu(tr("&Edit"), this);

@@ -344,8 +344,30 @@ void Editor::setColour(QColor colour)
 
 void Editor::changeColour(int i)
 {
-	QColor newColour = QColorDialog::getColor(object->getColour(i).colour);
-	changeColour(i, newColour);
+	//QColor newColour = QColorDialog::getColor(object->getColour(i).colour);
+	if(i>-1) {
+		bool *ok;
+		ok = new bool;
+		QRgb qrgba = QColorDialog::getRgba( object->getColour(i).colour.rgba(), ok, this );
+		if(*ok) {
+			changeColour(i, QColor::fromRgba(qrgba) );
+		}
+		delete ok;
+	}
+}
+
+void Editor::changeColourName(int i)
+{
+	if (i>-1) {
+		bool ok;
+		QString text = QInputDialog::getText(this, tr("Colour name"),
+                                          tr("Colour name:"), QLineEdit::Normal,
+                                          object->getColour(i).name, &ok);
+		if (ok && !text.isEmpty()) {
+			object->renameColour(i, text);
+			palette->updateList();
+		}
+	}
 }
 
 void Editor::changeColour(int i, QColor newColour)
@@ -382,12 +404,22 @@ void Editor::addColour() {
   if( currentColourIndex > -1 ) {
 		initialColour = object->getColour(currentColourIndex).colour;
 	}
-	QColor newColour = QColorDialog::getColor( initialColour );
+	bool *ok;
+	ok = new bool;
+	QRgb qrgba = QColorDialog::getRgba( initialColour.rgba(), ok, this );
+	if(*ok) {
+		object->addColour( QColor::fromRgba(qrgba) );
+		palette->updateList();
+		selectColour(object->getColourCount()-1);
+	}
+	delete ok;
+
+	/*QColor newColour = QColorDialog::getColor( initialColour );
 	if (newColour.isValid()) {
 		object->addColour(newColour);
 		palette->updateList();
 		//selectColour(object->getColourCount());
-	}
+	}*/
 }
 
 
@@ -652,7 +684,7 @@ void Editor::about()
 							 "<img src=':icons/logo.png' width='100%'><br>"
 							 "<table style='background-color: #DDDDDD'><tr><td width='160px'>"
 							 "Developed by: <i>Pascal Naidon & Patrick Corrieri</i><br>"
-							 "Version: <b>0.4.3b</b> (1st July, 2007)<br><br>"
+							 "Version: <b>0.4.3b</b> (10th July, 2007)<br><br>"
                "<b>Thanks to:</b><br>"
                "Trolltech for the Qt libraries<br>"
                "Roland for the Movie export functions<br>"
@@ -665,8 +697,8 @@ void Editor::about()
 }
 
 void Editor::helpBox() {
-	QMessageBox::about(this, tr("Hummm..."), tr("There's supposed to be a README file...<br><br>"
-		"For more information, please visit:<br>"
+	QMessageBox::about(this, tr("Help"), tr("Some documentation is available online.<br><br>"
+		"Please visit:<br>"
 		"<a href='http://www.les-stooges.org/pascal/pencil'>http://www.les-stooges.org/pascal/pencil/</a>."));
 	}
 
@@ -1045,6 +1077,27 @@ bool Editor::exportFlash() {
 		updateMaxFrame();
 		object->exportFlash(1, maxFrame, scribbleArea->getView(), exportSize, filePath, fps, exportFlashDialog_compression->value());
 		return true; 
+	}
+}
+
+void Editor::exportPalette()
+{
+	QSettings settings("Pencil","Pencil");
+	QString initialPath = settings.value("lastFilePath", QVariant(QDir::homePath())).toString();		
+	if(initialPath.isEmpty()) initialPath = QDir::homePath() + "/untitled.xml";
+	QString filePath = QFileDialog::getSaveFileName(this, tr("Export As"),initialPath);
+	if (!filePath.isEmpty()) object->exportPalette(filePath);
+}
+
+void Editor::importPalette()
+{
+	QSettings settings("Pencil","Pencil");
+	QString initialPath = settings.value("lastFilePath", QVariant(QDir::homePath())).toString();		
+	if(initialPath.isEmpty()) initialPath = QDir::homePath() + "/untitled.xml";
+	QString filePath = QFileDialog::getOpenFileName(this, tr("Import"),initialPath);
+	if (!filePath.isEmpty()) {
+		object->importPalette(filePath);
+		palette->updateList();
 	}
 }
 

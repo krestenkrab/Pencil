@@ -24,13 +24,13 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 {
 	this->editor = editor;
 	
-	QWidget* paletteContent = new QWidget(this);
+	QWidget* paletteContent = new QWidget();
 	//paletteContent->setWindowFlags(Qt::FramelessWindowHint);
 	
-	sliderRed = new QSlider(Qt::Horizontal, this);
-	sliderGreen = new QSlider(Qt::Horizontal, this);
-	sliderBlue = new QSlider(Qt::Horizontal, this);
-	sliderAlpha = new QSlider(Qt::Horizontal, this);
+	sliderRed = new QSlider(Qt::Horizontal);
+	sliderGreen = new QSlider(Qt::Horizontal);
+	sliderBlue = new QSlider(Qt::Horizontal);
+	sliderAlpha = new QSlider(Qt::Horizontal);
 	sliderRed->setRange(0,255);
 	sliderGreen->setRange(0,255);
 	sliderBlue->setRange(0,255);
@@ -54,29 +54,46 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 	sliderLayout->addWidget(sliderBlue, 2, 1);
 	sliderLayout->addWidget(labelAlpha, 3, 0);
 	sliderLayout->addWidget(sliderAlpha, 3, 1);
+	sliderLayout->setMargin(10);
+	sliderLayout->setSpacing(2);
+	
+	//QWidget* sliders = new QWidget();
+	//sliders->setLayout(sliderLayout);
+	//sliders->setFixedHeight(60);
 	
 	listOfColours = new QListWidget();
 	
-	QWidget *buttons = new QWidget();
-	addButton = new QToolButton(this);
-	rmButton = new QToolButton(this);
+	QToolBar *buttons = new QToolBar();
+	addButton = new QToolButton();
+	removeButton = new QToolButton();
 	addButton->setIcon(QIcon(":icons/add.png"));
 	addButton->setToolTip("Add Colour");
-	rmButton->setIcon(QIcon(":icons/remove.png"));
-	rmButton->setToolTip("Remove Colour");
+	addButton->setFixedSize(30,30);
+	removeButton->setIcon(QIcon(":icons/remove.png"));
+	removeButton->setToolTip("Remove Colour");
+	removeButton->setFixedSize(30,30);
+	
+	QLabel* spacer = new QLabel();
+	spacer->setFixedWidth(10);
 	
 	colourSwatch = new QLabel();
-	colourSwatch->setFixedSize( 36, 36 );
-	QPixmap colourPixmap(36,36);
+	colourSwatch->setFixedSize( 32, 32 );
+	QPixmap colourPixmap(32,32);
 	colourPixmap.fill( Qt::black );
 	colourSwatch->setPixmap(colourPixmap);
 	colourSwatch->setFrameStyle(QFrame::Panel | QFrame::Sunken);
 	
-	QGridLayout *buttonLayout = new QGridLayout();
-	buttonLayout->addWidget(colourSwatch,0,0);
-	buttonLayout->addWidget(addButton,0,1);
-	buttonLayout->addWidget(rmButton,0,2);
-	buttons->setLayout(buttonLayout);
+	//QGridLayout *buttonLayout = new QGridLayout();
+	buttons->addWidget(spacer);
+	buttons->addWidget(colourSwatch);
+	buttons->addWidget(addButton);
+	buttons->addWidget(removeButton);
+	//buttons->setFixedSize(100,34);
+	//buttons->layout()->setMargin(0);
+	//buttons->layout()->setSpacing(0);
+	//buttonLayout->setMargin(0);
+	//buttonLayout->setSpacing(0);
+	//buttons->setLayout(buttonLayout);
 	
 	listOfColours->setFrameStyle(QFrame::Panel | QFrame::Sunken);
 	listOfColours->setLineWidth(1);
@@ -87,6 +104,7 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 	layout->addLayout(sliderLayout);
 	layout->addWidget(buttons);
 	layout->addWidget(listOfColours);
+	layout->setMargin(0);
 	
 	paletteContent->setLayout(layout);
 	setWidget(paletteContent);
@@ -119,10 +137,11 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 
 	connect(listOfColours, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), this, SLOT(selectColour(QListWidgetItem *, QListWidgetItem *)));
 	connect(listOfColours, SIGNAL(itemClicked ( QListWidgetItem *)), this, SLOT(selectAndApplyColour( QListWidgetItem *)));
-	connect(listOfColours, SIGNAL(itemDoubleClicked ( QListWidgetItem *)), this, SLOT(changeColour( QListWidgetItem *)));
+	//connect(listOfColours, SIGNAL(itemDoubleClicked ( QListWidgetItem *)), this, SLOT(changeColour( QListWidgetItem *)));
+	connect(listOfColours, SIGNAL(itemDoubleClicked ( QListWidgetItem *)), this, SLOT(changeColourName( QListWidgetItem *)));
 	
 	connect(addButton, SIGNAL(clicked()), this, SLOT(addClick()));
-	connect(rmButton, SIGNAL(clicked()), this, SLOT(rmClick()));
+	connect(removeButton, SIGNAL(clicked()), this, SLOT(rmClick()));
 	
 	connect(this, SIGNAL(topLevelChanged(bool)), this, SLOT(closeIfDocked(bool)));
 }
@@ -168,14 +187,18 @@ void Palette::updateColour() {
 	editor->updateColour(currentColour(), newColour);
 }
 
-void Palette::updateSwatch(QColor x) {
+void Palette::updateSwatch(QColor colour) {
 	QPixmap colourPixmap(36,36);
-	colourPixmap.fill( x );
+	colourPixmap.fill( colour );
 	if(colourSwatch != NULL) colourSwatch->setPixmap(colourPixmap);
 }
 
 void Palette::changeColour( QListWidgetItem * item ) {
 	if(item != NULL) editor->changeColour(listOfColours->row(item));
+}
+
+void Palette::changeColourName( QListWidgetItem * item ) {
+	if(item != NULL) editor->changeColourName(listOfColours->row(item));
 }
 
 void Palette::addClick() {
@@ -192,6 +215,7 @@ void Palette::closeIfDocked(bool floating) {
 
 void Palette::setColour(QColor colour) {
 	setColour(colour.red(), colour.green(), colour.blue(), colour.alpha());
+	updateSwatch(colour);
 }
 
 void Palette::setColour(int r, int g, int b, int a) {

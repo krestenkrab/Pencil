@@ -61,7 +61,10 @@ class Object : public QObject
 		void addColour(QColor);
 		void addColour(ColourRef newColour) { myPalette.append(newColour); }
 		bool removeColour(int index);
+		void renameColour(int i, QString text);
 		int getColourCount() { return myPalette.size();}
+		bool importPalette(QString filePath);
+		bool exportPalette(QString filePath);
 		bool savePalette(QString filePath);
 		bool loadPalette(QString filePath);
 		void loadDefaultPalette();

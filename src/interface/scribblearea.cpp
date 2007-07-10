@@ -1259,7 +1259,7 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 	painter.setBrush(Qt::NoBrush);
 	painter.drawRect(QRect(0,0, width(), height()));
 	// shadow
-	if(shadows && (!mouseInUse || toolMode == HAND)) {
+	if(shadows && !editor->playing && (!mouseInUse || toolMode == HAND)) {
 		int radius1 = 12;
 		int radius2 = 8;
 		QLinearGradient shadow = QLinearGradient( 0, 0, 0, radius1);

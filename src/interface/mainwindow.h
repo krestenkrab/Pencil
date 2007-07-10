@@ -36,6 +36,7 @@ private:
 	
 	QMenu *fileMenu;
     QMenu *openRecentMenu;
+    QMenu *importMenu;
     QMenu *exportMenu;
     QMenu *editMenu;
     QMenu *layerMenu;
@@ -53,6 +54,8 @@ private:
 	QAction *exportAct;
 	QAction *exportMovAct;
 	QAction *exportFlashAct;
+	QAction *exportPaletteAct;
+	QAction *importPaletteAct;
 	QAction *savAct;
 	QAction *importAct;
 	QAction *undoAct;

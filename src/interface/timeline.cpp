@@ -639,17 +639,29 @@ void TimeLineCells::mouseDoubleClickEvent(QMouseEvent *event) {
 	int frameNumber = getFrameNumber(event->pos().x());
 	int layerNumber = getLayerNumber(event->pos().y());
 
-	if(type == "tracks" && (layerNumber != -1) && (frameNumber > 0) && layerNumber < editor->object->getLayerCount()) {
-		editor->object->getLayer(layerNumber)->mouseDoubleClick(event, frameNumber);
-	}
+	// -- short scrub --
 	if(event->pos().y() < 20) {
 		if(shortScrub) scrubChange(0); else scrubChange(1);
 	}
-	/*int layerNumber = getLayerNumber(event->pos().y());
-	if(layerNumber != -1 && layerNumber < editor->object->getLayerCount() ) {
-		editor->switchVisibilityOfLayer(layerNumber);
-		event->accept();
-	}*/
+	
+	// -- layer --
+	Layer* layer = editor->object->getLayer( layerNumber );
+	//if(layerNumber != -1 && layerNumber < editor->object->getLayerCount() ) {
+	if(layer) {
+		if(type == "tracks" && (layerNumber != -1) && (frameNumber > 0) && layerNumber < editor->object->getLayerCount()) {
+			editor->object->getLayer(layerNumber)->mouseDoubleClick(event, frameNumber);
+		}
+		if(type == "layers") {
+			bool ok;
+			QString text = QInputDialog::getText(this, tr("Layer name"),
+																				tr("Layer name:"), QLineEdit::Normal,
+																				layer->name, &ok);
+			if (ok && !text.isEmpty()) {
+				layer->name = text;
+				//palette->updateList();
+			}
+		}
+	}
 }
 
 // --- changes ---

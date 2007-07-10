@@ -83,102 +83,6 @@ void SpinSlider::sliderMoved(int value) {
 
 // ----------------------------------------------------------------------------------
 
- QSize TitleBar::minimumSizeHint() const
- {
-     QDockWidget *dw = qobject_cast<QDockWidget*>(parentWidget());
-     Q_ASSERT(dw != 0);
-     QSize result(leftPm.width() + rightPm.width(), centerPm.height());
-     if (dw->features() & QDockWidget::DockWidgetVerticalTitleBar)
-         result.transpose();
-     return result;
- }
-
- TitleBar::TitleBar(QWidget *parent) : QWidget(parent)
- {
-     leftPm = QPixmap(":icons/titleBar/floatButton.png");
-     centerPm = QPixmap(":icons/titleBar/floatButton.png");
-     rightPm = QPixmap(":icons/titleBar/closeButton.png");
- }
-
- void TitleBar::paintEvent(QPaintEvent*)
- {
-     QPainter painter(this);
-     QRect rect = this->rect();
-
-     QDockWidget *dw = qobject_cast<QDockWidget*>(parentWidget());
-     Q_ASSERT(dw != 0);
-
-     if (dw->features() & QDockWidget::DockWidgetVerticalTitleBar) {
-         QSize s = rect.size();
-         s.transpose();
-         rect.setSize(s);
-
-         painter.translate(rect.left(), rect.top() + rect.width());
-         painter.rotate(-90);
-         painter.translate(-rect.left(), -rect.top());
-     }
-
-     painter.drawPixmap(rect.topLeft(), leftPm);
-     painter.drawPixmap(rect.topRight() - QPoint(rightPm.width() - 1, 0), rightPm);
-     painter.drawPixmap(rect.topRight() - QPoint(2*rightPm.width() - 1, 0), rightPm);
-     
-		 //QBrush brush(centerPm);
-     painter.fillRect(rect.left() + leftPm.width(), rect.top(),
-                         rect.width() - leftPm.width() - rightPm.width(),
-                         centerPm.height(), QColor(200,200,255));
- }
-
- void TitleBar::mousePressEvent(QMouseEvent *event)
- {
-     QPoint pos = event->pos();
-
-     QRect rect = this->rect();
-
-     QDockWidget *dw = qobject_cast<QDockWidget*>(parentWidget());
-     Q_ASSERT(dw != 0);
-
-     if (dw->features() & QDockWidget::DockWidgetVerticalTitleBar) {
-         QPoint p = pos;
-         pos.setX(rect.left() + rect.bottom() - p.y());
-         pos.setY(rect.top() + p.x() - rect.left());
-
-         QSize s = rect.size();
-         s.transpose();
-         rect.setSize(s);
-     }
-
-     const int buttonRight = 7;
-     const int buttonWidth = rightPm.width();
-     int right = rect.right() - pos.x();
-     int button = (right - buttonRight)/buttonWidth;
-     switch (button) {
-         case 0:
-             event->accept();
-             dw->close();
-             break;
-         case 1:
-             event->accept();
-             dw->setFloating(!dw->isFloating());
-             break;
-         case 2: {
-             event->accept();
-             QDockWidget::DockWidgetFeatures features = dw->features();
-             if (features & QDockWidget::DockWidgetVerticalTitleBar)
-                 features &= ~QDockWidget::DockWidgetVerticalTitleBar;
-             else
-                 features |= QDockWidget::DockWidgetVerticalTitleBar;
-             dw->setFeatures(features);
-             break;
-         }
-         default:
-             event->ignore();
-             break;
-     }
- }
-
-
-// ----------------------------------------------------------------------------------
-
 ToolSet::ToolSet() {
 
 	drawPalette = new QDockWidget(tr("Tools"));
@@ -483,7 +387,7 @@ ToolSet::ToolSet() {
 	//onionGroup->setFlat(true);
 	//timeGroup->setFlat(true);
 
-	drawGroup->setMaximumSize( QSize(3*32,6*32+1) );
+	//drawGroup->setMaximumSize( QSize(3*32,6*32+1) );
 	
 	drawPalette->setMaximumHeight(200);
 	drawPalette->setFeatures(drawPalette->features() | QDockWidget::DockWidgetVerticalTitleBar);

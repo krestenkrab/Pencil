@@ -106,12 +106,12 @@ void Layer::paintSelection(QPainter &painter, int x, int y, int width, int heigh
 			QSettings settings("Pencil","Pencil");
 			QString style = settings.value("style").toString();
 			if(style == "aqua") {
-				linearGrad.setColorAt(0, QColor(225,225,255,200) );
-				linearGrad.setColorAt(0.01, QColor(225,225,255,90) );
-				linearGrad.setColorAt(0.10, QColor(225,225,255,64) );
+				linearGrad.setColorAt(0, QColor(225,225,255,100) );
+				linearGrad.setColorAt(0.10, QColor(225,225,255,80) );
+				linearGrad.setColorAt(0.20, QColor(225,225,255,64) );
 				linearGrad.setColorAt(0.35, QColor(225,225,255,20) );
 				linearGrad.setColorAt(0.351, QColor(0,0,0,32) );
-				linearGrad.setColorAt(0.75, QColor(245,255,235,32) );
+				linearGrad.setColorAt(0.66, QColor(245,255,235,32) );
 				linearGrad.setColorAt(1, QColor(245,255,235,128) );
 			} else {
 				linearGrad.setColorAt(0, QColor(255,255,255,128) );

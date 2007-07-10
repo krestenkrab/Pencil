@@ -112,6 +112,8 @@ public slots:
 	void importImage(QString filePath);
 	void importSound();
 	void importSound(QString filePath);
+	void importPalette();
+	void exportPalette();
 	void updateFrame(int frameNumber);
 	void updateFrameAndVector(int frameNumber);
 	void scrubTo(int frameNumber);	
@@ -166,6 +168,7 @@ public slots:
 	void selectAndApplyColour(int);
 	void setColour(QColor);
 	void changeColour(int);
+	void changeColourName(int);
 	void changeColour(int,QColor);
 	void updateColour(int, QColor);
 	void addColour();

@@ -217,10 +217,17 @@ bool Object::removeColour(int index) {
 	// update the vector pictures using that colour !
 }
 
+void Object::renameColour(int i, QString text) {
+	myPalette[i].name = text;
+}
 
 bool Object::savePalette(QString filePath) {
+	return exportPalette(filePath+"/palette.xml");
+}
+
+bool Object::exportPalette(QString filePath) {
 	//qDebug() << "coucou" << filePath;
-	QFile* file = new QFile(filePath+"/palette.xml");
+	QFile* file = new QFile(filePath);
 	if (!file->open(QFile::WriteOnly | QFile::Text)) {
 		//QMessageBox::warning(this, "Warning", "Cannot write file");
 		return false;
@@ -248,7 +255,11 @@ bool Object::savePalette(QString filePath) {
 }
 
 bool Object::loadPalette(QString filePath) {
-	QFile* file = new QFile(filePath+"/palette.xml");
+	return importPalette(filePath+"/palette.xml");
+}
+
+bool Object::importPalette(QString filePath) {
+	QFile* file = new QFile(filePath);
 	if (!file->open(QFile::ReadOnly)) {
 		//QMessageBox::warning(this, "Warning", "Cannot read file");
 		return false;

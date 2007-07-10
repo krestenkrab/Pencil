@@ -39,7 +39,7 @@ class Palette : public QDockWidget
 		
 		Editor* editor;
 		QListWidget* listOfColours;
-		QToolButton *addButton, *rmButton;
+		QToolButton *addButton, *removeButton;
 		QSlider *sliderRed, *sliderGreen, *sliderBlue, *sliderAlpha;
 		QLabel *colourSwatch;
 	
@@ -56,6 +56,7 @@ class Palette : public QDockWidget
 		void updateColour();
 		void changeColour();
 		void changeColour(QListWidgetItem*);
+		void changeColourName(QListWidgetItem*);
 		void addClick();
 		void rmClick();
 		void closeIfDocked(bool);
