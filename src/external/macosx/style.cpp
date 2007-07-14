@@ -23,7 +23,7 @@ int AquaStyle::pixelMetric(PixelMetric metric,
  {
      switch (metric) {
      case QStyle::PM_DockWidgetSeparatorExtent:
-         return 2;
+         return 3;
 		 case QStyle::PM_DockWidgetTitleBarButtonMargin:
 				return 1;
      default:

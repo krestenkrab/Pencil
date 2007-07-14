@@ -74,7 +74,7 @@ public:
 	void resetColours();
   
 	void deleteSelection();
-	void setSelection(QRectF rect);
+	void setSelection(QRectF rect, bool);
 	void displaySelectionProperties();
 	QRectF getSelection() { return mySelection; }
 	bool somethingSelected;
@@ -147,6 +147,7 @@ public slots:
 	void setBackground(int);
 	void setBackgroundBrush(QString);
 	void setShadows(int);
+	void setToolCursors(int);
 	void setStyle(int);
 	void toggleThinLines();
 	void toggleOutlines();
@@ -205,6 +206,7 @@ private:
 	bool highResPosition;
 	bool antialiasing;
 	bool shadows;
+	bool toolCursors;
 	int gradients;
 	qreal curveOpacity;
 	qreal curveSmoothing;

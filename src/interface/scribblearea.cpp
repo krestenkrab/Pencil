@@ -109,6 +109,8 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	if( settings.value("antialiasing").toString() == "false") antialiasing = false;
 	shadows = true; // default value is true (because it's prettier)
 	if( settings.value("shadows").toString() == "false") shadows = false;
+	toolCursors = true; // default value is true
+	if( settings.value("toolCursors").toString() == "false") toolCursors = false;
 	gradients = 2;
 	if( settings.value("gradients").toString() != "") gradients = settings.value("gradients").toInt();;
 	
@@ -343,6 +345,13 @@ void ScribbleArea::setShadows(int x)
 	if (x==0) { shadows=false; settings.setValue("shadows","false"); }
 	else { shadows=true; settings.setValue("shadows","true"); }
 	update();
+}
+
+void ScribbleArea::setToolCursors(int x)
+{
+	QSettings settings("Pencil","Pencil");
+	if (x==0) { toolCursors=false; settings.setValue("toolCursors","false"); }
+	else { toolCursors=true; settings.setValue("toolCursors","true"); }
 }
 
 void ScribbleArea::setStyle(int x)
@@ -639,7 +648,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 			} else { // there is nothing selected
 				mySelection.setTopLeft( lastPoint );
 				mySelection.setBottomRight( lastPoint );
-				setSelection(mySelection);
+				setSelection(mySelection, true);
 			}
 			update();
 		}
@@ -694,7 +703,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 							paintTransformedSelection();
 							if(event->modifiers() != Qt::ShiftModifier) { deselectAll(); }
 							vectorImage->setSelected(closestCurves, true);
-							setSelection( vectorImage->getSelectionRect() );
+							setSelection( vectorImage->getSelectionRect(), true );
 							update();
 						}
 					} else {
@@ -704,7 +713,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 								if(event->modifiers() != Qt::ShiftModifier) { deselectAll(); }
 								vectorImage->setAreaSelected(areaNumber, true);
 								//setSelection( vectorImage->getSelectionRect() );
-								setSelection( QRectF(0,0,0,0) );
+								setSelection( QRectF(0,0,0,0), true );
 								update();
 							}
 						}	else { // the user doesn't click near a curve or an area
@@ -763,7 +772,8 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 	if (toolMode == ScribbleArea::ERASER) {
 		if(event->buttons() & Qt::LeftButton) { // the user is also pressing the mouse (dragging)
 			if(layer->type == Layer::VECTOR) {
-				QList<VertexRef> nearbyVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, eraser.width/myTempView.m11());
+				qreal radius = (eraser.width/2)/myTempView.m11();
+				QList<VertexRef> nearbyVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, radius);
 				for(int i=0; i< nearbyVertices.size(); i++) {
 					((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->setSelected(nearbyVertices.at(i), true);
 				}
@@ -827,7 +837,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 				moveMode = ScribbleArea::MIDDLE;
 				mySelection.setTopLeft( lastPoint );
 				mySelection.setBottomRight( lastPoint );
-				setSelection(mySelection);
+				setSelection(mySelection, true);
 			}
 		} else { // the user is moving the mouse without pressing it
 			if(layer->type == Layer::VECTOR)  {
@@ -1088,7 +1098,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 				editor->getToolSet()->changeMoveButton();
 				moveOn();
 				VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
-				setSelection( vectorImage->getSelectionRect() );
+				setSelection( vectorImage->getSelectionRect(), true );
 				if(mySelection.size() == QSizeF(0,0)) somethingSelected = false;
 			}
 		}
@@ -1149,31 +1159,43 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 		if(layer->type == Layer::VECTOR) {
 			VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
 					
-			if(toolMode == EDIT) {
-				bufferImg->clear();
+			if(toolMode == EDIT || toolMode == HAND) {
+				//bufferImg->clear();
+				painter.save();
+				painter.setWorldMatrixEnabled(false);
+				painter.setRenderHint(QPainter::Antialiasing, false);
 				// ----- paints the edited elements
 				QPen pen2(Qt::black, 0.5, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin);
+				painter.setPen( pen2 );
 				QColor colour;
 				// ------------ vertices of the edited curves
 				colour = QColor(200,200,200);
+				painter.setBrush( colour );
 				for(int k=0; k<vectorSelection.curve.size(); k++) {
 					int curveNumber = vectorSelection.curve.at(k);
 					//QPainterPath path = vectorImage->curve[curveNumber].getStrokedPath();
 					//bufferImg->drawPath( myTempView.map(path), pen2, colour, QPainter::CompositionMode_SourceOver, false);
-					for(int vertexNumber=0; vertexNumber<vectorImage->getCurveSize(curveNumber); vertexNumber++) {
+					for(int vertexNumber=-1; vertexNumber<vectorImage->getCurveSize(curveNumber); vertexNumber++) {
 						QPointF vertexPoint = vectorImage->getVertex(curveNumber, vertexNumber);
-						QRectF rectangle = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSize(7,7) ); 
-						if(rect().contains( myTempView.map(vertexPoint).toPoint())) bufferImg->drawRect( rectangle.toRect(), pen2, colour, QPainter::CompositionMode_SourceOver, false);
+						QRectF rectangle = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSizeF(7,7) ); 
+						if(rect().contains( myTempView.map(vertexPoint).toPoint())) {
+							
+							painter.drawRect( rectangle.toRect() );
+							//bufferImg->drawRect( rectangle.toRect(), pen2, colour, QPainter::CompositionMode_SourceOver, false);
+						}
 					}
 					
 				}
 				// ------------ selected vertices of the edited curves
 				colour = QColor(100,100,255);
+				painter.setBrush( colour );
 				for(int k=0; k<vectorSelection.vertex.size(); k++) {
 					VertexRef vertexRef = vectorSelection.vertex.at(k);
 					QPointF vertexPoint = vectorImage->getVertex(vertexRef);
-					QRectF rectangle0 = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSize(7,7) ); 
-					bufferImg->drawRect( rectangle0, pen2, colour, QPainter::CompositionMode_SourceOver, false);
+					QRectF rectangle0 = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSizeF(7,7) ); 
+					painter.drawRect( rectangle0.toRect() );
+					//bufferImg->drawRect( rectangle0, pen2, colour, QPainter::CompositionMode_SourceOver, false);
+					
 					/* --- draws the control points -- maybe editable in a future version (although not recommended)
 					QPointF c1Point = vectorImage->getC1(vertexRef.nextVertex());
 					QPointF c2Point = vectorImage->getC2(vertexRef);
@@ -1187,15 +1209,18 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 				}
 				// ----- paints the closest vertices
 				colour = QColor(255,0,0);
+				painter.setBrush( colour );
 				if( vectorSelection.curve.size() > 0 ) {
 					for(int k=0; k<closestVertices.size(); k++) {
 						VertexRef vertexRef = closestVertices.at(k);
 						QPointF vertexPoint = vectorImage->getVertex(vertexRef);
 						//if( vectorImage->isSelected(vertexRef) ) vertexPoint = selectionTransformation.map( vertexPoint );
-						QRectF rectangle = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSize(7,7) ); 
-						bufferImg->drawRect( rectangle.toRect(), pen2, colour, QPainter::CompositionMode_SourceOver, false);
+						QRectF rectangle = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSizeF(7,7) );
+						painter.drawRect( rectangle.toRect() );
+						//bufferImg->drawRect( rectangle.toRect(), pen2, colour, QPainter::CompositionMode_SourceOver, false);
 					}
 				}
+				painter.restore();
 			}
 
 			if(toolMode == MOVE) {
@@ -1626,7 +1651,7 @@ void ScribbleArea::calculateSelectionRect() {
 	if(layer->type == Layer::VECTOR) {
 		VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
 		vectorImage->calculateSelectionRect();
-		setSelection( vectorImage->getSelectionRect() );
+		setSelection( vectorImage->getSelectionRect(), true );
 	}
 }
 
@@ -1675,11 +1700,11 @@ void ScribbleArea::paintTransformedSelection() {
 	}
 }
 
-void ScribbleArea::setSelection(QRectF rect) {
+void ScribbleArea::setSelection(QRectF rect, bool trueOrFalse) {
 	mySelection = rect;
 	myTransformedSelection = rect;
 	myTempTransformedSelection = rect;
-	somethingSelected = true;
+	somethingSelected = trueOrFalse;
 	displaySelectionProperties();
 }
 
@@ -1716,12 +1741,12 @@ void ScribbleArea::selectAll() {
 	Layer* layer = editor->getCurrentLayer();
 	if(layer == NULL) return;
 	if(layer->type == Layer::BITMAP) {
-		setSelection( myTempView.inverted().mapRect( QRect(-2,-2, width()+3, height()+3) ) ); // TO BE IMPROVED
+		setSelection( myTempView.inverted().mapRect( QRect(-2,-2, width()+3, height()+3) ), true ); // TO BE IMPROVED
 	}
 	if(layer->type == Layer::VECTOR) {
 		VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
 		vectorImage->selectAll();
-		setSelection( vectorImage->getSelectionRect() );
+		setSelection( vectorImage->getSelectionRect(), true );
 	}
 	updateFrame();
 }
@@ -2060,7 +2085,35 @@ void ScribbleArea::pencilOn() {
 	editor->setInvisibility(pencil.invisibility);
 	editor->setInvisibility(-1); // by definition the pencil is invisible in vector mode
 	// --- change cursor ---
-	setCursor(Qt::CrossCursor);
+	if(toolCursors) {
+		QCursor cursor(QPixmap(":icons/pencil2.png"),0,16);
+		setCursor(cursor);
+	} else {
+		setCursor(Qt::CrossCursor);
+	}
+}
+
+void ScribbleArea::penOn() {
+	switchTool();
+	toolMode = ScribbleArea::PEN;
+	// --- change properties ---
+	Layer* layer = editor->getCurrentLayer();
+	if(layer == NULL) return;
+	if(layer->type == Layer::VECTOR) editor->selectColour(pen.colourNumber);
+	if(layer->type == Layer::BITMAP) editor->setColour(pen.colour);
+	if(pen.width<0) pen.width = 1.0; editor->setWidth(pen.width);
+	if(pen.feather<0) pen.feather = 0.0; editor->setFeather(pen.feather);
+	if(pen.opacity<0) pen.opacity = 1.0; editor->setOpacity(pen.opacity);
+	editor->setPressure(pen.pressure);
+	editor->setInvisibility(pen.invisibility);
+	editor->setInvisibility(-1); // by definition the pen is visible in vector mode
+	// --- change cursor ---
+	if(toolCursors) {
+		QCursor cursor(QPixmap(":icons/pen.png"),7,0);
+		setCursor(cursor);
+	} else {
+		setCursor(Qt::CrossCursor);
+	}
 }
 
 void ScribbleArea::eraserOn() {
@@ -2074,7 +2127,17 @@ void ScribbleArea::eraserOn() {
 	editor->setInvisibility(1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	setCursor(Qt::CrossCursor);
+	QPixmap pixmap(eraser.width,eraser.width);
+	pixmap.fill( QColor(255,255,255,0) );
+	QPainter painter(&pixmap);
+	painter.setPen( QColor(0,0,0,190) );
+	painter.setBrush( QColor(255,255,255,100) );
+	painter.drawLine( QPointF(eraser.width/2-2,eraser.width/2), QPointF(eraser.width/2+2,eraser.width/2) );
+	painter.drawLine( QPointF(eraser.width/2,eraser.width/2-2), QPointF(eraser.width/2,eraser.width/2+2) );
+	painter.setRenderHints(QPainter::Antialiasing, true);
+	painter.drawEllipse( QRectF(0,0,eraser.width-1,eraser.width-1) );
+	painter.end();
+	setCursor(pixmap); //setCursor(Qt::CrossCursor);
 }
 
 void ScribbleArea::selectOn() {
@@ -2115,25 +2178,8 @@ void ScribbleArea::handOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	setCursor(Qt::PointingHandCursor);
-}
-
-void ScribbleArea::penOn() {
-	switchTool();
-	toolMode = ScribbleArea::PEN;
-	// --- change properties ---
-	Layer* layer = editor->getCurrentLayer();
-	if(layer == NULL) return;
-	if(layer->type == Layer::VECTOR) editor->selectColour(pen.colourNumber);
-	if(layer->type == Layer::BITMAP) editor->setColour(pen.colour);
-	if(pen.width<0) pen.width = 1.0; editor->setWidth(pen.width);
-	if(pen.feather<0) pen.feather = 0.0; editor->setFeather(pen.feather);
-	if(pen.opacity<0) pen.opacity = 1.0; editor->setOpacity(pen.opacity);
-	editor->setPressure(pen.pressure);
-	editor->setInvisibility(pen.invisibility);
-	editor->setInvisibility(-1); // by definition the pen is visible in vector mode
-	// --- change cursor ---
-	setCursor(Qt::CrossCursor);
+	QPixmap pixmap(":icons/hand.png");
+	setCursor(pixmap); //setCursor(Qt::PointingHandCursor);
 }
 
 void ScribbleArea::polylineOn() {
@@ -2168,7 +2214,12 @@ void ScribbleArea::bucketOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	setCursor(Qt::CrossCursor);
+	if(toolCursors) {
+		QCursor cursor(QPixmap(":icons/bucketTool.png"),4,19);
+		setCursor(cursor);
+	} else {
+		setCursor(Qt::CrossCursor);
+	}
 }
 
 void ScribbleArea::eyedropperOn() {
@@ -2230,7 +2281,8 @@ void ScribbleArea::smudgeOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	setCursor(Qt::ArrowCursor);
+	QCursor cursor(QPixmap(":icons/smudge.png"),3,16);
+	setCursor(cursor); //setCursor(Qt::ArrowCursor);
 }
 
 void ScribbleArea::deleteSelection() {

@@ -258,10 +258,15 @@ void BitmapImage::transform(QRect newBoundaries, bool smoothTransform) {
 		boundaries = newBoundaries;
 		newBoundaries.moveTopLeft( QPoint(0,0) );
 		QImage* newImage = new QImage( boundaries.size(), QImage::Format_ARGB32_Premultiplied);
+		//newImage->fill(QColor(255,255,255).rgb());
 		QPainter painter(newImage);
 		painter.setRenderHint(QPainter::SmoothPixmapTransform, smoothTransform);
+		painter.setCompositionMode(QPainter::CompositionMode_Source);
+		painter.fillRect( newImage->rect(), QColor(0,0,0,0) );
+		painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 		painter.drawImage(newBoundaries, *image );
 		painter.end();
+		//if(image != NULL) delete image;
 		image = newImage;
 	}
 }

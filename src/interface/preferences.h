@@ -36,6 +36,7 @@ class Preferences : public QDialog {
 		void gradientsChange(int);
 		void backgroundChange(int);
 		void shadowsChange(int);
+		void toolCursorsChange(int);
 		void styleChange(int);
 		
 		void lengthSizeChange(QString);

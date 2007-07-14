@@ -152,6 +152,10 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 	shadowsBox->setChecked(true); // default
 	if (settings.value("shadows").toString()=="false") shadowsBox->setChecked(false);
 	
+	QCheckBox *toolCursorsBox = new QCheckBox(tr("Tool Cursors"));
+	toolCursorsBox->setChecked(true); // default
+	if (settings.value("toolCursors").toString()=="false") toolCursorsBox->setChecked(false);
+
 	QCheckBox *aquaBox = new QCheckBox(tr("Aqua Style"));
 	aquaBox->setChecked(false); // default
 	if (settings.value("style").toString()=="aqua") aquaBox->setChecked(true);
@@ -222,6 +226,7 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 	
 	lay->addWidget(backgroundBox);
 	lay->addWidget(shadowsBox);
+	lay->addWidget(toolCursorsBox);
 #ifdef Q_WS_MAC	
 	lay->addWidget(aquaBox);
 #endif
@@ -230,6 +235,7 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 	
 	connect(backgroundButtons, SIGNAL(buttonClicked(int)), parent, SIGNAL(backgroundChange(int)));
 	connect(shadowsBox, SIGNAL(stateChanged(int)), parent, SIGNAL(shadowsChange(int)));
+	connect(toolCursorsBox, SIGNAL(stateChanged(int)), parent, SIGNAL(toolCursorsChange(int)));
 	connect(aquaBox, SIGNAL(stateChanged(int)), parent, SIGNAL(styleChange(int)));
 	connect(antialiasingBox, SIGNAL(stateChanged(int)), parent, SIGNAL(antialiasingChange(int)));
 	connect(gradientsBox, SIGNAL(stateChanged(int)), parent, SIGNAL(gradientsChange(int)));

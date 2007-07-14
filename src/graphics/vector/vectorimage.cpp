@@ -115,7 +115,7 @@ void VectorImage::removeCurveAt(int i) {
 
 void VectorImage::addCurve(BezierCurve &newCurve, qreal factor) {
 	if(newCurve.getVertexSize() < 1) return; // security - a new curve should have a least 2 vertices
-	qreal tol = qMax(newCurve.getWidth(), 3.0 / factor); // tolerance for taking the intersection as an existing vertex on a curve
+	qreal tol = qMax(newCurve.getWidth() / factor, 3.0 / factor); // tolerance for taking the intersection as an existing vertex on a curve
 	//qDebug() << "tolerance" << tol;
 	// finds if the new curve interesects itself
 	for(int k=0; k < newCurve.getVertexSize(); k++) { // for each cubic section of the new curve
@@ -125,11 +125,11 @@ void VectorImage::addCurve(BezierCurve &newCurve, qreal factor) {
 			if(intersection) {
 						//qDebug() << "INTERSECTION" << intersectionPoint << t1 << t2;
 						//newCurve.addPoint(k, intersectionPoint);
-						newCurve.addPoint(k, intersections[0].t1);
+						newCurve.addPoint(k, intersections[0].t1); //qDebug() << "--a " << newCurve.getVertex(k) << newCurve.getVertex(k+1);
 						k++;
 						j++;
 						//newCurve.addPoint(j, intersectionPoint);
-						newCurve.addPoint(j, intersections[0].t2);
+						newCurve.addPoint(j, intersections[0].t2); //qDebug() << "--a " << newCurve.getVertex(j) << newCurve.getVertex(j+1);
 						j++;
 			}
 		}
@@ -151,17 +151,17 @@ void VectorImage::addCurve(BezierCurve &newCurve, qreal factor) {
 			qreal dist1 = BezierCurve::eLength(P-P1);
 			qreal dist2 = BezierCurve::eLength(P-P2);
 			if(dist1 <= 0.2*tol) {
-				newCurve.setVertex(-1, P1);
+				newCurve.setVertex(-1, P1); //qDebug() << "--b " << P1;
 			} else {
 				if(dist2 <= 0.2*tol) {
-					newCurve.setVertex(-1, P2);
+					newCurve.setVertex(-1, P2); //qDebug() << "--c " << P2;
 				} else {
 					if( dist1+dist2 <= 3*tol3 ) { // preselection, to speed up
 						QPointF nearestPoint = P;
 						qreal t = -1.0;
 						qreal distance = BezierCurve::findDistance(curve[i], j, P, nearestPoint, t);
 						if(distance < tol) {
-							newCurve.setOrigin(nearestPoint);
+							newCurve.setOrigin(nearestPoint); //qDebug() << "--d " << nearestPoint;
 							addPoint(i, j, t);
 							//j++;
 						}
@@ -173,17 +173,17 @@ void VectorImage::addCurve(BezierCurve &newCurve, qreal factor) {
 			dist1 = BezierCurve::eLength(Q-P1);
 			dist2 = BezierCurve::eLength(Q-P2);
 			if(dist1 <= 0.2*tol) {
-				newCurve.setLastVertex(P1);
+				newCurve.setLastVertex(P1); //qDebug() << "--e " << P1;
 			} else {
 				if(dist2 <= 0.2*tol) {
-					newCurve.setLastVertex(P2);
+					newCurve.setLastVertex(P2); //qDebug() << "--f " << P2;
 				} else {
 					if( dist1+dist2 <= 3*tol3 ) { // preselection, to speed up
 						QPointF nearestPoint = Q;
 						qreal t = -1.0;;
 						qreal distance = BezierCurve::findDistance(curve[i], j, Q, nearestPoint, t);
 						if(distance < tol) {
-							newCurve.setLastVertex(nearestPoint); 
+							newCurve.setLastVertex(nearestPoint); //qDebug() << "--g " << nearestPoint;
 							addPoint(i, j, t);
 							//j++;
 						}
@@ -227,7 +227,7 @@ void VectorImage::addCurve(BezierCurve &newCurve, qreal factor) {
 						if(distance < tol) {
 							P = nearestPoint;
 							curve[i].setOrigin(P);
-							newCurve.addPoint(k, P);
+							newCurve.addPoint(k, P); //qDebug() << "--i " << P;
 						}
 					}
 				}
@@ -250,7 +250,7 @@ void VectorImage::addCurve(BezierCurve &newCurve, qreal factor) {
 						if(distance < tol) {
 							Q = nearestPoint;
 							curve[i].setLastVertex(Q);
-							newCurve.addPoint(k, Q);
+							newCurve.addPoint(k, Q); //qDebug() << "--j " << Q;
 						}
 					}
 				}
@@ -267,25 +267,25 @@ void VectorImage::addCurve(BezierCurve &newCurve, qreal factor) {
 					qreal t1 = intersections[0].t1;
 					qreal t2 = intersections[0].t2;
 					if( BezierCurve::eLength(intersectionPoint - newCurve.getVertex(k-1)) <= 0.1*tol ) { // the first point is close to the intersection
-						newCurve.setVertex(k-1, intersectionPoint); 
+						newCurve.setVertex(k-1, intersectionPoint); //qDebug() << "--k " << intersectionPoint;
 						//qDebug() << "--------- recal " << k-1 << intersectionPoint;
 					} else {
 						if( BezierCurve::eLength(intersectionPoint - newCurve.getVertex(k)) <= 0.1*tol ) { // the second point is close to the intersection
-							newCurve.setVertex(k, intersectionPoint); 
+							newCurve.setVertex(k, intersectionPoint); //qDebug() << "--l " << intersectionPoint;
 							//qDebug() << "-------- recal " << k << intersectionPoint;
 						} else { // none of the point is close to the intersection -> we add a new point
 							//newCurve.addPoint(k, intersectionPoint); 
-							newCurve.addPoint(k, t1); 
+							newCurve.addPoint(k, t1); //qDebug() << "--m " << newCurve.getVertex(k);
 							//qDebug() << "----- add " << k << newCurve.getVertex(k);
 							//k++;
 						}
 					}
 					if( BezierCurve::eLength(intersectionPoint - curve.at(i).getVertex(j-1)) <= 0.1*tol ) { // the first point is close to the intersection
-						curve[i].setVertex(j-1, intersectionPoint); 
+						curve[i].setVertex(j-1, intersectionPoint); //qDebug() << "--n " << intersectionPoint;
 						//qDebug() << "-------- recal2 " << j-1 << intersectionPoint;
 					} else {
 						if( BezierCurve::eLength(intersectionPoint - curve.at(i).getVertex(j)) <= 0.1*tol ) { // the second point is close to the intersection
-							curve[i].setVertex(j, intersectionPoint); 
+							curve[i].setVertex(j, intersectionPoint); //qDebug() << "--o " << intersectionPoint;
 							//qDebug() << "-------- recal2 " << j << intersectionPoint;
 						} else { // none of the point is close to the intersection -> we add a new point
 							addPoint(i, j, t2); 

@@ -52,12 +52,15 @@ BezierCurve::BezierCurve(QList<QPointF> pointList, QList<qreal> pressureList, do
 			}
 		} 
 	}
+	
 	//pointList = simplifiedPointList;
 	//pressureList = simplifiedPressureList;
 	//n = pointList.size();
 	
 	// Create curve from the simplified path
 	createCurve(simplifiedPointList, simplifiedPressureList);
+	
+	//createCurve(pointList, pressureList);
 }
 
 
@@ -306,9 +309,12 @@ void BezierCurve::removeVertex(int i) {
 }
 
 void BezierCurve::drawPath(QPainter &painter, Object* object, QMatrix transformation, bool simplified, bool showThinLines, qreal opacity) {
+	if(!simplified) painter.setOpacity(opacity);
+	QColor colour = object->getColour(colourNumber).colour;
+	
 	//simplified = true;
 	//if(selected) { painter.setMatrix(transformation); } else { painter.setMatrix(QMatrix()); }
-	QColor colour = object->getColour(colourNumber).colour;
+	//QColor colour = object->getColour(colourNumber).colour;
 	if(!simplified) painter.setOpacity(opacity);
 	BezierCurve myCurve;
 	if(isPartlySelected()) { myCurve = (transformed(transformation)); } else { myCurve = *this; }
@@ -317,6 +323,22 @@ void BezierCurve::drawPath(QPainter &painter, Object* object, QMatrix transforma
 		painter.setPen(QPen(QBrush(colour), 1, Qt::NoPen, Qt::RoundCap,Qt::RoundJoin));	
 		painter.setBrush(colour);
 		painter.drawPath(myCurve.getStrokedPath());
+		/*QPen pen;
+		pen.setColor(colour);
+		QPointF P1 = origin;
+		QPointF P2 = origin;
+		for(int i=0; i<vertex.size(); i++) {
+			P2 = getVertex(i);
+			QPainterPath path;
+			path.moveTo(P1);
+			path.cubicTo(c1.at(i), c2.at(i), P2);
+			pen.setWidthF( 2.0 * width * getPressure(i) );
+			pen.setCapStyle( Qt::RoundCap );
+			painter.setPen( pen );
+			painter.drawPath( path );
+			//painter.drawLine( P1, P2 );
+			P1 = P2;
+		}*/
 	} else {
 		qreal renderedWidth = width;
 		if(simplified) {
@@ -368,6 +390,7 @@ void BezierCurve::drawPath(QPainter &painter, Object* object, QMatrix transforma
 		}
 	}
 }
+
 
 QPainterPath BezierCurve::getSimplePath() {
 	QPainterPath path;
@@ -459,9 +482,10 @@ void BezierCurve::createCurve(QList<QPointF> &pointList, QList<qreal> &pressureL
 	
 	}
 	smoothCurve();
-	colourNumber = 0;
+	//colourNumber = 0;
 	feather = 0;
 }
+
 
 void BezierCurve::smoothCurve() {
 	QPointF c1, c2, c2old, tangentVec, normalVec;
@@ -678,14 +702,14 @@ bool BezierCurve::findIntersection(BezierCurve curve1, int i1, BezierCurve curve
 	
 	//QPointF intersectionPoint = QPointF(50.0, 50.0); // bogus point
 	//QPointF* intersection = &intersectionPoint;
-	if( R1.intersects(R2) ) {
+	QPointF* cubicIntersection = &QPointF(50.0, 50.0); // bogus point
+	if( R1.intersects(R2) || L2.intersect(L1, cubicIntersection) == QLineF::BoundedIntersection ) {
 	//if(L2.intersect(L1, intersection) == QLineF::BoundedIntersection) {
 		//qDebug() << "                   FOUND rectangle intersection ";
 		//if(intersectionPoint != curve1.getVertex(i1-1) && intersectionPoint != curve1.getVertex(i1)) {
 		//	qDebug() << "                   it's not one of the points ";
 		// find the cubic intersection
 		int nSteps = 24;
-		QPointF* cubicIntersection = &QPointF(50.0, 50.0); // bogus point
 		P1 = curve1.getVertex(i1-1);
 		for(int i=1; i<=nSteps;i++) {
 			qreal s = (i+0.0)/nSteps;

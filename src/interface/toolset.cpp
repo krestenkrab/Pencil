@@ -388,6 +388,7 @@ ToolSet::ToolSet() {
 	//timeGroup->setFlat(true);
 
 	//drawGroup->setMaximumSize( QSize(3*32,6*32+1) );
+	drawGroup->setMaximumHeight(6*32+1);
 	
 	drawPalette->setMaximumHeight(200);
 	//drawPalette->setFeatures(drawPalette->features() | QDockWidget::DockWidgetVerticalTitleBar);

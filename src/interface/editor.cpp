@@ -145,6 +145,7 @@ Editor::Editor(QMainWindow* parent)
 	connect(preferences, SIGNAL(gradientsChange(int)), scribbleArea, SLOT(setGradients(int)));
 	connect(preferences, SIGNAL(backgroundChange(int)), scribbleArea, SLOT(setBackground(int)));
 	connect(preferences, SIGNAL(shadowsChange(int)), scribbleArea, SLOT(setShadows(int)));
+	connect(preferences, SIGNAL(toolCursorsChange(int)), scribbleArea, SLOT(setToolCursors(int)));
 	connect(preferences, SIGNAL(styleChange(int)), scribbleArea, SLOT(setStyle(int)));
 	
 	connect(preferences, SIGNAL(lengthSizeChange(QString)), timeLine, SIGNAL(lengthChange(QString)));
@@ -588,7 +589,7 @@ void Editor::paste() {
 			scribbleArea->deselectAll();
 			VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(currentFrame, 0);
 			vectorImage->paste( clipboardVectorImage );  // paste the clipboard
-			scribbleArea->setSelection( vectorImage->getSelectionRect() );
+			scribbleArea->setSelection( vectorImage->getSelectionRect(), true );
 			//((LayerVector*)layer)->getLastVectorImageAtFrame(backupFrame, 0)->modification(); ????
 		}
 	}
