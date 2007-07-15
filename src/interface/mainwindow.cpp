@@ -277,8 +277,12 @@ void MainWindow::keyReleaseEvent( QKeyEvent *e ) {
 
 void MainWindow::readSettings() {
 	QSettings settings("Pencil", "Pencil");
-	QPoint pos = settings.value("editorPosition", QPoint(100, 100)).toPoint();
-	QSize size = settings.value("editorSize", QSize(400, 300)).toSize();
+	QRect desktopRect = QApplication::desktop()->screenGeometry();
+	desktopRect.adjust(80,80,-80,-80);
+	//QPoint pos = settings.value("editorPosition", QPoint( qMax(0, (desktopRect.width()-800)/2), qMax(0, (desktopRect.height()-600)/2) )).toPoint();
+	QPoint pos = settings.value("editorPosition", desktopRect.topLeft() ).toPoint();
+	//QSize size = settings.value("editorSize", QSize(800, 600)).toSize();
+	QSize size = settings.value("editorSize", desktopRect.size() ).toSize();
 	move(pos);
 	resize(size);
 	

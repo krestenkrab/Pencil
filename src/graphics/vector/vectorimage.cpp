@@ -676,10 +676,16 @@ void VectorImage::paintImage(QPainter &painter, bool simplified, bool showThinCu
 				painter.fillPath( area[i].path, colour );
 			}
 			if(area[i].isSelected()) {
-				QBrush brush = painter.brush();
-				painter.setBrush( QBrush( QColor(0,0,255), Qt::Dense6Pattern) );
-				painter.drawPath( area[i].path );
-				painter.setBrush( brush );
+				//QBrush brush = painter.brush();
+				painter.save();
+				painter.setWorldMatrixEnabled(false);
+				
+				painter.setBrush( QBrush( QColor(255-colour.red(),255-colour.green(),255-colour.blue()), Qt::Dense6Pattern) );
+				//painter.setCompositionMode( QPainter::CompositionMode_Screen );
+				painter.drawPath( painter.worldMatrix().map( area[i].path ) );
+				//painter.setBrush( brush );
+				painter.restore();
+				painter.setWorldMatrixEnabled(true);
 			}
 			// --
 			painter.setRenderHint(QPainter::Antialiasing, antialiasing);

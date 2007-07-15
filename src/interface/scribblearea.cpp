@@ -175,6 +175,7 @@ void ScribbleArea::setColour(const int i)
 		brush.colourNumber = i;
 		brush.colour = editor->object->getColour(i).colour;
 	}
+	updateCursor();
 	updateFrame();
 }
 
@@ -190,6 +191,7 @@ void ScribbleArea::setColour(const QColor colour)
 		brush.colour = colour;
 	}
 	currentColour = colour;
+	updateCursor();
 }
 
 void ScribbleArea::resetColours()
@@ -220,6 +222,7 @@ void ScribbleArea::setWidth(const qreal newWidth)
 	}
 	currentWidth = newWidth;
 	updateAllFrames();
+	updateCursor();
 }
 
 void ScribbleArea::setFeather(const qreal newFeather)
@@ -239,6 +242,7 @@ void ScribbleArea::setFeather(const qreal newFeather)
 	}
 	//currentWidth = newWidth;
 	updateAllFrames();
+	updateCursor();
 }
 
 void ScribbleArea::setOpacity(const qreal newOpacity)
@@ -2069,6 +2073,113 @@ void ScribbleArea::switchTool() {
 	if(toolMode == ScribbleArea::POLYLINE) escape();
 }
 
+void ScribbleArea::updateCursor() {
+	if(toolMode == PENCIL) {
+		if(toolCursors) {
+			QCursor cursor(QPixmap(":icons/pencil2.png"),0,16);
+			setCursor(cursor);
+		} else {
+			setCursor(Qt::CrossCursor);
+		}
+	}
+	if(toolMode == PEN) {
+		if(toolCursors) {
+			QCursor cursor(QPixmap(":icons/pen.png"),7,0);
+			setCursor(cursor);
+		} else {
+			setCursor(Qt::CrossCursor);
+		}
+	}
+	if(toolMode == ERASER) {
+		QPixmap pixmap(eraser.width,eraser.width);
+		pixmap.fill( QColor(255,255,255,0) );
+		QPainter painter(&pixmap);
+		painter.setPen( QColor(0,0,0,190) );
+		painter.setBrush( QColor(255,255,255,100) );
+		painter.drawLine( QPointF(eraser.width/2-2,eraser.width/2), QPointF(eraser.width/2+2,eraser.width/2) );
+		painter.drawLine( QPointF(eraser.width/2,eraser.width/2-2), QPointF(eraser.width/2,eraser.width/2+2) );
+		painter.setRenderHints(QPainter::Antialiasing, true);
+		painter.setPen( QColor(0,0,0,100) );
+		painter.drawEllipse( QRectF(1,1,eraser.width-2,eraser.width-2) );
+		painter.end();
+		setCursor(pixmap); //setCursor(Qt::CrossCursor);
+	}
+	if(toolMode == BUCKET) {
+		if(toolCursors) {
+			QPixmap pixmap(":icons/bucketTool.png");
+			QPainter painter(&pixmap);
+			painter.setPen( brush.colour );
+			painter.drawLine( QPoint(5,16), QPoint(5,18) );
+			painter.end();
+			QCursor cursor(pixmap,4,20);
+			setCursor(cursor);
+		} else {
+			setCursor(Qt::CrossCursor);
+		}
+	}
+	if(toolMode == EYEDROPPER) {
+		if(eyedropperCursor == NULL) {
+			eyedropperCursor = new QPixmap(32,32);
+			eyedropperCursor->fill(Qt::white);
+			QPixmap* mask = new QPixmap(32,32);
+			mask->fill(Qt::color0);
+			QPainter painter(eyedropperCursor);
+			painter.drawLine(5,0,5,10);
+			painter.drawLine(0,5,10,5);
+			painter.end();
+			painter.begin(mask);
+			painter.setBrush(Qt::color1);
+			painter.setPen(Qt::color1);
+			painter.drawLine(5,0,5,10);
+			painter.drawLine(0,5,10,5);
+			painter.drawRect(10,10,20,20);
+			painter.end();
+			eyedropperCursor->setMask(*mask);
+		}
+		setCursor( QCursor(*eyedropperCursor, 5, 5) );
+	}
+	if(toolMode == SELECT) {
+		Layer* layer = editor->getCurrentLayer();
+		if(layer->type == Layer::VECTOR) setCursor(Qt::ArrowCursor);
+		if(layer->type == Layer::BITMAP) setCursor(Qt::CrossCursor);
+	}
+	if(toolMode == MOVE) {
+		setCursor(Qt::ArrowCursor);
+	}
+	if(toolMode == HAND) {
+		QPixmap pixmap(":icons/hand.png");
+		setCursor(pixmap); //setCursor(Qt::PointingHandCursor);
+	}
+	if(toolMode == POLYLINE) {
+		setCursor(Qt::CrossCursor);
+	}
+	if(toolMode == COLOURING) {
+		Layer* layer = editor->getCurrentLayer();
+		if(layer->type == Layer::VECTOR) {
+			setCursor(Qt::CrossCursor);
+		}
+		if(layer->type == Layer::BITMAP) {
+			qreal width = brush.width*0.66;
+			QPixmap pixmap(width,width);
+			pixmap.fill( QColor(255,255,255,0) );
+			QPainter painter(&pixmap);
+			painter.setPen( QColor(0,0,0,190) );
+			painter.setBrush( Qt::NoBrush );
+			painter.drawLine( QPointF(width/2-2,width/2), QPointF(width/2+2,width/2) );
+			painter.drawLine( QPointF(width/2,width/2-2), QPointF(width/2,width/2+2) );
+			painter.setRenderHints(QPainter::Antialiasing, true);
+			painter.setPen( QColor(0,0,0,100) );
+			painter.drawEllipse( QRectF(1,1,width-2,width-2) );
+			painter.end();
+			setCursor(pixmap);
+		}
+	}
+	if(toolMode == EDIT) {
+		QCursor cursor(QPixmap(":icons/smudge.png"),3,16);
+		setCursor(cursor); //setCursor(Qt::ArrowCursor);
+	}
+}
+
 void ScribbleArea::pencilOn() {
 	switchTool();
 	toolMode = ScribbleArea::PENCIL;
@@ -2085,12 +2196,7 @@ void ScribbleArea::pencilOn() {
 	editor->setInvisibility(pencil.invisibility);
 	editor->setInvisibility(-1); // by definition the pencil is invisible in vector mode
 	// --- change cursor ---
-	if(toolCursors) {
-		QCursor cursor(QPixmap(":icons/pencil2.png"),0,16);
-		setCursor(cursor);
-	} else {
-		setCursor(Qt::CrossCursor);
-	}
+	updateCursor();
 }
 
 void ScribbleArea::penOn() {
@@ -2108,12 +2214,7 @@ void ScribbleArea::penOn() {
 	editor->setInvisibility(pen.invisibility);
 	editor->setInvisibility(-1); // by definition the pen is visible in vector mode
 	// --- change cursor ---
-	if(toolCursors) {
-		QCursor cursor(QPixmap(":icons/pen.png"),7,0);
-		setCursor(cursor);
-	} else {
-		setCursor(Qt::CrossCursor);
-	}
+	updateCursor();
 }
 
 void ScribbleArea::eraserOn() {
@@ -2127,17 +2228,7 @@ void ScribbleArea::eraserOn() {
 	editor->setInvisibility(1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	QPixmap pixmap(eraser.width,eraser.width);
-	pixmap.fill( QColor(255,255,255,0) );
-	QPainter painter(&pixmap);
-	painter.setPen( QColor(0,0,0,190) );
-	painter.setBrush( QColor(255,255,255,100) );
-	painter.drawLine( QPointF(eraser.width/2-2,eraser.width/2), QPointF(eraser.width/2+2,eraser.width/2) );
-	painter.drawLine( QPointF(eraser.width/2,eraser.width/2-2), QPointF(eraser.width/2,eraser.width/2+2) );
-	painter.setRenderHints(QPainter::Antialiasing, true);
-	painter.drawEllipse( QRectF(0,0,eraser.width-1,eraser.width-1) );
-	painter.end();
-	setCursor(pixmap); //setCursor(Qt::CrossCursor);
+	updateCursor();
 }
 
 void ScribbleArea::selectOn() {
@@ -2152,8 +2243,7 @@ void ScribbleArea::selectOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	if(layer->type == Layer::VECTOR) setCursor(Qt::ArrowCursor);
-	if(layer->type == Layer::BITMAP) setCursor(Qt::CrossCursor);
+	updateCursor();
 }
 
 void ScribbleArea::moveOn() {
@@ -2165,7 +2255,7 @@ void ScribbleArea::moveOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	setCursor(Qt::ArrowCursor);
+	updateCursor();
 }
 
 void ScribbleArea::handOn() {
@@ -2178,8 +2268,7 @@ void ScribbleArea::handOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	QPixmap pixmap(":icons/hand.png");
-	setCursor(pixmap); //setCursor(Qt::PointingHandCursor);
+	updateCursor();
 }
 
 void ScribbleArea::polylineOn() {
@@ -2196,7 +2285,7 @@ void ScribbleArea::polylineOn() {
 	editor->setPressure(pen.pressure);
 	editor->setInvisibility(pen.invisibility);
 	// --- change cursor ---
-	setCursor(Qt::CrossCursor);
+	updateCursor();
 }
 
 void ScribbleArea::bucketOn() {
@@ -2214,12 +2303,7 @@ void ScribbleArea::bucketOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	if(toolCursors) {
-		QCursor cursor(QPixmap(":icons/bucketTool.png"),4,19);
-		setCursor(cursor);
-	} else {
-		setCursor(Qt::CrossCursor);
-	}
+	updateCursor();
 }
 
 void ScribbleArea::eyedropperOn() {
@@ -2232,26 +2316,7 @@ void ScribbleArea::eyedropperOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	//setCursor(Qt::CrossCursor);
-	if(eyedropperCursor == NULL) {
-		eyedropperCursor = new QPixmap(32,32);
-		eyedropperCursor->fill(Qt::white);
-		QPixmap* mask = new QPixmap(32,32);
-		mask->fill(Qt::color0);
-		QPainter painter(eyedropperCursor);
-		painter.drawLine(5,0,5,10);
-		painter.drawLine(0,5,10,5);
-		painter.end();
-		painter.begin(mask);
-		painter.setBrush(Qt::color1);
-		painter.setPen(Qt::color1);
-		painter.drawLine(5,0,5,10);
-		painter.drawLine(0,5,10,5);
-		painter.drawRect(10,10,20,20);
-		painter.end();
-		eyedropperCursor->setMask(*mask);
-	}
-	setCursor( QCursor(*eyedropperCursor, 5, 5) );
+	updateCursor();
 }
 
 void ScribbleArea::colouringOn() {
@@ -2268,7 +2333,7 @@ void ScribbleArea::colouringOn() {
 	editor->setPressure(brush.pressure);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	setCursor(Qt::CrossCursor);
+	updateCursor();
 }
 
 void ScribbleArea::smudgeOn() {
@@ -2281,9 +2346,10 @@ void ScribbleArea::smudgeOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
-	QCursor cursor(QPixmap(":icons/smudge.png"),3,16);
-	setCursor(cursor); //setCursor(Qt::ArrowCursor);
+	updateCursor();
 }
+
+
 
 void ScribbleArea::deleteSelection() {
 	if( somethingSelected ) {  // there is something selected

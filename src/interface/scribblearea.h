@@ -183,6 +183,7 @@ private:
 	void drawEyedropperPreview(const QColor colour);
 	void drawPolyline();
 	void endPolyline();
+	void updateCursor();
 	
 	void floodFill(VectorImage* vectorImage, QPoint point, QRgb targetColour, QRgb replacementColour, int tolerance);
 	void floodFillError(int errorType);
