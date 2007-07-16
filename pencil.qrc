@@ -23,9 +23,13 @@
 		<file>icons/mirror.png</file>
 		<file>icons/magnify.png</file>
 		<file>icons/smudge.png</file>
-
+		
 		<file>icons/onionPrev.png</file>
 		<file>icons/onionNext.png</file>
+		
+		<file>icons/layer-vector.png</file>
+		<file>icons/layer-bitmap.png</file>
+		<file>icons/layer-sound.png</file>
 		
 		<file>icons/controls/play.png</file>
 		<file>icons/controls/loop.png</file>
