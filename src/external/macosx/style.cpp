@@ -246,7 +246,7 @@ void AquaStyle::drawControl(ControlElement element,
 							painter->drawLine( QPoint(0,16), QPoint(width,16) );*/
 							
 							painter->setPen( QColor(0,78,193,128) );
-							painter->drawLine( QPoint(0,0), QPoint(0,16) );
+							painter->drawLine( QPoint(0,0), QPoint(0,height) );
 							painter->drawLine( QPoint(width-1,0), QPoint(width-1, height) );
 							
 							painter->setPen( QColor(0,0,0,160) );

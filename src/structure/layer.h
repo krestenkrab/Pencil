@@ -60,8 +60,10 @@ class Layer : public QObject
 		virtual void mouseRelease(QMouseEvent *event, int frameNumber);
 		virtual void mouseDoubleClick(QMouseEvent *event, int frameNumber);
 		
+		virtual void editProperties();
+		
 	public:
-		enum types { UNDEFINED, BITMAP, VECTOR, MOVIE, SOUND };
+		enum types { UNDEFINED, BITMAP, VECTOR, MOVIE, SOUND, CAMERA };
 };
 
 #endif

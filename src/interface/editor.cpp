@@ -26,7 +26,7 @@ GNU General Public License for more details.
 #include "layerbitmap.h"
 #include "layervector.h"
 #include "layersound.h"
-
+#include "layercamera.h"
 
 
 Editor::Editor(QMainWindow* parent)
@@ -72,6 +72,10 @@ Editor::Editor(QMainWindow* parent)
 	exportFramesDialog_hBox = NULL;
 	exportFramesDialog_vBox = NULL;
 	exportFramesDialog_format = NULL;
+	exportMovieDialog_hBox = NULL;
+	exportMovieDialog_vBox = NULL;
+	exportMovieDialog_format = NULL;
+	
 	exportFlashDialog_compression = NULL;
 	
 	// FOCUS POLICY
@@ -128,6 +132,7 @@ Editor::Editor(QMainWindow* parent)
 	connect(timeLine, SIGNAL(newBitmapLayer()), this, SLOT(newBitmapLayer()));
 	connect(timeLine, SIGNAL(newVectorLayer()), this, SLOT(newVectorLayer()));
 	connect(timeLine, SIGNAL(newSoundLayer()), this, SLOT(newSoundLayer()));
+	connect(timeLine, SIGNAL(newCameraLayer()), this, SLOT(newCameraLayer()));
 	connect(timeLine, SIGNAL(deleteCurrentLayer()), this, SLOT(deleteCurrentLayer()));
 	
 	connect(timeLine, SIGNAL(playClick()), this, SLOT(play()));
@@ -610,26 +615,32 @@ void Editor::clipboardChanged() {
 void Editor::newBitmapLayer() {
 	if(object != NULL) {
 		object->addNewBitmapLayer();
-		currentLayer = object->getLayerCount()-1;
 		timeLine->updateLayerNumber( object->getLayerCount() );
-		scribbleArea->updateAllFrames();
+		setCurrentLayer( object->getLayerCount()-1 );
 	}
 }
 
 void Editor::newVectorLayer() {
 	if(object != NULL) {
 		object->addNewVectorLayer();
-		currentLayer = object->getLayerCount()-1;
 		timeLine->updateLayerNumber( object->getLayerCount() );
-		scribbleArea->updateAllFrames();
+		setCurrentLayer( object->getLayerCount()-1 );
 	}
 }
 
 void Editor::newSoundLayer() {
 	if(object != NULL) {
 		object->addNewSoundLayer();
-		currentLayer = object->getLayerCount()-1;
 		timeLine->updateLayerNumber( object->getLayerCount() );
+		setCurrentLayer( object->getLayerCount()-1 );
+	}
+}
+
+void Editor::newCameraLayer() {
+	if(object != NULL) {
+		object->addNewCameraLayer();
+		timeLine->updateLayerNumber( object->getLayerCount() );
+		setCurrentLayer( object->getLayerCount()-1 );
 	}
 }
 
@@ -640,7 +651,7 @@ void Editor::deleteCurrentLayer() {
 			QMessageBox::Ok);
 	if(ret == QMessageBox::Ok) {
 		object->deleteLayer(currentLayer);
-		if(currentLayer == object->getLayerCount()) currentLayer = currentLayer-1;
+		if(currentLayer == object->getLayerCount()) setCurrentLayer( currentLayer-1 );
 		timeLine->updateLayerNumber( object->getLayerCount() );
 		//timeLine->update();
 		scribbleArea->updateAllFrames();
@@ -685,7 +696,7 @@ void Editor::about()
 							 "<img src=':icons/logo.png' width='100%'><br>"
 							 "<table style='background-color: #DDDDDD'><tr><td width='160px'>"
 							 "Developed by: <i>Pascal Naidon</i> &  <i>Patrick Corrieri</i><br>"
-							 "Version: <b>0.4.3b</b> (15th July, 2007)<br><br>"
+							 "Version: <b>0.4.3b</b> (21st July, 2007)<br><br>"
                "<b>Thanks to:</b><br>"
                "Trolltech for the Qt libraries<br>"
                "Roland for the Movie export functions<br>"
@@ -774,6 +785,7 @@ void Editor::setObject(Object *object) {
 	this->object = object;
 	if(object) {
 		connect( object, SIGNAL(imageAdded(int)), this, SLOT(addFrame(int)) );
+		connect( object, SIGNAL(imageAdded(int,int)), this, SLOT(addFrame(int,int)) );
 		connect( object, SIGNAL(imageRemoved(int)), this, SLOT(removeFrame(int)) );
 		
 		//currentLayer = object->getLayerCount()-1; // the default selected layer is the last one
@@ -852,14 +864,11 @@ void Editor::createNewDocumentDialog() {
 	newDocumentDialog->setModal(true);*/
 }
 
-void Editor::createExportSizeBox() {
+void Editor::createExportFramesSizeBox() {
+	int defaultWidth = 720; int defaultHeight = 540;
 	exportFramesDialog_hBox = new QSpinBox(this);
 	exportFramesDialog_hBox->setMinimum(1);
 	exportFramesDialog_hBox->setMaximum(10000);
-	int defaultWidth = 720; int defaultHeight = 540;
-	//if(object != NULL) {
-		//defaultWidth = object->size.width(); defaultHeight = object->size.height();
-	//}
 	exportFramesDialog_hBox->setValue(defaultWidth);
 	exportFramesDialog_hBox->setFixedWidth(80);
 	exportFramesDialog_vBox = new QSpinBox(this);
@@ -869,13 +878,28 @@ void Editor::createExportSizeBox() {
 	exportFramesDialog_vBox->setFixedWidth(80);
 }
 
+void Editor::createExportMovieSizeBox() {
+	int defaultWidth = 720; int defaultHeight = 540;	
+	exportMovieDialog_hBox = new QSpinBox(this);
+	exportMovieDialog_hBox->setMinimum(1);
+	exportMovieDialog_hBox->setMaximum(10000);
+	exportMovieDialog_hBox->setValue(defaultWidth);
+	exportMovieDialog_hBox->setFixedWidth(80);
+	exportMovieDialog_vBox = new QSpinBox(this);
+	exportMovieDialog_vBox->setMinimum(1);
+	exportMovieDialog_vBox->setMaximum(10000);
+	exportMovieDialog_vBox->setValue(defaultHeight);
+	exportMovieDialog_vBox->setFixedWidth(80);
+
+}
+
 void Editor::createExportFramesDialog() {
 	exportFramesDialog = new QDialog(this, Qt::Dialog);
 	QGridLayout *mainLayout = new QGridLayout;
 	
 	QGroupBox *resolutionBox = new QGroupBox(tr("Resolution"));
 	if(exportFramesDialog_hBox == NULL || exportFramesDialog_vBox == NULL) {
-		createExportSizeBox();
+		createExportFramesSizeBox();
 	}
 	QGridLayout *resolutionLayout = new QGridLayout;
 	resolutionLayout->addWidget(exportFramesDialog_hBox,0,0);
@@ -907,20 +931,20 @@ void Editor::createExportMovieDialog() {
 	QGridLayout *mainLayout = new QGridLayout;
 	
 	QGroupBox *resolutionBox = new QGroupBox(tr("Resolution"));
-	if(!exportFramesDialog_hBox || !exportFramesDialog_vBox) {
-		createExportSizeBox();
+	if(!exportMovieDialog_hBox || !exportMovieDialog_vBox) {
+		createExportMovieSizeBox();
 	}
 	QGridLayout *resolutionLayout = new QGridLayout;
-	resolutionLayout->addWidget(exportFramesDialog_hBox,0,0);
-	resolutionLayout->addWidget(exportFramesDialog_vBox,0,1);
+	resolutionLayout->addWidget(exportMovieDialog_hBox,0,0);
+	resolutionLayout->addWidget(exportMovieDialog_vBox,0,1);
 	resolutionBox->setLayout(resolutionLayout);
 	
 	QGroupBox *formatBox = new QGroupBox(tr("Format"));
-	exportFramesDialog_format = new QComboBox();
-	exportFramesDialog_format->addItem("MOV");
+	exportMovieDialog_format = new QComboBox();
+	exportMovieDialog_format->addItem("MOV");
 	//exportFramesDialog_format->addItem("JPEG");
 	QGridLayout *formatLayout = new QGridLayout;
-	formatLayout->addWidget(exportFramesDialog_format,0,0);
+	formatLayout->addWidget(exportMovieDialog_format,0,0);
 	formatBox->setLayout(formatLayout);
 	
 	QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -997,18 +1021,19 @@ bool Editor::exportSeq() {
 		settings.setValue("lastExportPath", QVariant(filePath));
 		
 		if (!exportFramesDialog) createExportFramesDialog();
-		exportFramesDialog_hBox->setValue( scribbleArea->size().width() );
-		exportFramesDialog_vBox->setValue( scribbleArea->size().height() );
+		exportFramesDialog_hBox->setValue( scribbleArea->getViewRect().toRect().width() );
+		exportFramesDialog_vBox->setValue( scribbleArea->getViewRect().toRect().height() );
 		exportFramesDialog->exec();
 		if(exportFramesDialog->result() == QDialog::Rejected) return false;
 		
 		QSize exportSize = QSize(exportFramesDialog_hBox->value(), exportFramesDialog_vBox->value());
-		QMatrix view = map( QRectF(QPointF(0,0), scribbleArea->size() ), QRectF(QPointF(0,0), exportSize) );
+		//QMatrix view = map( QRectF(QPointF(0,0), scribbleArea->size() ), QRectF(QPointF(0,0), exportSize) );
+		QMatrix view = map( scribbleArea->getViewRect(), QRectF(QPointF(0,0), exportSize) );
 		view = scribbleArea->getView() * view;
 	
 		QByteArray exportFormat(exportFramesDialog_format->currentText().toLatin1());
 		updateMaxFrame();		
-		object->exportFrames(1, maxFrame, view, exportSize, filePath, exportFormat, -1, false, true, 2);
+		object->exportFrames(1, maxFrame, view, getCurrentLayer(), exportSize, filePath, exportFormat, -1, false, true, 2);
 		return true; 
 	}
 }
@@ -1023,9 +1048,13 @@ bool Editor::exportX() {
 		return false;
 	} else {
 		settings.setValue("lastExportPath", QVariant(filePath));
+		
+		QSize exportSize = scribbleArea->getViewRect().toRect().size();
+		QMatrix view = map( scribbleArea->getViewRect(), QRectF(QPointF(0,0), exportSize) );
+		view = scribbleArea->getView() * view;
+		
 		updateMaxFrame();
-		QMatrix view = scribbleArea->getView();
-		object->exportX(1, maxFrame, view, scribbleArea->size(), filePath, true, 2);
+		object->exportX(1, maxFrame, view, exportSize, filePath, true, 2);
 		return true; 
 	}
 }
@@ -1041,20 +1070,17 @@ bool Editor::exportMov() {
 	} else {
 		settings.setValue("lastExportPath", QVariant(filePath));
 		if (!exportMovieDialog) createExportMovieDialog();
-		if(!exportFramesDialog_hBox || !exportFramesDialog_vBox) {
-			createExportSizeBox();
-		}
-		exportFramesDialog_hBox->setValue( scribbleArea->size().width() );
-		exportFramesDialog_vBox->setValue( scribbleArea->size().height() );
+		exportMovieDialog_hBox->setValue( scribbleArea->getViewRect().toRect().width() );
+		exportMovieDialog_vBox->setValue( scribbleArea->getViewRect().toRect().height() );
 		exportMovieDialog->exec();
 		if(exportMovieDialog->result() == QDialog::Rejected) return false;
 		
-		QSize exportSize = QSize(exportFramesDialog_hBox->value(), exportFramesDialog_vBox->value());
-		QMatrix view = map( QRectF(QPointF(0,0), scribbleArea->size() ), QRectF(QPointF(0,0), exportSize) );
+		QSize exportSize = QSize(exportMovieDialog_hBox->value(), exportMovieDialog_vBox->value());
+		QMatrix view = map( scribbleArea->getViewRect(), QRectF(QPointF(0,0), exportSize) );
 		view = scribbleArea->getView() * view;
 		
 		updateMaxFrame();
-		object->exportMovie(1, maxFrame, view, exportSize, filePath, fps);
+		object->exportMovie(1, maxFrame, view, getCurrentLayer(), exportSize, filePath, fps);
 		return true; 
 	}
 }
@@ -1074,9 +1100,12 @@ bool Editor::exportFlash() {
 		
 		settings.setValue("flashCompressionLevel", 10-exportFlashDialog_compression->value() );
 	
-		QSize exportSize = scribbleArea->size();
+		QSize exportSize = scribbleArea->getViewRect().toRect().size();
+		QMatrix view = map( scribbleArea->getViewRect(), QRectF(QPointF(0,0), exportSize) );
+		view = scribbleArea->getView() * view;
+		
 		updateMaxFrame();
-		object->exportFlash(1, maxFrame, scribbleArea->getView(), exportSize, filePath, fps, exportFlashDialog_compression->value());
+		object->exportFlash(1, maxFrame, view, exportSize, filePath, fps, exportFlashDialog_compression->value());
 		return true; 
 	}
 }
@@ -1242,10 +1271,11 @@ void Editor::addKey() {
 void Editor::addKey(int layerNumber, int &frameNumber) {
 	Layer* layer = object->getLayer(layerNumber);
 	if(layer != NULL) {
-		if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) {
+		if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR || layer->type == Layer::CAMERA) {
 			bool success = false;
 			if(layer->type == Layer::BITMAP) success = ((LayerBitmap*)layer)->addImageAtFrame(frameNumber);
 			if(layer->type == Layer::VECTOR) success = ((LayerVector*)layer)->addImageAtFrame(frameNumber);
+			if(layer->type == Layer::CAMERA) success = ((LayerCamera*)layer)->addImageAtFrame(frameNumber);
 			if(success) {
 				timeLine->updateContent();
 				//scribbleArea->addFrame(frameNumber);
@@ -1262,20 +1292,32 @@ void Editor::removeKey() {
 	if(layer != NULL) {
 		if(layer->type == Layer::BITMAP) ((LayerBitmap*)layer)->removeImageAtFrame(currentFrame);
 		if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->removeImageAtFrame(currentFrame);
+		if(layer->type == Layer::CAMERA) ((LayerCamera*)layer)->removeImageAtFrame(currentFrame);
 		timeLine->updateContent();
 		scribbleArea->updateFrame();
 	}
 }
 
-void Editor::addFrame(int frameNumber) {
+void Editor::addFrame(int frameNumber) { // adding a frame to the cache
 	frameList << frameNumber;
 	qSort(frameList);
 	scribbleArea->updateFrame();
+	timeLine->update();
+}
+
+void Editor::addFrame(int frameNumber1, int frameNumber2) { // adding a range of frames to the cache
+	for(int i=frameNumber1; i<=frameNumber2; i++) {
+		frameList << i;
+	}
+	qSort(frameList);
+	scribbleArea->updateFrame();
+	timeLine->update();
 }
 
 void Editor::removeFrame(int frameNumber) {
 	frameList.removeAt( getLastIndexAtFrame(frameNumber) );
 	scribbleArea->updateFrame();
+	timeLine->update();
 }
 
 int Editor::getLastIndexAtFrame(int frameNumber) {
@@ -1296,7 +1338,7 @@ int Editor::getLastFrameAtFrame(int frameNumber) {
 
 
 
-void Editor::config() {
+void Editor::showPreferences() {
 	preferences->show();
 }
 

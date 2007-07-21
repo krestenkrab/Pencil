@@ -20,6 +20,7 @@ GNU General Public License for more details.
 #include "editor.h"
 #include "layerbitmap.h"
 #include "layervector.h"
+#include "layercamera.h"
 
 #include "bitmapimage.h"
 
@@ -130,9 +131,9 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	showThinLines = false;
 	showAllLayers = 1;
 	myView = QMatrix(); // identity matrix
-	myTempView = myView;
-	transMatrix = myView;
-	centralPoint = NULL;
+	myTempView = QMatrix();
+	transMatrix = QMatrix();
+	centralView = QMatrix();
 	
 	QString background = settings.value("background").toString();
 	if(background == "") background = "white";
@@ -601,7 +602,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 	if (event->button() == Qt::LeftButton || event->button() == Qt::RightButton) {  // if the user is pressing the left or right button
 		if(tabletInUse && highResPosition) { lastPixel = QPointF(event->pos()) + tabletPosition - QPointF(event->globalPos()); } else { lastPixel = QPointF(event->pos()); }
 		bool invertible = true;
-		lastPoint = myView.inverted(&invertible).map(QPointF(lastPixel));
+		lastPoint = myTempView.inverted(&invertible).map(QPointF(lastPixel));
 		lastBrushPoint = lastPoint;
 	}
 	
@@ -624,11 +625,11 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 				if(usePressure) brushWidth = brush.width*tabletPressure;
 				drawBrush( lastPoint, brushWidth, brush.colour, opacity);
 				int rad = qRound(brushWidth / 2) + 3;
-				update(myView.mapRect(QRect(lastPoint.toPoint(), lastPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
+				update(myTempView.mapRect(QRect(lastPoint.toPoint(), lastPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
 			}
 		}		
 		// ----------------------------------------------------------------------
-		if(toolMode == POLYLINE ) {
+		if(toolMode == POLYLINE && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) ) {
 			if(mousePoints.size() == 0) editor->backup();
 			if(layer->type == Layer::VECTOR) {
 				((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->deselectAll();
@@ -638,7 +639,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 			//qDebug() << "--------- " << mousePoints;
 		}
 		// ----------------------------------------------------------------------
-		if(toolMode == ScribbleArea::SELECT) {
+		if(toolMode == ScribbleArea::SELECT && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR)) {
 			if(layer->type == Layer::VECTOR) {
 				((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->deselectAll();
 			}
@@ -683,7 +684,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 			}
 		}
 		// ----------------------------------------------------------------------
-		if(toolMode == ScribbleArea::MOVE) {
+		if(toolMode == ScribbleArea::MOVE && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR)) {
 			editor->backup();
 			moveMode = ScribbleArea::MIDDLE;
 			if( somethingSelected ) {  // there is an area selection
@@ -751,17 +752,21 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 	
 	if(tabletInUse  && highResPosition) { currentPixel = QPointF(event->pos()) + tabletPosition - QPointF(event->globalPos()); } else { currentPixel = event->pos(); }
 	bool invertible = true;
-	currentPoint = myView.inverted(&invertible).map(QPointF(currentPixel));
+	currentPoint = myTempView.inverted(&invertible).map(QPointF(currentPixel));
 	if(event->buttons() & Qt::LeftButton || event->buttons() & Qt::RightButton) { // the user is also pressing the mouse (dragging)
 		offset = currentPoint - lastPoint;
 		mousePath.append(currentPoint);
 	}
-	if ((event->buttons() & Qt::LeftButton) && (toolMode == ScribbleArea::PENCIL || toolMode == ScribbleArea::ERASER || toolMode == ScribbleArea::PEN || toolMode == ScribbleArea::COLOURING))
-			drawLineTo(currentPixel, currentPoint);
-	if(toolMode == ScribbleArea::POLYLINE)
-			drawPolyline();
+	
 	// ----------------------------------------------------------------------
-	if (toolMode == ScribbleArea::SELECT && (event->buttons() & Qt::LeftButton) && somethingSelected) {
+	if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) {
+		if ((event->buttons() & Qt::LeftButton) && (toolMode == ScribbleArea::PENCIL || toolMode == ScribbleArea::ERASER || toolMode == ScribbleArea::PEN || toolMode == ScribbleArea::COLOURING))
+			drawLineTo(currentPixel, currentPoint);
+		if(toolMode == ScribbleArea::POLYLINE)
+			drawPolyline();
+	}
+	// ----------------------------------------------------------------------
+	if (toolMode == ScribbleArea::SELECT && (event->buttons() & Qt::LeftButton) && somethingSelected && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR)) {
 		if(moveMode == ScribbleArea::MIDDLE) mySelection.setBottomRight(currentPoint);
 		if(moveMode == ScribbleArea::TOPLEFT) mySelection.setTopLeft(currentPoint);
 		if(moveMode == ScribbleArea::TOPRIGHT) mySelection.setTopRight(currentPoint);
@@ -773,7 +778,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 		update();
 	}
 	// ----------------------------------------------------------------------
-	if (toolMode == ScribbleArea::ERASER) {
+	if (toolMode == ScribbleArea::ERASER && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR)) {
 		if(event->buttons() & Qt::LeftButton) { // the user is also pressing the mouse (dragging)
 			if(layer->type == Layer::VECTOR) {
 				qreal radius = (eraser.width/2)/myTempView.m11();
@@ -786,7 +791,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 		}
 	}
 	// ----------------------------------------------------------------------
-	if (toolMode == ScribbleArea::EDIT) {
+	if (toolMode == ScribbleArea::EDIT && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR)) {
 		if(event->buttons() & Qt::LeftButton) { // the user is also pressing the mouse (dragging) {
 			if( layer->type == Layer::VECTOR) {
 				if( event->modifiers() != Qt::ShiftModifier) { // (and the user doesn't press shift)
@@ -813,7 +818,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 		update();
 	}
 	// ----------------------------------------------------------------------
-	if (toolMode == ScribbleArea::MOVE) {
+	if (toolMode == ScribbleArea::MOVE  && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR)) {
 		if(event->buttons() & Qt::LeftButton) { // the user is also pressing the mouse (dragging)
 			if( somethingSelected) {  // there is something selected
 				if( event->modifiers() != Qt::ShiftModifier) { // (and the user doesn't press shift)
@@ -851,7 +856,7 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 		}
 	}
 	// ----------------------------------------------------------------------
-	if (  (toolMode == ScribbleArea::HAND && (event->buttons() != Qt::NoButton)) || event->buttons() & Qt::RightButton) {
+	if (  toolMode == ScribbleArea::HAND && (event->buttons() != Qt::NoButton || event->buttons() & Qt::RightButton) ) {
 		if(event->modifiers() & Qt::ControlModifier || event->modifiers() & Qt::AltModifier || event->buttons() & Qt::RightButton) {
 			QPoint centralPixel(width()/2, height()/2);
 			if(lastPixel.x() != centralPixel.x()) {
@@ -861,30 +866,23 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 				if( event->modifiers() & Qt::AltModifier) { // rotation
 					QPointF V1 = lastPixel-centralPixel;
 					QPointF V2 = currentPixel-centralPixel;
-					//qreal scale = BezierCurve::eLength(V2)/BezierCurve::eLength(V1);
-					//scale = 1.0;
 					cosine = ( V1.x()*V2.x() + V1.y()*V2.y()  )/(BezierCurve::eLength(V1)*BezierCurve::eLength(V2));
 					sine = ( -V1.x()*V2.y() + V1.y()*V2.x()  )/(BezierCurve::eLength(V1)*BezierCurve::eLength(V2));
 					
 				}
 				if( event->modifiers() & Qt::ControlModifier || event->buttons() & Qt::RightButton) { // scale
 					scale = exp( 0.01*( currentPixel.y()-lastPixel.y() ) );
-					//transMatrix = QMatrix(scale, 0, 0,scale,(1.0-scale)*centralPixel.x(), (1.0-scale)*centralPixel.y());
 				}
 				transMatrix = QMatrix(
 					scale*cosine, -scale*sine,
 					scale*sine,  scale*cosine,
-					(1.0-scale*cosine)*centralPixel.x()-scale*sine*centralPixel.y(),
-					(1.0-scale*cosine)*centralPixel.y()+scale*sine*centralPixel.x()
+					0.0,
+					0.0
 				);
-				myTempView = myView*transMatrix;
 			}
 		} else { // translation
-			myTempView = myView;
-			myTempView.translate(offset.x(), offset.y());
 			transMatrix.setMatrix(1.0,0.0,0.0,1.0, currentPixel.x()-lastPixel.x(), currentPixel.y()-lastPixel.y());
 		}
-		setView(myTempView);
 		update();
 	}
 	// ----------------------------------------------------------------------
@@ -910,7 +908,6 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {	
 	mouseInUse = false;
-	transMatrix.reset();
 	
 	Layer* layer = editor->getCurrentLayer();
 	// ---- checks ------
@@ -926,10 +923,12 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 	// ---- end checks ------
 
 	//currentWidth = myPenWidth;
-	if ((event->button() == Qt::LeftButton) && (toolMode == ScribbleArea::PENCIL || toolMode == ScribbleArea::ERASER || toolMode == ScribbleArea::PEN)) {
-		drawLineTo(currentPixel, currentPoint);
-		//if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) ((LayerImage*)layer)->setModified(editor->currentFrame, true);
-		//setModified(layer, editor->currentFrame);
+	if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) {
+		if ((event->button() == Qt::LeftButton) && (toolMode == ScribbleArea::PENCIL || toolMode == ScribbleArea::ERASER || toolMode == ScribbleArea::PEN)) {
+			drawLineTo(currentPixel, currentPoint);
+			//if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) ((LayerImage*)layer)->setModified(editor->currentFrame, true);
+			//setModified(layer, editor->currentFrame);
+		}
 	}
 		
 	if(event->button() == Qt::LeftButton) {
@@ -1004,7 +1003,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 			if( (toolMode == ScribbleArea::PENCIL || toolMode == ScribbleArea::PEN) && mousePath.size() > -1 ) {
 				// Clear the temporary pixel path
 				bufferImg->clear();
-				qreal tol = curveSmoothing/qAbs( myTempView.m11() );
+				qreal tol = curveSmoothing/qAbs( myView.m11() );
 				BezierCurve curve(mousePath, mousePressure, tol);
 				if(toolMode == PEN) {
 					curve.setWidth(pen.width);
@@ -1024,7 +1023,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 				//curve.setSelected(true);
 				//qDebug() << "this curve has " << curve.getVertexSize() << "vertices";
 				
-				vectorImage->addCurve(curve, qAbs(myTempView.m11()) );
+				vectorImage->addCurve(curve, qAbs(myView.m11()) );
 				
 				//if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) ((LayerImage*)layer)->setModified(editor->currentFrame, true);
 				//update();
@@ -1058,13 +1057,13 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 			setModified(layer, editor->currentFrame);
 		}
 	}
-	if ((toolMode == ScribbleArea::MOVE) && (event->button() == Qt::LeftButton)) {
+	if ((toolMode == ScribbleArea::MOVE) && (event->button() == Qt::LeftButton)  && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR)) {
 		offset.setX(0);
 		offset.setY(0);
 		calculateSelectionTransformation();
 		//if(layer->type == Layer::VECTOR) {
-			//	closestCurves = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getCurvesCloseTo(currentPoint, tol/myTempView.m11());
-			//	closestVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, tol/myTempView.m11());
+			//	closestCurves = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getCurvesCloseTo(currentPoint, tol/myView.m11());
+			//	closestVertices = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->getVerticesCloseTo(currentPoint, tol/myView.m11());
 		//}	
 		//if(somethingSelected && layer->type == Layer::VECTOR) {
 			//editor->backup();
@@ -1089,14 +1088,21 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 	// ----------------------------------------------------------------------
 	if( toolMode == ScribbleArea::HAND || (event->button() == Qt::RightButton) ) {
 		bufferImg->clear();
-		myView = myTempView;
+		if(layer->type == Layer::CAMERA) {
+			LayerCamera* layerCamera = (LayerCamera*)layer;
+			QMatrix view = layerCamera->getViewAtFrame(editor->currentFrame);
+			layerCamera->loadImageAtFrame(editor->currentFrame, view * transMatrix);
+			//Camera* camera = ((LayerCamera*)layer)->getLastCameraAtFrame(editor->currentFrame, 0);
+			//camera->view = camera->view * transMatrix;
+		} else {
+			myView =  myView * transMatrix;
+		}
 		transMatrix.reset();
-		updateCentralPoint();
 		updateAllVectorLayers();
 		//update();
 	}
 	// ----------------------------------------------------------------------
-	if( toolMode == ScribbleArea::SELECT && (event->button() == Qt::LeftButton)) {
+	if( toolMode == ScribbleArea::SELECT && (event->button() == Qt::LeftButton)  && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR)) {
 		if(layer->type == Layer::VECTOR) {
 			if(somethingSelected) {
 				editor->getToolSet()->changeMoveButton();
@@ -1130,6 +1136,7 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 {
 	//qDebug() << "paint event!" << editor->currentFrame << QDateTime::currentDateTime();
 	QPainter painter(this);
+	
 	// draws the canvas
 	if(!mouseInUse) {
 		// --- we retrieve the image from the cache; we create it if it doesn't exist
@@ -1144,21 +1151,22 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 			painter.setWorldMatrixEnabled(true);
 			painter.setPen(Qt::NoPen);
 			painter.setBrush(backgroundBrush);
-			painter.drawRect(  myTempView.inverted().mapRect( QRect(-2,-2, width()+3, height()+3) )  ); // this is necessary to have the background move with the view
+			painter.drawRect(  (myTempView).inverted().mapRect( QRect(-2,-2, width()+3, height()+3) )  ); // this is necessary to have the background move with the view
 		}
 	}
 	if(toolMode == MOVE) {
-		Layer* layer = (editor->object->getLayer(editor->currentLayer));
+		Layer* layer = editor->getCurrentLayer();
 		if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->setModified(true);
 		paintCanvas(editor->currentFrame);
 	}
 	painter.setWorldMatrixEnabled(true);
-	painter.setWorldMatrix(transMatrix);
+	painter.setWorldMatrix(  centralView.inverted() * transMatrix * centralView  );
 	painter.drawPixmap( QPoint(0,0), canvas );
+	
+	Layer* layer = editor->getCurrentLayer();
 	
 	if(!editor->playing) {  // we don't need to display the following when the animation is playing
 		painter.setWorldMatrix(myTempView);
-		Layer* layer = (editor->object->getLayer(editor->currentLayer));
 		
 		if(layer->type == Layer::VECTOR) {
 			VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
@@ -1181,8 +1189,8 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 					//bufferImg->drawPath( myTempView.map(path), pen2, colour, QPainter::CompositionMode_SourceOver, false);
 					for(int vertexNumber=-1; vertexNumber<vectorImage->getCurveSize(curveNumber); vertexNumber++) {
 						QPointF vertexPoint = vectorImage->getVertex(curveNumber, vertexNumber);
-						QRectF rectangle = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSizeF(7,7) ); 
-						if(rect().contains( myTempView.map(vertexPoint).toPoint())) {
+						QRectF rectangle = QRectF( (myView*transMatrix*centralView).map(vertexPoint)-QPointF(3.0,3.0), QSizeF(7,7) ); 
+						if(rect().contains( (myView*transMatrix*centralView).map(vertexPoint).toPoint())) {
 							
 							painter.drawRect( rectangle.toRect() );
 							//bufferImg->drawRect( rectangle.toRect(), pen2, colour, QPainter::CompositionMode_SourceOver, false);
@@ -1196,7 +1204,7 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 				for(int k=0; k<vectorSelection.vertex.size(); k++) {
 					VertexRef vertexRef = vectorSelection.vertex.at(k);
 					QPointF vertexPoint = vectorImage->getVertex(vertexRef);
-					QRectF rectangle0 = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSizeF(7,7) ); 
+					QRectF rectangle0 = QRectF( (myView*transMatrix*centralView).map(vertexPoint)-QPointF(3.0,3.0), QSizeF(7,7) ); 
 					painter.drawRect( rectangle0.toRect() );
 					//bufferImg->drawRect( rectangle0, pen2, colour, QPainter::CompositionMode_SourceOver, false);
 					
@@ -1219,7 +1227,7 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 						VertexRef vertexRef = closestVertices.at(k);
 						QPointF vertexPoint = vectorImage->getVertex(vertexRef);
 						//if( vectorImage->isSelected(vertexRef) ) vertexPoint = selectionTransformation.map( vertexPoint );
-						QRectF rectangle = QRectF( myTempView.map(vertexPoint)-QPointF(3.0,3.0), QSizeF(7,7) );
+						QRectF rectangle = QRectF( (myView*transMatrix*centralView).map(vertexPoint)-QPointF(3.0,3.0), QSizeF(7,7) );
 						painter.drawRect( rectangle.toRect() );
 						//bufferImg->drawRect( rectangle.toRect(), pen2, colour, QPainter::CompositionMode_SourceOver, false);
 					}
@@ -1233,11 +1241,11 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 				QPen pen2(Qt::black, 0.5, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin);
 				QColor colour = QColor(100,100,255);
 				for(int k=0; k<closestCurves.size(); k++) {
-					qreal scale = sqrt( myTempView.m11()*myTempView.m11() + myTempView.m22()*myTempView.m22() );
+					qreal scale = myTempView.det();
 					BezierCurve myCurve = vectorImage->curve[closestCurves[k]];
 					if(myCurve.isPartlySelected()) myCurve.transform( selectionTransformation );
 					QPainterPath path = myCurve.getStrokedPath(1.2/scale, false);
-					bufferImg->drawPath( myTempView.map(path), pen2, colour, QPainter::CompositionMode_SourceOver, antialiasing);
+					bufferImg->drawPath( (myView*transMatrix*centralView).map(path), pen2, colour, QPainter::CompositionMode_SourceOver, antialiasing);
 				}
 			}
 
@@ -1256,7 +1264,7 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 			// outline of the transformed selection
 			painter.setWorldMatrixEnabled(false);
 			painter.setOpacity(1.0);
-			QPolygon tempRect = myTempView.mapToPolygon( myTempTransformedSelection.normalized().toRect() );
+			QPolygon tempRect = (myView*transMatrix*centralView).mapToPolygon( myTempTransformedSelection.normalized().toRect() );
 			
 			Layer* layer = editor->getCurrentLayer();
 			if(layer != NULL) {
@@ -1281,7 +1289,23 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 			}
 		} 
 	}
-					
+	
+	// clips to the frame of the camera
+	if(layer->type == Layer::CAMERA) {
+		QRect rect = ((LayerCamera*)layer)->getViewRect();
+		rect.translate( width()/2, height()/2 );
+		painter.setWorldMatrixEnabled(false);
+		painter.setPen(Qt::NoPen);
+		painter.setBrush(QColor(0,0,0,160));
+		painter.drawRect( QRect(0, 0, width(), (height() - rect.height())/2) );
+		painter.drawRect( QRect(0, rect.bottom(), width(), (height() - rect.height())/2) );
+		painter.drawRect( QRect(0, rect.top(), (width() - rect.width())/2, rect.height()-1) );
+		painter.drawRect( QRect((width() + rect.width())/2, rect.top(), (width() - rect.width())/2, rect.height()-1) );
+		painter.setPen(Qt::black);
+		painter.setBrush(Qt::NoBrush);
+		painter.drawRect(rect);
+	}
+																	
 	// outlines the frame of the viewport
 	painter.setWorldMatrixEnabled(false);
 	painter.setPen( QPen(Qt::gray, 2) );
@@ -1322,6 +1346,7 @@ void ScribbleArea::paintCanvas(int frame)
 	} else {
 		painter.setRenderHint(QPainter::SmoothPixmapTransform, antialiasing);
 	}
+	setView();
 	painter.setWorldMatrix(myTempView);
 	painter.setWorldMatrixEnabled(true);
 		
@@ -1348,6 +1373,7 @@ void ScribbleArea::paintCanvas(int frame)
 	for(int i=0; i < object->getLayerCount(); i++) {
 		opacity = 1.0;
 		if(i != editor->currentLayer && (showAllLayers == 1)) { opacity = 0.4; }
+		if(editor->getCurrentLayer()->type == Layer::CAMERA) opacity = 1.0;
 		Layer* layer = (object->getLayer(i));
 		if(layer->visible && (showAllLayers>0 || i == editor->currentLayer)) {
 			// paints the bitmap images
@@ -1473,19 +1499,19 @@ void ScribbleArea::drawLineTo(const QPointF &endPixel, const QPointF &endPoint)
 			QPen pen2 = QPen ( QBrush(QColor(255,255,255,255)), currentWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin );
 			bufferImg->drawLine(lastPoint, endPoint, pen2, QPainter::CompositionMode_SourceOver, antialiasing);
 			int rad = qRound(currentWidth / 2) + 2;
-			update(myView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
+			update(myTempView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
 		}
 		if(toolMode == ScribbleArea::PENCIL) {
 			QPen pen2 = QPen ( QBrush(currentColour), currentWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin );
 			bufferImg->drawLine(lastPoint, endPoint, pen2, QPainter::CompositionMode_SourceOver, antialiasing);
 			int rad = qRound(currentWidth / 2) + 3;
-			update(myView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
+			update(myTempView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
 		}
 		if(toolMode == ScribbleArea::PEN) {
 			QPen pen2 = QPen ( QBrush(pen.colour), currentWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin );
 			bufferImg->drawLine(lastPoint, endPoint, pen2, QPainter::CompositionMode_SourceOver, antialiasing);
 			int rad = qRound(currentWidth / 2) + 3;
-			update(myView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
+			update(myTempView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
 		}
 		if(toolMode == ScribbleArea::COLOURING) {
 			qreal opacity = 1.0;
@@ -1503,7 +1529,7 @@ void ScribbleArea::drawLineTo(const QPointF &endPixel, const QPointF &endPoint)
 			}
 			
 			int rad = qRound(brushWidth / 2) + 3;
-			update(myView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
+			update(myTempView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
 		}
 	}
 	if(layer->type == Layer::VECTOR) {
@@ -1593,59 +1619,63 @@ void ScribbleArea::endPolyline()
 void ScribbleArea::resizeEvent(QResizeEvent *event)
 {
 	//resize( size() );
-	if(centralPoint == NULL) updateCentralPoint();
 	QWidget::resizeEvent(event);
-	/*if(canvas) delete canvas;
-	canvas = new QPixmap(size());*/
-	//if(bufferImg.width() < width() || bufferImg.height() < height() ) bufferImg = QImage(size(), QImage::Format_ARGB32_Premultiplied);
 	canvas = QPixmap(size());
 	recentre();
 }
 
 void ScribbleArea::recentre() {
-	QPointF formerPoint = myView.map(*centralPoint);
-	myView = myView * QMatrix(1,0,0,1, 0.5*width() - formerPoint.x(), 0.5*height() - formerPoint.y() );
-	myTempView = myView;
-	setView( myView );
+	centralView = QMatrix(1,0,0,1, 0.5*width(), 0.5*height());
+	setView();
 	QPixmapCache::clear();
 	update();
 }
 
-void ScribbleArea::updateCentralPoint() {
-	bool invertible = true;
-	if(centralPoint != NULL) delete centralPoint;
-	centralPoint = new QPointF(   myView.inverted(&invertible).map(QPointF(0.5*width(), 0.5*height()))   );
-	QPixmapCache::clear();
-}
-
 void ScribbleArea::setView() {
-	setView(myView);
+	setView(getView());
 }
 
 void ScribbleArea::setView(QMatrix view) {
 	for(int i=0; i < editor->object->getLayerCount() ; i++) {
 		Layer* layer = editor->object->getLayer(i);
 		if(layer->type == Layer::VECTOR) {
-			((LayerVector*)layer)->setView(view);
+			((LayerVector*)layer)->setView(view * centralView);
 		}
 	}
+	myTempView = view * centralView;
 }
 
 void ScribbleArea::resetView() {
 	editor->resetMirror();
-	myTempView.reset();
-	myView = myTempView;
-	if(centralPoint != NULL) delete centralPoint;
-	centralPoint = new QPointF(0,0);
+	myView.reset();
+	myTempView = myView * centralView;
 	recentre();
 }
 
 QMatrix ScribbleArea::getView() {
-	return myView;
+	Layer* layer = editor->getCurrentLayer();
+	if(layer == NULL) return QMatrix(); // error
+	if(layer->type == Layer::CAMERA) {
+		return ((LayerCamera*)layer)->getViewAtFrame(editor->currentFrame);
+		qDebug() << "viewCamera" << ((LayerCamera*)layer)->getViewAtFrame(editor->currentFrame);
+	} else {
+		return myView;
+	}
+}
+
+QRectF ScribbleArea::getViewRect() {
+	QRectF rect =  QRectF( -width()/2, -height()/2, width(), height() );
+	Layer* layer = editor->getCurrentLayer();
+	if(layer == NULL) return rect;
+	if(layer->type == Layer::CAMERA) {
+		return ((LayerCamera*)layer)->getViewRect();
+	} else {
+		return rect;
+	}
 }
 
 QPointF ScribbleArea::getCentralPoint() {
-	if(centralPoint) { return *centralPoint; } else { return QPointF(0,0); }
+	return myTempView.inverted().map( QPoint(width()/2, height()/2) );
 }
 
 void ScribbleArea::calculateSelectionRect() {
@@ -1803,7 +1833,7 @@ void ScribbleArea::floodFill(VectorImage* vectorImage, QPoint point, QRgb target
 	int j, k; bool condition;
 	//vectorImage->update(true, showThinLines); // update the vector image with simplified curves (all width=1)
 	QImage* targetImage = new QImage(size(), QImage::Format_ARGB32_Premultiplied);
-	vectorImage->outputImage(targetImage, size(), myView, true, showThinLines, 1.0, true, false); // the target image is the vector image with simplified curves (all width=1)
+	vectorImage->outputImage(targetImage, size(), myTempView, true, showThinLines, 1.0, true, false); // the target image is the vector image with simplified curves (all width=1)
 	//QImage* replaceImage = &bufferImg;
 	QImage* replaceImage = new QImage( size(), QImage::Format_ARGB32_Premultiplied);
 	QList<VertexRef> points = vectorImage->getAllVertices(); // refs of all the points
@@ -2389,8 +2419,8 @@ void ScribbleArea::toggleOutlines() {
 }
 
 void ScribbleArea::toggleMirror() {
-	myView =  myView * QMatrix(-1, 0, 0, 1, width(), 0);
-	myTempView = myView;
+	myView =  myView * QMatrix(-1, 0, 0, 1, 0, 0);
+	myTempView = myView * centralView;
 	setView(myView);
 	updateAllFrames();
 }

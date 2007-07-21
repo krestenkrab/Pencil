@@ -29,7 +29,7 @@ void initialise() {
 	qApp->setStyle(new AquaStyle());
 }
 
-void Object::exportMovie(int startFrame, int endFrame, QMatrix view, QSize exportSize, QString filePath, int fps) {
+void Object::exportMovie(int startFrame, int endFrame, QMatrix view, Layer* currentLayer, QSize exportSize, QString filePath, int fps) {
 	if(!filePath.endsWith(".mov", Qt::CaseInsensitive)) {
 		filePath = filePath + ".mov";
 	}
@@ -40,7 +40,7 @@ void Object::exportMovie(int startFrame, int endFrame, QMatrix view, QSize expor
 	QString tempPath = QDir::tempPath()+"pencil/";
 	QMessageBox assembling("Export",tr("Exporting movie..."),QMessageBox::Information,0,0,0);
 	assembling.show();
-	exportFrames(startFrame, endFrame, view, exportSize, tempPath+"tmp", "jpg", 100, true, true, 2);
+	exportFrames(startFrame, endFrame, view, currentLayer, exportSize, tempPath+"tmp", "jpg", 100, true, true, 2);
 	
 	// --------- Quicktime assemble call ----------
 	

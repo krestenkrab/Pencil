@@ -133,8 +133,8 @@ MainWindow::MainWindow() {
 	selectAllAct->setShortcut(tr("Ctrl+A"));
 	connect(selectAllAct, SIGNAL(triggered()), editor, SIGNAL(selectAll()));
 
-	configAct = new QAction(tr("Preferences"), this);
-	connect(configAct, SIGNAL(triggered()), editor, SLOT(config()));
+	preferencesAct = new QAction(tr("Preferences"), this);
+	connect(preferencesAct, SIGNAL(triggered()), editor, SLOT(showPreferences()));
 
 
 	newBitmapLayerAct = new QAction(tr("New Bitmap Layer"), this);
@@ -145,6 +145,9 @@ MainWindow::MainWindow() {
 
 	newSoundLayerAct = new QAction(tr("New Sound Layer"), this);
 	connect(newSoundLayerAct, SIGNAL(triggered()), editor, SLOT(newSoundLayer()));
+
+	newCameraLayerAct = new QAction(tr("New Camera Layer"), this);
+	connect(newCameraLayerAct, SIGNAL(triggered()), editor, SLOT(newCameraLayer()));
 
 	deleteLayerAct = new QAction(tr("Delete Current Layer"), this);
 	connect(deleteLayerAct, SIGNAL(triggered()), editor, SLOT(deleteCurrentLayer()));
@@ -191,12 +194,13 @@ editMenu->addSeparator();
 editMenu->addAction(importAct);
 editMenu->addAction(importSndAct);
 editMenu->addSeparator();
-editMenu->addAction(configAct);
+editMenu->addAction(preferencesAct);
 
 layerMenu = new QMenu(tr("&Layer"), this);
 layerMenu->addAction(newBitmapLayerAct);
 layerMenu->addAction(newVectorLayerAct);
 layerMenu->addAction(newSoundLayerAct);
+layerMenu->addAction(newCameraLayerAct);
 layerMenu->addSeparator();
 layerMenu->addAction(deleteLayerAct);
 

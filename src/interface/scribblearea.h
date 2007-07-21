@@ -89,6 +89,7 @@ public:
 	bool thinLines() const { return showThinLines; }
 	int allLayers() const { return showAllLayers; }
 	QMatrix getView();
+	QRectF getViewRect();
 	QPointF getCentralPoint();
 	
 	void updateFrame();
@@ -171,7 +172,6 @@ protected:
 	void paintEvent(QPaintEvent *event);
 	void resizeEvent(QResizeEvent *event);
 	void recentre();
-	void updateCentralPoint();
 	void setView();
 	void setView(QMatrix);
 	
@@ -254,8 +254,7 @@ private:
 	qreal tabletPressure;
 	QPointF tabletPosition;
 	
-	QMatrix myView, myTempView, transMatrix;
-	QPointF* centralPoint;
+	QMatrix myView, myTempView, centralView, transMatrix;
 	
 	QPixmap canvas;
 	

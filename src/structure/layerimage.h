@@ -57,6 +57,7 @@ class LayerImage : public Layer
 	
 	signals:
 		void imageAdded(int);
+		void imageAdded(int,int);
 		void imageRemoved(int);
 		
 	protected:

@@ -38,6 +38,7 @@ class Object : public QObject
 	
 	signals:
 		void imageAdded(int);
+		void imageAdded(int,int);
 		void imageRemoved(int);
 		
   public:
@@ -73,6 +74,7 @@ class Object : public QObject
 		void addNewBitmapLayer();
 		void addNewVectorLayer();
 		void addNewSoundLayer();
+		void addNewCameraLayer();
 		Layer* getLayer(int i);
 		int getLayerCount() { return layer.size(); }
 		void moveLayer(int i, int j);
@@ -83,9 +85,9 @@ class Object : public QObject
 		
 		void defaultInitialisation();
 		
-		void exportFrames(int frameStart, int frameEnd, QMatrix view, QSize exportSize, QString filePath, const char* format, int quality, bool background, bool antialiasing, int gradients);
+		void exportFrames(int frameStart, int frameEnd, QMatrix view, Layer* currentLayer, QSize exportSize, QString filePath, const char* format, int quality, bool background, bool antialiasing, int gradients);
+		void exportMovie(int startFrame, int endFrame, QMatrix view, Layer* currentLayer, QSize exportSize, QString filePath, int fps);
 		void exportX(int frameStart, int frameEnd, QMatrix view, QSize exportSize, QString filePath,  bool antialiasing, int gradients);
-		void exportMovie(int startFrame, int endFrame, QMatrix view, QSize exportSize, QString filePath, int fps);
 		void exportFlash(int startFrame, int endFrame, QMatrix view, QSize exportSize, QString filePath, int fps, int compression);
 };
 

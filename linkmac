@@ -36,4 +36,5 @@ install_name_tool -change $qtlib"QtGui.framework/Versions/4/QtGui" @executable_p
 install_name_tool -change $qtlib"QtCore.framework/Versions/4/QtCore" @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore $pencil/Contents/plugins/imageformats/libqjpeg.dylib
 install_name_tool -change $qtlib"QtGui.framework/Versions/4/QtGui" @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui $pencil/Contents/plugins/imageformats/libqjpeg.dylib
 
+cp Info.plist ./build/Release/Pencil.app/Contents/Info.plist
 echo ok

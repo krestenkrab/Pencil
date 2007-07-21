@@ -106,6 +106,7 @@ signals:
 	void newBitmapLayer();
 	void newVectorLayer();
 	void newSoundLayer();
+	void newCameraLayer();
 	void deleteCurrentLayer();
 
 	void playClick();

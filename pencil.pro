@@ -28,6 +28,7 @@ HEADERS += src/external/flash/flash.h \
            src/graphics/vector/vertexref.h \
            src/structure/layer.h \
            src/structure/layerbitmap.h \
+           src/structure/layercamera.h \
            src/structure/layerimage.h \
            src/structure/layersound.h \
            src/structure/layervector.h \
@@ -50,6 +51,7 @@ SOURCES += src/external/flash/flash.cpp \
            src/graphics/vector/vertexref.cpp \
            src/structure/layer.cpp \
            src/structure/layerbitmap.cpp \
+           src/structure/layercamera.cpp \
            src/structure/layerimage.cpp \
            src/structure/layersound.cpp \
            src/structure/layervector.cpp \

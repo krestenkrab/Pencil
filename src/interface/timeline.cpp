@@ -79,10 +79,12 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	QAction* newBitmapLayerAct = new QAction(tr("New Bitmap Layer"), this);
 	QAction* newVectorLayerAct = new QAction(tr("New Vector Layer"), this);
 	QAction* newSoundLayerAct = new QAction(tr("New Sound Layer"), this);
+	QAction* newCameraLayerAct = new QAction(tr("New Camera Layer"), this);
 	QMenu* layerMenu = new QMenu(tr("&Layer"), this);
 	layerMenu->addAction(newBitmapLayerAct);
 	layerMenu->addAction(newVectorLayerAct);
 	layerMenu->addAction(newSoundLayerAct);
+	layerMenu->addAction(newCameraLayerAct);
 	addLayerButton->setMenu(layerMenu);
 	addLayerButton->setPopupMode(QToolButton::InstantPopup);
 
@@ -227,6 +229,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	connect(newBitmapLayerAct, SIGNAL(triggered()), this, SIGNAL(newBitmapLayer()));
 	connect(newVectorLayerAct, SIGNAL(triggered()), this, SIGNAL(newVectorLayer()));
 	connect(newSoundLayerAct, SIGNAL(triggered()), this, SIGNAL(newSoundLayer()));
+	connect(newCameraLayerAct, SIGNAL(triggered()), this, SIGNAL(newCameraLayer()));
 	connect(removeLayerButton, SIGNAL(clicked()), this, SIGNAL(deleteCurrentLayer()));
 
 	//scrubbing = false;
@@ -652,14 +655,7 @@ void TimeLineCells::mouseDoubleClickEvent(QMouseEvent *event) {
 			editor->object->getLayer(layerNumber)->mouseDoubleClick(event, frameNumber);
 		}
 		if(type == "layers") {
-			bool ok;
-			QString text = QInputDialog::getText(this, tr("Layer name"),
-																				tr("Layer name:"), QLineEdit::Normal,
-																				layer->name, &ok);
-			if (ok && !text.isEmpty()) {
-				layer->name = text;
-				//palette->updateList();
-			}
+			layer->editProperties();
 		}
 	}
 }

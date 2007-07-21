@@ -23,6 +23,7 @@ GNU General Public License for more details.
 #include "layerbitmap.h"
 #include "layervector.h"
 #include "layersound.h"
+#include "layercamera.h"
 
 #include "editor.h"
 #include "bitmapimage.h"
@@ -82,6 +83,13 @@ bool Object::read(QString filePath) {
 					layerNumber++;
 					((LayerSound*)(getLayer(layerNumber)))->loadDomElement( element, filePath );
 				}
+				// --- camera layer ---
+				if(element.attribute("type").toInt() == Layer::CAMERA) {
+					addNewCameraLayer();
+					layerNumber++;
+					((LayerCamera*)(getLayer(layerNumber)))->loadDomElement( element, filePath );
+				}
+
 			}
 		}
 		tag = tag.nextSibling();
@@ -138,6 +146,13 @@ void Object::addNewVectorLayer() {
 void Object::addNewSoundLayer() {
 	LayerSound* layerSound = new LayerSound(this);
 	layer.append( layerSound );
+}
+
+void Object::addNewCameraLayer() {
+	LayerCamera* layerCamera = new LayerCamera(this);
+	layer.append( layerCamera );
+	connect( layerCamera, SIGNAL(imageAdded(int,int)), this, SIGNAL(imageAdded(int,int)) );
+	connect( layerCamera, SIGNAL(imageRemoved(int)), this, SLOT(imageCheck(int)) );
 }
 
 Layer* Object::getLayer(int i) {
@@ -369,7 +384,7 @@ void Object::paintImage(QPainter &painter, int frameNumber, bool background, qre
 	}
 }
 
-void Object::exportFrames(int frameStart, int frameEnd, QMatrix view, QSize exportSize, QString filePath, const char* format, int quality, bool background, bool antialiasing, int gradients) {
+void Object::exportFrames(int frameStart, int frameEnd, QMatrix view, Layer* currentLayer, QSize exportSize, QString filePath, const char* format, int quality, bool background, bool antialiasing, int gradients) {
 	
 	QSettings settings("Pencil","Pencil");
 	qreal curveOpacity = (100-settings.value("curveOpacity").toInt())/100.0; // default value is 1.0
@@ -393,7 +408,14 @@ void Object::exportFrames(int frameStart, int frameEnd, QMatrix view, QSize expo
 		QImage tempImage(exportSize, QImage::Format_ARGB32_Premultiplied);
 		QPainter painter(&tempImage);
 		
-		painter.setWorldMatrix(view);
+		if(currentLayer->type == Layer::CAMERA) {
+			QRect viewRect = ((LayerCamera*)currentLayer)->getViewRect();
+			QMatrix mapView = Editor::map( viewRect, QRectF(QPointF(0,0), exportSize) );
+			mapView = ((LayerCamera*)currentLayer)->getViewAtFrame(currentFrame) * mapView;
+			painter.setWorldMatrix(mapView);
+		} else {
+			painter.setWorldMatrix(view);
+		}
 		paintImage(painter, currentFrame, background, curveOpacity, antialiasing, gradients);
 		
 		QString frameNumberString = QString::number(currentFrame);

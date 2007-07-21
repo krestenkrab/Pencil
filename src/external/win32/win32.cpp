@@ -19,7 +19,7 @@ void initialise() {
   // nothing, for now
 }
 
-void Object::exportMovie(int startFrame, int endFrame, QMatrix view, QSize exportSize, QString filePath, int fps) {
+void Object::exportMovie(int startFrame, int endFrame, QMatrix view, Layer* currentLayer, QSize exportSize, QString filePath, int fps) {
 	QMessageBox assembling("Export",tr("Not supported yet on this platform..."),QMessageBox::Information,0,0,0);
 	assembling.show();
 	// nothing

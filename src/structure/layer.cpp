@@ -79,14 +79,6 @@ void Layer::paintLabel(QPainter &painter, TimeLineCells *cells, int x, int y, in
 	painter.setPen(QPen(QBrush(QColor(100,100,100)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
 	painter.drawRect(x, y-1, width, height); // empty rectangle  by default
 	
-	if(type == BITMAP) painter.drawPixmap( QPoint(20, y+2), QPixmap(":/icons/layer-bitmap.png") );
-	if(type == VECTOR) painter.drawPixmap( QPoint(20, y+2), QPixmap(":/icons/layer-vector.png") );
-	if(type == SOUND) painter.drawPixmap( QPoint(21, y+2), QPixmap(":/icons/layer-sound.png") );
-	
-	painter.setFont(QFont("helvetica", height/2));
-	painter.setPen(Qt::black);
-	painter.drawText(QPoint(45, y+(2*height)/3), name);
-	
 	if(visible) {
 		if(allLayers==0)  painter.setBrush(Qt::NoBrush);
 		if(allLayers==1)   painter.setBrush(Qt::darkGray);
@@ -94,6 +86,7 @@ void Layer::paintLabel(QPainter &painter, TimeLineCells *cells, int x, int y, in
 	} else {
 		painter.setBrush(Qt::NoBrush);
 	}
+	painter.setPen(Qt::black);
 	painter.setRenderHint(QPainter::Antialiasing, true);
 	painter.drawEllipse(x+6, y+4, 9, 9);
 	painter.setRenderHint(QPainter::Antialiasing, false);
@@ -105,6 +98,16 @@ void Layer::paintLabel(QPainter &painter, TimeLineCells *cells, int x, int y, in
 	if(selected) {
 		paintSelection(painter, x, y, width, height);
 	}
+	
+	if(type == BITMAP) painter.drawPixmap( QPoint(20, y+2), QPixmap(":/icons/layer-bitmap.png") );
+	if(type == VECTOR) painter.drawPixmap( QPoint(20, y+2), QPixmap(":/icons/layer-vector.png") );
+	if(type == SOUND) painter.drawPixmap( QPoint(21, y+2), QPixmap(":/icons/layer-sound.png") );
+	if(type == CAMERA) painter.drawPixmap( QPoint(21, y+2), QPixmap(":/icons/layer-camera.png") );
+	
+	painter.setFont(QFont("helvetica", height/2));
+	painter.setPen(Qt::black);
+	painter.drawText(QPoint(45, y+(2*height)/3), name);
+
 }
 
 void Layer::paintSelection(QPainter &painter, int x, int y, int width, int height) {
@@ -167,6 +170,16 @@ void Layer::mouseMove(QMouseEvent *event, int frameNumber) {
 void Layer::mouseRelease(QMouseEvent *event, int frameNumber) {
 }
 
+void Layer::editProperties() {
+	bool ok;
+	QString text = QInputDialog::getText(NULL, tr("Layer Properties"),
+																				tr("Layer name:"), QLineEdit::Normal,
+																				name, &ok);
+	if (ok && !text.isEmpty()) {
+		name = text;
+		//palette->updateList();
+	}
+}
 
 //void Layer::addImageAtFrame(int frameNumber) {
 	// nothing by default

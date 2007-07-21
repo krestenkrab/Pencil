@@ -137,13 +137,14 @@ public slots:
 	void removeKey();
 	
 	void addFrame(int frameNumber);
+	void addFrame(int frameNumber1, int frameNumber2);
 	void removeFrame(int frameNumber);
 	int getLastIndexAtFrame(int frameNumber);
 	int getLastFrameAtFrame(int frameNumber);
 	
 	//void altPress();
 	//void altRelease();
-	void config();
+	void showPreferences();
 	
 	void newObject();
 	void setObject(Object *object);
@@ -186,6 +187,7 @@ public slots:
 	void newBitmapLayer();
 	void newVectorLayer();
 	void newSoundLayer();
+	void newCameraLayer();
 	void deleteCurrentLayer();
 	
 	void toggleMirror();
@@ -240,7 +242,8 @@ private:
 	VectorImage clipboardVectorImage;
 	
 	// dialogs
-	void createExportSizeBox();
+	void createExportFramesSizeBox();
+	void createExportMovieSizeBox();
 	void createExportFramesDialog();
 	void createExportMovieDialog();
 	void createExportFlashDialog();
@@ -251,9 +254,10 @@ private:
 	QDialog *exportFlashDialog;
 	QSpinBox *exportFramesDialog_hBox;
 	QSpinBox *exportFramesDialog_vBox;
-	//QSpinBox *exportMovieDialog_hBox;
-	//QSpinBox *exportMovieDialog_vBox;
+	QSpinBox *exportMovieDialog_hBox;
+	QSpinBox *exportMovieDialog_vBox;
 	QComboBox *exportFramesDialog_format;
+	QComboBox *exportMovieDialog_format;
 	QSlider* exportFlashDialog_compression;
 };
 

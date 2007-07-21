@@ -64,11 +64,12 @@ private:
 	QAction *pasteAct;
 	QAction *selectAllAct;
 	QAction *importSndAct;
-	QAction *configAct;
+	QAction *preferencesAct;
 	
 	QAction *newBitmapLayerAct;
 	QAction *newVectorLayerAct;
 	QAction *newSoundLayerAct;
+	QAction *newCameraLayerAct;
 	QAction *deleteLayerAct;
 	
 	QAction *dockAllPalettesAct;
