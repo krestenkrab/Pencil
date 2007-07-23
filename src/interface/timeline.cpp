@@ -76,10 +76,10 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	leftToolBarLayout->addWidget(layerButtons);
 	leftToolBar->setLayout(leftToolBarLayout);
 
-	QAction* newBitmapLayerAct = new QAction(tr("New Bitmap Layer"), this);
-	QAction* newVectorLayerAct = new QAction(tr("New Vector Layer"), this);
-	QAction* newSoundLayerAct = new QAction(tr("New Sound Layer"), this);
-	QAction* newCameraLayerAct = new QAction(tr("New Camera Layer"), this);
+	QAction* newBitmapLayerAct = new QAction(QIcon(":icons/layer-bitmap.png"), tr("New Bitmap Layer"), this);
+	QAction* newVectorLayerAct = new QAction(QIcon(":icons/layer-vector.png"), tr("New Vector Layer"), this);
+	QAction* newSoundLayerAct = new QAction(QIcon(":icons/layer-sound.png"), tr("New Sound Layer"), this);
+	QAction* newCameraLayerAct = new QAction(QIcon(":icons/layer-camera.png"), tr("New Camera Layer"), this);
 	QMenu* layerMenu = new QMenu(tr("&Layer"), this);
 	layerMenu->addAction(newBitmapLayerAct);
 	layerMenu->addAction(newVectorLayerAct);
