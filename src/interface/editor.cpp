@@ -124,6 +124,7 @@ Editor::Editor(QMainWindow* parent)
 	connect(this, SIGNAL(selectAll()), scribbleArea, SLOT(selectAll()));
 	
 	connect(scribbleArea, SIGNAL(modification()), this, SLOT(modification()));
+	connect(scribbleArea, SIGNAL(modification(int)), this, SLOT(modification(int)));
 	connect(timeLine, SIGNAL(modification()), this, SLOT(modification()));
 	
 	connect(timeLine, SIGNAL(addKeyClick()), this, SLOT(addKey()));
@@ -396,7 +397,7 @@ void Editor::updateColour(int i, QColor newColour)
 		object->setColour(i, newColour);
 		Layer* layer = object->getLayer(currentLayer);
 		if(layer != NULL) {
-			if(layer->type == Layer::VECTOR) scribbleArea->setModified(layer, currentFrame);
+			if(layer->type == Layer::VECTOR) scribbleArea->setModified(currentLayer, currentFrame);
 		}
 		toolSet->setColour(object->getColour(i).colour);
 		palette->updateSwatch(object->getColour(i).colour);
@@ -441,10 +442,14 @@ void Editor::removeColour(int i) {
 }
 
 void Editor::modification() {
+	modification(currentLayer);
+}
+
+void Editor::modification(int layerNumber) {
 	modified = true;
 	if(object != NULL) object->modification();
 	lastModifiedFrame = currentFrame;
-	lastModifiedLayer = currentLayer;
+	lastModifiedLayer = layerNumber;
 }
 
 void Editor::backup() {
@@ -460,7 +465,7 @@ void Editor::backup(int backupLayer, int backupFrame) {
 	while(backupList.size()-1 > backupIndex && backupList.size() > 0) {
 		delete backupList.takeLast();
 	}
-	while(backupList.size() > 7) { // we authorize only 8 levels of cancellation
+	while(backupList.size() > 19) { // we authorize only 20 levels of cancellation
 		delete backupList.takeFirst();
 		backupIndex--;
 	}
@@ -1231,6 +1236,7 @@ void Editor::scrubTo(int frameNumber) {
 	//timeLine->setCurrentFrame(currentFrame);
 	timeLine->updateFrame(oldFrame);
 	timeLine->updateFrame(currentFrame);
+	scribbleArea->readCanvasFromCache = true;
 	scribbleArea->update();
 }
 

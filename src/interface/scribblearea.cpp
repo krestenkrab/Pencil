@@ -151,6 +151,7 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	
 	tol = 7.0;
 	
+	readCanvasFromCache = true;
 	mouseInUse = false;
 	setMouseTracking(true); // reacts to mouse move events, even if the button is not pressed
 	
@@ -423,6 +424,7 @@ void ScribbleArea::updateFrame(int frame) {
 	setView();
 	int frameNumber = editor->getLastFrameAtFrame( frame );
 	QPixmapCache::remove("frame"+QString::number(frameNumber));
+	readCanvasFromCache = true;
 	update();
 }
 
@@ -431,6 +433,7 @@ void ScribbleArea::updateAllFrames() {
 	//frameList.clear();
 	setView();
 	QPixmapCache::clear();
+	readCanvasFromCache = true;
 	update();
 }
 
@@ -455,10 +458,11 @@ void ScribbleArea::updateAllVectorLayers() {
 	updateAllFrames();
 }
 
-void ScribbleArea::setModified(Layer* layer, int frame) {
-	if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->setModified(true);
-	if(layer->type == Layer::BITMAP) ((LayerImage*)layer)->setModified(editor->currentFrame, true);
-	emit modification();
+void ScribbleArea::setModified(int layerNumber, int frameNumber) {
+	Layer* layer = editor->object->getLayer(layerNumber);
+	if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->getLastVectorImageAtFrame(frameNumber, 0)->setModified(true);
+	if(layer->type == Layer::BITMAP) ((LayerImage*)layer)->setModified(frameNumber, true);
+	emit modification(layerNumber);
 	//updateFrame(frame);
 	updateAllFrames();
 }
@@ -582,6 +586,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 				tr("You are drawing on a hidden layer! Please select another layer (or make the current layer visible)."),
 				QMessageBox::Ok,
 				QMessageBox::Ok);
+		mouseInUse = false;
 		return;
 	}
 	if(layer->type == Layer::VECTOR) {
@@ -926,8 +931,6 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 	if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) {
 		if ((event->button() == Qt::LeftButton) && (toolMode == ScribbleArea::PENCIL || toolMode == ScribbleArea::ERASER || toolMode == ScribbleArea::PEN)) {
 			drawLineTo(currentPixel, currentPoint);
-			//if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) ((LayerImage*)layer)->setModified(editor->currentFrame, true);
-			//setModified(layer, editor->currentFrame);
 		}
 	}
 		
@@ -936,16 +939,19 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 		if(layer->type == Layer::BITMAP) {
 			// ----------------------------------------------------------------------
 			if( toolMode == BUCKET) {
-				BitmapImage* targetImage = ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
-				BitmapImage* fillImage = targetImage;
+				BitmapImage* sourceImage = ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
+				Layer* targetLayer = layer; // by default
+				int layerNumber = editor->currentLayer; // by default
 				if( editor->currentLayer > 0) {
 					Layer* layer2 = editor->getCurrentLayer(-1);
 					if(layer2->type == Layer::BITMAP) {
-						fillImage = ((LayerBitmap*)layer2)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
+						targetLayer = layer2;
+						layerNumber = layerNumber - 1;
 					}
 				}
-				BitmapImage::floodFill( targetImage, fillImage, lastPoint.toPoint(), qRgba(0,0,0,0), brush.colour.rgba(), 10*10);
-				setModified(layer, editor->currentFrame);
+				BitmapImage* targetImage = ((LayerBitmap*)targetLayer)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
+				BitmapImage::floodFill( sourceImage, targetImage, lastPoint.toPoint(), qRgba(0,0,0,0), brush.colour.rgba(), 10*10);
+				setModified(layerNumber, editor->currentFrame);
 			}
 			// ----------------------------------------------------------------------
 			if( toolMode == EYEDROPPER) {
@@ -962,9 +968,16 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 				} else {
 					targetImage->paste(bufferImg);
 				}
+				QRect rect = myTempView.mapRect(bufferImg->boundaries);
 				bufferImg->clear();
-				//update();
-				setModified(layer, editor->currentFrame);
+				
+				//setModified(layer, editor->currentFrame);
+				((LayerImage*)layer)->setModified(editor->currentFrame, true);
+				emit modification();
+				QPixmapCache::remove("frame"+QString::number(editor->currentFrame));
+				readCanvasFromCache = false;
+				updateCanvas(editor->currentFrame, rect);
+				update(rect);
 			}
 		}
 		
@@ -978,9 +991,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 				} else {
 					floodFill(vectorImage, lastPixel.toPoint(), qRgba(0,0,0,0), qRgb(200,200,200), 100*100);
 				}
-				//((LayerImage*)layer)->setModified(editor->currentFrame, true);
-				//update();
-				setModified(layer, editor->currentFrame);
+				setModified(editor->currentLayer, editor->currentFrame);
 			}
 			// ----------------------------------------------------------------------
 			if( toolMode == EYEDROPPER) {
@@ -997,7 +1008,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 				((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->colour(mousePath, brush.colourNumber);
 				//((LayerImage*)layer)->setModified(editor->currentFrame, true);
 				//update();
-				setModified(layer, editor->currentFrame);
+				setModified(editor->currentLayer, editor->currentFrame);
 			}
 			// ----------------------------------------------------------------------
 			if( (toolMode == ScribbleArea::PENCIL || toolMode == ScribbleArea::PEN) && mousePath.size() > -1 ) {
@@ -1027,7 +1038,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 				
 				//if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) ((LayerImage*)layer)->setModified(editor->currentFrame, true);
 				//update();
-				setModified(layer, editor->currentFrame);
+				setModified(editor->currentLayer, editor->currentFrame);
 			}
 			// ----------------------------------------------------------------------
 			if( toolMode == ScribbleArea::ERASER ) {
@@ -1038,7 +1049,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 				bufferImg->clear();
 				vectorImage->deleteSelectedPoints();
 				//update();
-				setModified(layer, editor->currentFrame);
+				setModified(editor->currentLayer, editor->currentFrame);
 			}
 		}
 	}
@@ -1054,7 +1065,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 				int curveNumber = vectorSelection.curve.at(k);
 				vectorImage->curve[curveNumber].smoothCurve();
 			}
-			setModified(layer, editor->currentFrame);
+			setModified(editor->currentLayer, editor->currentFrame);
 		}
 	}
 	if ((toolMode == ScribbleArea::MOVE) && (event->button() == Qt::LeftButton)  && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR)) {
@@ -1083,7 +1094,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 			}
 		}
 
-		setModified(layer, editor->currentFrame);
+		setModified(editor->currentLayer, editor->currentFrame);
 	}
 	// ----------------------------------------------------------------------
 	if( toolMode == ScribbleArea::HAND || (event->button() == Qt::RightButton) ) {
@@ -1134,31 +1145,33 @@ void ScribbleArea::mouseDoubleClickEvent(QMouseEvent *event)
 
 void ScribbleArea::paintEvent(QPaintEvent* event)
 {
-	//qDebug() << "paint event!" << editor->currentFrame << QDateTime::currentDateTime();
+	//qDebug() << "paint event!" << readCanvasFromCache << mouseInUse << editor->currentFrame << QDateTime::currentDateTime();
 	QPainter painter(this);
 	
-	// draws the canvas
-	if(!mouseInUse) {
-		// --- we retrieve the image from the cache; we create it if it doesn't exist
-		int frameNumber = editor->getLastFrameAtFrame( editor->currentFrame );
-		if(!QPixmapCache::find("frame"+QString::number(frameNumber), canvas)) {
-			paintCanvas(editor->currentFrame);
-			QPixmapCache::insert("frame"+QString::number(frameNumber), canvas);
-		}
-	} else {
-		if(toolMode == HAND) {
+	// draws the background (if necessary)
+	if(mouseInUse && toolMode == HAND) {
 			painter.setWorldMatrix(myTempView);
 			painter.setWorldMatrixEnabled(true);
 			painter.setPen(Qt::NoPen);
 			painter.setBrush(backgroundBrush);
 			painter.drawRect(  (myTempView).inverted().mapRect( QRect(-2,-2, width()+3, height()+3) )  ); // this is necessary to have the background move with the view
+	}
+
+	// process the canvas (or not)
+	if(!mouseInUse && readCanvasFromCache) {
+		// --- we retrieve the canvas from the cache; we create it if it doesn't exist
+		int frameNumber = editor->getLastFrameAtFrame( editor->currentFrame );
+		if(!QPixmapCache::find("frame"+QString::number(frameNumber), canvas)) {
+			updateCanvas(editor->currentFrame, event->rect());
+			QPixmapCache::insert("frame"+QString::number(frameNumber), canvas);
 		}
 	}
 	if(toolMode == MOVE) {
 		Layer* layer = editor->getCurrentLayer();
 		if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0)->setModified(true);
-		paintCanvas(editor->currentFrame);
+		updateCanvas(editor->currentFrame, event->rect());
 	}
+	// paints the canvas
 	painter.setWorldMatrixEnabled(true);
 	painter.setWorldMatrix(  centralView.inverted() * transMatrix * centralView  );
 	painter.drawPixmap( QPoint(0,0), canvas );
@@ -1335,10 +1348,9 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 	event->accept();
 }
 
-void ScribbleArea::paintCanvas(int frame)
+void ScribbleArea::updateCanvas(int frame, QRect rect)
 {	
 	//qDebug() << "paint canvas!" << QDateTime::currentDateTime();
-	canvas.fill(Qt::white);
 	// merge the different layers into the ScribbleArea
 	QPainter painter(&canvas);
 	if(myTempView.det() == 1.0) {
@@ -1346,6 +1358,9 @@ void ScribbleArea::paintCanvas(int frame)
 	} else {
 		painter.setRenderHint(QPainter::SmoothPixmapTransform, antialiasing);
 	}
+	painter.setClipRect(rect);
+	painter.setClipping(true);
+	painter.fillRect(rect, Qt::red);
 	setView();
 	painter.setWorldMatrix(myTempView);
 	painter.setWorldMatrixEnabled(true);
@@ -1612,7 +1627,7 @@ void ScribbleArea::endPolyline()
 	}
 	bufferImg->clear();
 	while(!mousePoints.isEmpty()) mousePoints.removeAt(0); // empty the mousePoints
-	setModified(layer, editor->currentFrame);
+	setModified(editor->currentLayer, editor->currentFrame);
 }
 
 
@@ -1730,7 +1745,7 @@ void ScribbleArea::paintTransformedSelection() {
 		}
 		//deselectAll();
 		//emit modification();
-		setModified(layer, editor->currentFrame);
+		setModified(editor->currentLayer, editor->currentFrame);
 	}
 }
 
@@ -2401,7 +2416,7 @@ void ScribbleArea::clearImage() {
 	if(layer->type == Layer::BITMAP) ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(editor->currentFrame, 0)->clear();
 	//emit modification();
 	//update();
-	setModified(layer, editor->currentFrame);
+	setModified(editor->currentLayer, editor->currentFrame);
 }
 	
 void ScribbleArea::toggleThinLines() {

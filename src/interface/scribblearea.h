@@ -78,6 +78,7 @@ public:
 	void displaySelectionProperties();
 	QRectF getSelection() { return mySelection; }
 	bool somethingSelected;
+	bool readCanvasFromCache;
 	
 	bool isModified() const { return modified; }
 	
@@ -101,6 +102,7 @@ public:
 	
 signals:
 	void modification();
+	void modification(int);
 	void thinLinesChanged(bool);
 	void outlinesChanged(bool);
 	//void showAllLayersChanged(bool);
@@ -110,7 +112,7 @@ public slots:
 	void calculateSelectionRect();
 	void calculateSelectionTransformation();
 	void paintTransformedSelection();
-	void setModified(Layer* layer, int frame);
+	void setModified(int layerNumber, int frameNumber);
 	
 	void selectAll();
 	void deselectAll();
@@ -176,7 +178,7 @@ protected:
 	void setView(QMatrix);
 	
 private:
-	void paintCanvas(int frame);
+	void updateCanvas(int frame, QRect rect);
 	void setGaussianGradient(QGradient &gradient, QColor coulour, qreal opacity);
 	void drawBrush(QPointF thePoint, qreal brushWidth, QColor fillColour, qreal opacity);
 	void drawLineTo(const QPointF &endPixel, const QPointF &endPoint);

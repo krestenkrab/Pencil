@@ -176,6 +176,7 @@ public slots:
 	void removeColour(int);
 	
 	void modification();
+	void modification(int);
 	void backup();
 	void backup(int layerNumber, int frameNumber);
 	void undo();
