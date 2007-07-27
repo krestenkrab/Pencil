@@ -69,6 +69,7 @@ win32 {
 	INCLUDEPATH += . libwin32
 	SOURCES += src/external/win32/win32.cpp
 	LIBS += -Llibwin32 -lming -lpng
+	RC_FILE = pencil.rc
 }
 macx {
 	INCLUDEPATH += . libmacosx
@@ -76,6 +77,7 @@ macx {
 	SOURCES += src/external/macosx/macosx.cpp \
 	 	   src/external/macosx/style.cpp
 	LIBS += libmacosx/libming.a
+	RC_FILE = pencil.icns
 }
 linux-g++ {
 	INCLUDEPATH += . liblinux
