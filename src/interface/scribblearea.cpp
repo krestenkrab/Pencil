@@ -1145,7 +1145,7 @@ void ScribbleArea::mouseDoubleClickEvent(QMouseEvent *event)
 
 void ScribbleArea::paintEvent(QPaintEvent* event)
 {
-	//qDebug() << "paint event!" << readCanvasFromCache << mouseInUse << editor->currentFrame << QDateTime::currentDateTime();
+	//qDebug() << "paint event!" << QDateTime::currentDateTime() << event->rect(); //readCanvasFromCache << mouseInUse << editor->currentFrame;
 	QPainter painter(this);
 	
 	// draws the background (if necessary)
@@ -1637,6 +1637,7 @@ void ScribbleArea::resizeEvent(QResizeEvent *event)
 	QWidget::resizeEvent(event);
 	canvas = QPixmap(size());
 	recentre();
+	updateAllFrames();
 }
 
 void ScribbleArea::recentre() {
