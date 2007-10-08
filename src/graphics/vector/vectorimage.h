@@ -35,6 +35,8 @@ class VectorImage
 		//VectorImage(QSize size, QImage::Format format, Object* parent);
 		//VectorImage(QImage newImage, Object* parent);
 		
+		bool read(QString filePath);
+		bool write(QString filePath, QString format);
 		QDomElement createDomElement(QDomDocument &doc);
 		void loadDomElement(QDomElement element);
 		

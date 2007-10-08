@@ -30,6 +30,62 @@ VectorImage::VectorImage(Object *parent) {
 }
 
 
+bool VectorImage::read(QString filePath) {
+	QFileInfo fileInfo(filePath);
+	if( fileInfo.isDir() ) return false;
+	
+	QFile* file = new QFile(filePath);
+	if (!file->open(QFile::ReadOnly)) {
+		//QMessageBox::warning(this, "Warning", "Cannot read file");
+		return false;
+	}
+	
+	QDomDocument doc("MyVectorImage");
+	doc.setContent(file);
+	
+	int layerNumber = -1;
+	QDomElement docElem = doc.documentElement();
+	QDomNode tag = docElem.firstChild();
+	while(!tag.isNull()) {
+		QDomElement element = tag.toElement(); // try to convert the node to an element.
+		if(!element.isNull()) {
+			if(element.tagName() == "image") {
+				// --- vector image ---
+				if(element.attribute("type") == "vector") {
+					loadDomElement( element );
+				}
+			}
+		}
+		tag = tag.nextSibling();
+	}
+	return true;
+}
+
+
+bool VectorImage::write(QString filePath, QString format) {
+	QFile* file = new QFile(filePath);
+	if (!file->open(QFile::WriteOnly | QFile::Text)) {
+		//QMessageBox::warning(this, "Warning", "Cannot write file");
+		return false;
+	}
+	QTextStream out(file);
+	
+	if(format == "VEC") {
+		QDomDocument doc("MyVectorImage");
+		QDomElement root = doc.createElement("MyVectorImage");
+		doc.appendChild(root);
+	
+		QDomElement imageTag = createDomElement(doc);
+		root.appendChild(imageTag);
+	
+		int IndentSize = 2;
+		doc.save(out, IndentSize);
+		return true;
+	} else {
+		return false;
+	}
+}
+
 QDomElement VectorImage::createDomElement(QDomDocument &doc) {
 	QDomElement imageTag = doc.createElement("image");
 	imageTag.setAttribute("type", "vector");

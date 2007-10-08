@@ -396,36 +396,254 @@ void BitmapImage::drawPath( QPainterPath path, QPen pen, QBrush brush, QPainter:
 	}
 }
 
-void BitmapImage::blur2(qreal radius) {
+
+void BitmapImage::fastBlur(qreal rad) { // --- faster blur  -- doesn't work :-(
+	if(image == NULL) return;
+	int radius = qRound(rad);
+	if (radius<1) return;
+	/*
+  //int[] pix=img.pixels;
+  int w=image->width();
+  int h=image->height();
+  int wm=w-1;
+  int hm=h-1;
+  int wh=w*h;
+  int div=radius+radius+1;
+
+  //int r[]=new int[wh];
+  //int g[]=new int[wh];
+  //int b[]=new int[wh];
+  QList<int> r, g, b;
+	int rsum,gsum,bsum,x,y,i,yp,yi,yw;
+	QRgb p;
+  //int vmin[] = new int[max(w,h)];
+	QList<int> vmin;
+	
+  int divsum=(div+1)>>1;
+  divsum*=divsum;
+  //int dv[]=new int[256*divsum];
+	QList<int> dv;
+  for (i=0;i<256*divsum;i++){
+    //dv[i]=(i/divsum);
+		dv << (i/divsum);
+  }
+
+  yw=yi=0;
+
+  //int[][] stack=new int[div][3];
+	QList<int> stack[3];
+  int stackpointer;
+  int stackstart;
+  //int[] sir;
+  QList<int> sir;
+	int rbs;
+  int r1=radius+1;
+  int routsum,goutsum,boutsum;
+  int rinsum,ginsum,binsum;
+
+  for (y=0;y<h;y++){
+    rinsum=ginsum=binsum=routsum=goutsum=boutsum=rsum=gsum=bsum=0;
+    for(i=-radius;i<=radius;i++){
+      sir=stack[i+radius];
+      //p=pix[yi+min(wm,max(i,0))];
+			//sir[0]=(p & 0xff0000)>>16;
+      //sir[1]=(p & 0x00ff00)>>8;
+      //sir[2]=(p & 0x0000ff);
+      
+			int truc = yi+min(wm,max(i,0));
+			p = image->pixel( truc % w, truc / w );
+			sir[0]=qRed(p);
+			sir[1]=qGreen(p);
+			sir[2]=qBlue(p);
+			
+      rbs=r1-abs(i);
+      rsum+=sir[0]*rbs;
+      gsum+=sir[1]*rbs;
+      bsum+=sir[2]*rbs;
+      if (i>0){
+        rinsum+=sir[0];
+        ginsum+=sir[1];
+        binsum+=sir[2];
+      } else {
+        routsum+=sir[0];
+        goutsum+=sir[1];
+        boutsum+=sir[2];
+      }
+    }
+    stackpointer=radius;
+
+    for (x=0;x<w;x++){
+
+      r[yi]=dv[rsum];
+      g[yi]=dv[gsum];
+      b[yi]=dv[bsum];
+      
+      rsum-=routsum;
+      gsum-=goutsum;
+      bsum-=boutsum;
+
+      stackstart=stackpointer-radius+div;
+      sir=stack[stackstart%div];
+      
+      routsum-=sir[0];
+      goutsum-=sir[1];
+      boutsum-=sir[2];
+      
+      if(y==0){
+        vmin[x]=min(x+radius+1,wm);
+      }
+      //p=pix[yw+vmin[x]];
+      //sir[0]=(p & 0xff0000)>>16;
+      //sir[1]=(p & 0x00ff00)>>8;
+      //sir[2]=(p & 0x0000ff);
+			
+			int truc = yw+vmin[x];
+			p = image->pixel( truc % w, truc / w );
+			sir[0]=qRed(p);
+			sir[1]=qGreen(p);
+			sir[2]=qBlue(p);
+			
+      rinsum+=sir[0];
+      ginsum+=sir[1];
+      binsum+=sir[2];
+
+      rsum+=rinsum;
+      gsum+=ginsum;
+      bsum+=binsum;
+      
+      stackpointer=(stackpointer+1)%div;
+      sir=stack[(stackpointer)%div];
+     
+      routsum+=sir[0];
+      goutsum+=sir[1];
+      boutsum+=sir[2];
+     
+       rinsum-=sir[0];
+      ginsum-=sir[1];
+      binsum-=sir[2];
+     
+       yi++;
+    }
+    yw+=w;
+  }
+  for (x=0;x<w;x++){
+    rinsum=ginsum=binsum=routsum=goutsum=boutsum=rsum=gsum=bsum=0;
+    yp=-radius*w;
+    for(i=-radius;i<=radius;i++){
+      yi=max(0,yp)+x;
+     
+       sir=stack[i+radius];
+      
+      sir[0]=r[yi];
+      sir[1]=g[yi];
+      sir[2]=b[yi];
+     
+      rbs=r1-abs(i);
+      
+      rsum+=r[yi]*rbs;
+      gsum+=g[yi]*rbs;
+      bsum+=b[yi]*rbs;
+     
+      if (i>0){
+        rinsum+=sir[0];
+        ginsum+=sir[1];
+        binsum+=sir[2];
+      } else {
+        routsum+=sir[0];
+        goutsum+=sir[1];
+        boutsum+=sir[2];
+      }
+      
+      if(i<hm){
+        yp+=w;
+      }
+    }
+    yi=x;
+    stackpointer=radius;
+    for (y=0;y<h;y++){
+      //pix[yi]=0xff000000 | (dv[rsum]<<16) | (dv[gsum]<<8) | dv[bsum];
+			image->setPixel(yi % w, yi/w, qRgb(dv[rsum], dv[gsum], dv[bsum]) );
+			
+      rsum-=routsum;
+      gsum-=goutsum;
+      bsum-=boutsum;
+
+      stackstart=stackpointer-radius+div;
+      sir=stack[stackstart%div];
+     
+      routsum-=sir[0];
+      goutsum-=sir[1];
+      boutsum-=sir[2];
+     
+       if(x==0){
+        vmin[y]=min(y+r1,hm)*w;
+      }
+      p=x+vmin[y];
+      
+      sir[0]=r[p];
+      sir[1]=g[p];
+      sir[2]=b[p];
+      
+      rinsum+=sir[0];
+      ginsum+=sir[1];
+      binsum+=sir[2];
+
+      rsum+=rinsum;
+      gsum+=ginsum;
+      bsum+=binsum;
+
+      stackpointer=(stackpointer+1)%div;
+      sir=stack[stackpointer];
+     
+      routsum+=sir[0];
+      goutsum+=sir[1];
+      boutsum+=sir[2];
+      
+      rinsum-=sir[0];
+      ginsum-=sir[1];
+      binsum-=sir[2];
+
+      yi+=w;
+    }
+  }*/
+}
+
+
+void BitmapImage::blur2(qreal radius) { // --- faster blur  -- doesn't work :-(
 	if(image == NULL) return;
 	int rad = qRound(radius);
-	QImage* newImage;
-	// --- fast blur
-	newImage = new QImage(image->width()+2*rad, image->height()+2*rad, QImage::Format_ARGB32_Premultiplied);
+	
+	int w = image->width();
+	int h = image->height();
+	int w2 = w + 2*rad;
+	int h2 = h + 2*rad;
+	QImage *newImage = new QImage(w2, h2, QImage::Format_ARGB32_Premultiplied);
 	newImage->fill( qRgba(0,0,0,0) );
-	QPainter painter(newImage);
+	
+	/*QImage *sourceImage = new QImage(image->width()+4*rad, image->height()+4*rad, QImage::Format_ARGB32_Premultiplied);
+	sourceImage->fill( qRgba(0,0,0,0) );
+	QPainter painter(sourceImage);
+	painter.drawImage( QPoint(2*rad,2*rad), *image );
+	//painter.setBrush( QBrush( QPixmap(":backgrounds/dots.png") ) );
+	//painter.drawRect( QRect(2*rad,2*rad, image->width(), image->height()) );
+	painter.end();
+	painter.begin(newImage);
+	painter.setCompositionMode(QPainter::CompositionMode_Source);
 	painter.setRenderHints(QPainter::SmoothPixmapTransform, true);
-	for(int i=0; i<newImage->width(); i++) {
-		for(int j=0; j<newImage->height(); j++) {
-			painter.drawImage( QRect(i,j,1,1), *image, QRect(i-rad,j-rad, rad, rad));
-			/*int r=0; int g = 0; int b = 0; int a = 0;
-			for(int u=-rad+1; u<rad; u++) {
-				//qDebug() << i << j << u << value;
-				//qDebug() << "poppp" << qAlpha(pixel(i+u,j));
-				QRgb pix = qRgba(0,0,0,0);
-				if(i-rad+u>-1 && i-rad+u<image->width() && j-rad>-1 && j-rad<image->height()) pix = image->pixel(i-rad+u,j-rad);
-				r = r + gaussian.at(abs(u))*qRed(pix);
-				g = g + gaussian.at(abs(u))*qGreen(pix);
-				b = b + gaussian.at(abs(u))*qBlue(pix);
-				a = a + gaussian.at(abs(u))*qAlpha(pix);
+	painter.setRenderHints(QPainter::Antialiasing, true);
+	*/
+	for(int i=0; i<w; i++) {
+		for(int j=0; j<h; j++) {
+			//painter.drawImage( QRect(i,j,1,1), *image, QRect(i-rad,j-rad, rad, rad));
+			int sum = 0;
+			for(int i2=qMax(0,i-rad-rad); i2<=qMin(w,i); i2++) {
+				for(int j2=qMax(0,j-rad-rad); j2<=qMin(h,j); j2++) {
+					sum += qAlpha( image->pixel(i2, j2) );
+				}
 			}
-			r = r/sum;
-			g = g/sum;
-			b = b/sum;
-			a = a/sum;
-			//qDebug() << qRound(value/sum);
-			//int alpha = 255;
-			newImage->setPixel(QPoint(i,j), qRgba(r,g,b,a) );*/
+			sum = sum/(4*rad*rad);
+			newImage->setPixel( i, j, qRgba(20,20,20, sum) );
+			//painter.drawImage( QRect(i,j,1,1), *sourceImage, QRect(i,j, 2*rad, 2*rad));
 		}
 	}
 	delete image;

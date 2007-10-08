@@ -39,6 +39,7 @@ class LayerBitmap : public LayerImage
 	
 	void loadImageAtFrame(QString, QPoint, int);
 	void saveImage(int, QString, int);
+	QString fileName(int index, int layerNumber);
 	
 	QDomElement createDomElement(QDomDocument &doc);
 	void loadDomElement(QDomElement element, QString filePath);

@@ -46,7 +46,9 @@ class LayerVector : public LayerImage
 			
 		void saveImage(int, QString, int);
 		void setView(QMatrix view);
+		QString fileName(int index, int layerNumber);
 		void setModified(bool trueOrFalse);
+		void setModified(int frameNumber, bool trueOrFalse);
 		
 		QDomElement createDomElement(QDomDocument &doc);
 		void loadDomElement(QDomElement element,  QString filePath);

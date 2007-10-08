@@ -460,7 +460,8 @@ void ScribbleArea::updateAllVectorLayers() {
 
 void ScribbleArea::setModified(int layerNumber, int frameNumber) {
 	Layer* layer = editor->object->getLayer(layerNumber);
-	if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->getLastVectorImageAtFrame(frameNumber, 0)->setModified(true);
+	//if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->getLastVectorImageAtFrame(frameNumber, 0)->setModified(true);
+	if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->setModified(frameNumber, true);
 	if(layer->type == Layer::BITMAP) ((LayerImage*)layer)->setModified(frameNumber, true);
 	emit modification(layerNumber);
 	//updateFrame(frame);
@@ -571,7 +572,7 @@ void ScribbleArea::tabletEvent(QTabletEvent *event)
 		if(tabletEraser == true) pencilOn();
 		tabletEraser = false;
 	}
-	event->ignore();
+	event->ignore(); // indicates that the tablet event is not accepted yet, so that it is propagated as a mouse event)
 }
 
 void ScribbleArea::mousePressEvent(QMouseEvent *event)

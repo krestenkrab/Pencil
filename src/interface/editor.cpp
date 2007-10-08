@@ -450,6 +450,8 @@ void Editor::modification(int layerNumber) {
 	if(object != NULL) object->modification();
 	lastModifiedFrame = currentFrame;
 	lastModifiedLayer = layerNumber;
+	scribbleArea->update();
+	timeLine->updateContent();
 }
 
 void Editor::backup() {
@@ -757,7 +759,7 @@ bool Editor::saveObject(QString filePath)
 	for(int i=0; i < object->getLayerCount(); i++) {
 		Layer* layer = object->getLayer(i);
 		if(layer->type == Layer::BITMAP) ((LayerBitmap*)layer)->saveImages(filePath+".data", i);
-		//if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->saveImages(filePath+".data", i);
+		if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->saveImages(filePath+".data", i);
 		if(layer->type == Layer::SOUND) ((LayerSound*)layer)->saveImages(filePath+".data", i);
 	}
 	
@@ -768,6 +770,7 @@ bool Editor::saveObject(QString filePath)
 	object->write(filePath);
 
 	object->modified = false;
+	timeLine->updateContent();
 	return true;
 }
 
@@ -832,7 +835,7 @@ void Editor::saveForce() {
 	if (savedName!="")
 		saveObject(savedName);
 	else saveDocument();
-}		
+}
 
 void Editor::createNewDocumentDialog() {
 	/*newDocumentDialog = new QDialog(this, Qt::Dialog);

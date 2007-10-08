@@ -41,11 +41,12 @@ class LayerImage : public Layer
 		QImage* getLastImageAtFrame(int frameNumber, int increment);
 		virtual bool addImageAtFrame(int frameNumber);
 		virtual void removeImageAtFrame(int frameNumber);
-		void setModified(int frameNumber, bool trueOrFalse);
+		virtual void setModified(int frameNumber, bool trueOrFalse);
 		void deselectAllFrames();
 		
 		void saveImages(QString path, int layerNumber);
 		virtual void saveImage(int index, QString path, int layerNumber);
+		virtual QString fileName(int index, int layerNumber);
 		
 		// graphic representation -- could be put in another class
 		void paintTrack(QPainter &painter, TimeLineCells *cells, int x, int y, int width, int height, bool selected, int frameSize);
@@ -65,6 +66,7 @@ class LayerImage : public Layer
 		//QList<QImage*> framesImage;
 		//QList<QImage> framesAlpha;
 		QList<int> framesPosition;
+		QList<int> framesOriginalPosition;
 		QList<QString> framesFilename;
 		QList<bool> framesModified;
 		// graphic representation -- could be put in another class

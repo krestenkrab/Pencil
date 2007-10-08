@@ -43,6 +43,7 @@ class Layer : public QObject
 		Object* object;
 		int type;
 		bool visible;
+		int id;
 		QString name;
 		
 		void switchVisibility() { visible = !visible;}

@@ -129,11 +129,11 @@ void LayerImage::paintImages(QPainter &painter, TimeLineCells *cells, int x, int
 				painter.drawRect( cells->getFrameX(framesPosition.at(i)+frameOffset)-frameSize+2, y+1, frameSize-2, height-4);
 			}
 			else {
-				//if(framesModified.at(i))
 				if(selected)
 					painter.setBrush(QColor(125,125,125));
 				else
 					painter.setBrush(QColor(125,125,125,125));
+					if(framesModified.at(i)) painter.setBrush(QColor(255,125,125,125));
 					painter.drawRect( cells->getFrameX(framesPosition.at(i))-frameSize+2, y+1, frameSize-2, height-4 );
 					//painter.drawRect(x+(framesPosition.at(i)-1)*frameSize+2, y+1, frameSize-2, height-4);
 				//painter.drawText(QPoint( (framesPosition.at(i)-1)*frameSize+5, y+(2*height)/3), QString::number(i) );
@@ -193,9 +193,9 @@ void LayerImage::mouseRelease(QMouseEvent *event, int frameNumber) {
 		if(framesSelected.at(i) && frameOffset != 0) {
 			int originalFrame = framesPosition[i];
 			framesPosition[i] = originalFrame + frameOffset;
-			framesModified[i] = true;
-			emit imageRemoved(originalFrame);
-			emit imageAdded(originalFrame + frameOffset);
+			//framesModified[i] = true;
+			emit imageRemoved(originalFrame); // this is to indicate to the cache that an image have been removed here
+			emit imageAdded(originalFrame + frameOffset); // this is to indicate to the cache that an image have been added here
 			object->modification();
 		}
 	}
@@ -207,6 +207,7 @@ bool LayerImage::addImageAtFrame(int frameNumber) {
 	int index = getIndexAtFrame(frameNumber);
 	if(index == -1) {
 		framesPosition.append(frameNumber);
+		framesOriginalPosition.append(frameNumber);
 		framesSelected.append(false);
 		framesFilename.append("");
 		framesModified.append(false);
@@ -222,6 +223,7 @@ void LayerImage::removeImageAtFrame(int frameNumber) {
 	int index = getIndexAtFrame(frameNumber);
 	if(index != -1) {
 		framesPosition.removeAt(index);
+		framesOriginalPosition.removeAt(index);
 		framesSelected.removeAt(index);
 		framesFilename.removeAt(index);
 		framesModified.removeAt(index);
@@ -256,13 +258,14 @@ void LayerImage::bubbleSort()  {
 
 void LayerImage::swap(int i, int j) {
 	framesPosition.swap(i,j);
+	framesOriginalPosition.swap(i,j);
 	framesSelected.swap(i,j);
 	framesFilename.swap(i,j);
 	framesModified.swap(i,j);
 }
 
 void LayerImage::setModified(int frameNumber, bool trueOrFalse) {
-	int index = getIndexAtFrame(frameNumber);
+	int index = getLastIndexAtFrame(frameNumber);
 	if(index != -1) {
 		framesModified[index] = trueOrFalse;
 		object->modification();
@@ -276,19 +279,66 @@ void LayerImage::deselectAllFrames() {
 }
 
 void LayerImage::saveImages(QString path, int layerNumber) {
+	qDebug() << "Save images... ";
+	QDir dir(path);
+	//qDebug() << dir.exists() << dir.path();
+	//qDebug() << framesPosition;
+	//qDebug() << framesOriginalPosition;
+	
+	// --- we test if all the files already exists
 	for(int i=0; i < framesPosition.size(); i++) {
-		if(framesFilename.at(i) != "" && framesModified.at(i)) {
-			//qDebug() << "Remove " << framesFilename.at(i);
-			QDir::current().remove(path + framesFilename.at(i));
-		} else {
-			//qDebug() << "Do not remove " << framesFilename.at(i);
+		QString fileName = framesFilename.at(i);
+		bool test = dir.exists(fileName);
+		if(!test) {
+			framesModified[i] = true;
+		}
+	}
+	// --- we rename the files for the images which have been moved (if such files exist)
+	// --- we do that in two steps, with temporary names in the first step, in order to avoid conflicting names
+	for(int i=0; i < framesPosition.size(); i++) {
+		int frame1 = framesPosition.at(i);
+		int frame0 = framesOriginalPosition.at(i);
+		if(frame1 != frame0 && framesFilename.at(i) != "") {
+			QString fileName0 = fileName(frame0,layerNumber);
+			QString fileName1 = fileName(frame1,layerNumber);
+			//qDebug() << fileName0 << fileName1;
+			bool rename = dir.rename( fileName0, "tmp"+fileName0 );
+			if(rename) { }
 		}
 	}
 	for(int i=0; i < framesPosition.size(); i++) {
-		saveImage(i, path, layerNumber);
+		int frame1 = framesPosition.at(i);
+		int frame0 = framesOriginalPosition.at(i);
+		if(frame1 != frame0 && framesFilename.at(i) != "") {
+			QString fileName0 = fileName(frame0,layerNumber);
+			QString fileName1 = fileName(frame1,layerNumber);
+			bool rename = dir.rename( "tmp"+fileName0, fileName1 );
+			if(rename) {
+				framesOriginalPosition[i] = frame1;
+				framesFilename[i] = fileName1;
+				qDebug() << "Rename to " << framesFilename.at(i);
+			} else { // the file doesn't exist, we probably need to create it
+				qDebug() << "Could not rename to " << framesFilename.at(i);
+				framesFilename[i] = "";
+				framesModified[i] = true;
+			}
+		}
 	}
+	// --- we now save the files for the images which have been modified
+	for(int i=0; i < framesPosition.size(); i++) {
+		if(framesModified.at(i)) {
+			saveImage(i, path, layerNumber);
+			qDebug() << "Save " << framesFilename.at(i);
+		}
+	}
+	qDebug() << "done";
 }
 
 void LayerImage::saveImage(int index, QString path, int layerNumber) {
 	// implemented in subclasses
+}
+
+QString LayerImage::fileName(int index, int layerNumber) {
+	// implemented in subclasses
+	return "";
 }

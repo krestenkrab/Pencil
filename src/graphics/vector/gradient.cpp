@@ -1085,6 +1085,7 @@ void Gradient::paint5(QPainter &painter, VectorImage* v, int i, int gradients) {
 		painter.fillPath( v->area[i].path, colour );
 		return;
 	}
+	gradientWidth = gradientWidth * sqrt(painter.worldMatrix().det());
 		
 	// ---- find the area just below that area
 	VertexRef P1Ref, P2Ref; QPointF midPoint;
@@ -1111,8 +1112,9 @@ void Gradient::paint5(QPainter &painter, VectorImage* v, int i, int gradients) {
 	QMatrix painterMatrix = painter.worldMatrix();
 	QPainterPath path = painterMatrix.map( v->area[i].path );
 	BitmapImage* buffer = new BitmapImage(NULL);
-	buffer->drawPath( path, Qt::NoPen, colour, QPainter::CompositionMode_SourceOver, false);
-	buffer->blur2(gradientWidth);
+	//buffer->drawPath( path, Qt::NoPen, colour, QPainter::CompositionMode_SourceOver, false);
+	buffer->drawPath( path, QPen(colour, gradientWidth), colour, QPainter::CompositionMode_SourceOver, false);
+	buffer->blur(gradientWidth);
 	
 	
 	/*QPointF P1, P2, C1, C2;

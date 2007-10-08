@@ -22,6 +22,7 @@ GNU General Public License for more details.
 Layer::Layer(Object* object) : QObject(0) {
 	this->object = object;
 	type = Layer::UNDEFINED;
+	id = 0;
 	name = QString("Undefined Layer");
 	visible = true;
 }

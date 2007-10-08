@@ -100,6 +100,11 @@ void LayerVector::setModified(bool trueOrFalse) {
 	}
 }
 
+void LayerVector::setModified(int frameNumber, bool trueOrFalse) {
+	LayerImage::setModified(frameNumber, trueOrFalse);
+	getLastVectorImageAtFrame(frameNumber, 0)->setModified(trueOrFalse);
+}
+
 // -----
 
 bool LayerVector::usesColour(int index) {
@@ -154,6 +159,7 @@ bool LayerVector::addImageAtFrame(int frameNumber) {
 		framesImage.append(new QImage( QSize(2,2), QImage::Format_ARGB32_Premultiplied)); // very small image to begin with
 
 		framesPosition.append(frameNumber);
+		framesOriginalPosition.append(frameNumber);
 		framesSelected.append(false);
 		framesFilename.append("");
 		framesModified.append(false);
@@ -175,6 +181,7 @@ void LayerVector::removeImageAtFrame(int frameNumber) {
 		framesImage.removeAt(index);
 
 		framesPosition.removeAt(index);
+		framesOriginalPosition.removeAt(index);
 		framesSelected.removeAt(index);
 		framesFilename.removeAt(index);
 		framesModified.removeAt(index);
@@ -186,8 +193,9 @@ void LayerVector::removeImageAtFrame(int frameNumber) {
 void LayerVector::loadImageAtFrame(QString path, int frameNumber) {
 	if(getIndexAtFrame(frameNumber) == -1) addImageAtFrame(frameNumber);
 	int index = getIndexAtFrame(frameNumber);
-	//image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-	//framesImage[index] = new QImage(path);
+	framesVector[index]->read(path);
+	QFileInfo fi(path);
+	framesFilename[index] = fi.fileName();
 }
 
 /*void LayerVector::loadImageAtFrame(VectorImage* picture, int frameNumber) {
@@ -203,24 +211,42 @@ void LayerVector::swap(int i, int j) {
 	framesImage.swap(i,j);
 }
 
+
 void LayerVector::saveImage(int index, QString path, int layerNumber) {
-	// not implemented yet
+	int theFrame = framesPosition.at(index);
+	QString theFileName = fileName(theFrame, id);
+	framesFilename[index] = theFileName;
+	//qDebug() << "Write " << theFileName;
+	framesVector[index]->write(path +"/"+ theFileName,"VEC");
+	framesModified[index] = false;
+}
+
+QString LayerVector::fileName(int frame, int layerID) {
+	QString layerNumberString = QString::number(layerID);
+	QString frameNumberString = QString::number(frame);
+	while( layerNumberString.length() < 3) layerNumberString.prepend("0");
+	while( frameNumberString.length() < 3) frameNumberString.prepend("0");
+	return layerNumberString+"."+frameNumberString+".vec";
 }
 
 QDomElement LayerVector::createDomElement(QDomDocument &doc) {
 	QDomElement layerTag = doc.createElement("layer");
+	layerTag.setAttribute("id", id);
 	layerTag.setAttribute("name", name);
 	layerTag.setAttribute("visibility", visible);
 	layerTag.setAttribute("type", type);
 	for(int index=0; index < framesPosition.size() ; index++) {
-		QDomElement imageTag = framesVector[index]->createDomElement(doc);
+		//QDomElement imageTag = framesVector[index]->createDomElement(doc); // if we want to embed the data
+		QDomElement imageTag = doc.createElement("image");
 		imageTag.setAttribute("frame", framesPosition.at(index));
+		imageTag.setAttribute("src", framesFilename.at(index)); // if we want to link the data to an external file
 		layerTag.appendChild(imageTag);
 	}
 	return layerTag;
 }
 
 void LayerVector::loadDomElement(QDomElement element, QString filePath) {
+	if(!element.attribute("id").isNull()) id = element.attribute("id").toInt();
 	name = element.attribute("name");
 	visible = (element.attribute("visibility") == "1");
 	type = element.attribute("type").toInt();
@@ -230,9 +256,17 @@ void LayerVector::loadDomElement(QDomElement element, QString filePath) {
 		QDomElement imageElement = imageTag.toElement();
 		if(!imageElement.isNull()) {
 			if(imageElement.tagName() == "image") {
-				int frame = imageElement.attribute("frame").toInt();
-				addImageAtFrame( frame );
-				getVectorImageAtFrame( frame )->loadDomElement(imageElement);
+				if(!imageElement.attribute("src").isNull()) {
+					QString path =  filePath +".data/" + imageElement.attribute("src"); // the file is supposed to be in the data irectory
+					QFileInfo fi(path);
+					if(!fi.exists()) path = imageElement.attribute("src");
+					int position = imageElement.attribute("frame").toInt();
+					loadImageAtFrame( path, position );
+				} else {
+					int frame = imageElement.attribute("frame").toInt();
+					addImageAtFrame( frame );
+					getVectorImageAtFrame( frame )->loadDomElement(imageElement);
+				}
 			}
 		}
 		imageTag = imageTag.nextSibling();

@@ -131,6 +131,7 @@ bool Object::write(QString filePath) {
 
 void Object::addNewBitmapLayer() {
 	LayerBitmap* layerBitmap = new LayerBitmap(this);
+	layerBitmap->id = 1+getMaxID();
 	layer.append( layerBitmap );
 	connect( layerBitmap, SIGNAL(imageAdded(int)), this, SIGNAL(imageAdded(int)) );
 	connect( layerBitmap, SIGNAL(imageRemoved(int)), this, SLOT(imageCheck(int)) );
@@ -138,6 +139,7 @@ void Object::addNewBitmapLayer() {
 
 void Object::addNewVectorLayer() {
 	LayerVector* layerVector = new LayerVector(this);
+	layerVector->id = 1+getMaxID();
 	layer.append( layerVector );
 	connect( layerVector, SIGNAL(imageAdded(int)), this, SIGNAL(imageAdded(int)) );
 	connect( layerVector, SIGNAL(imageRemoved(int)), this, SLOT(imageCheck(int)) );
@@ -145,14 +147,25 @@ void Object::addNewVectorLayer() {
 
 void Object::addNewSoundLayer() {
 	LayerSound* layerSound = new LayerSound(this);
+	layerSound->id = 1+getMaxID();
 	layer.append( layerSound );
 }
 
 void Object::addNewCameraLayer() {
 	LayerCamera* layerCamera = new LayerCamera(this);
+	layerCamera->id = 1+getMaxID();
 	layer.append( layerCamera );
 	connect( layerCamera, SIGNAL(imageAdded(int,int)), this, SIGNAL(imageAdded(int,int)) );
 	connect( layerCamera, SIGNAL(imageRemoved(int)), this, SLOT(imageCheck(int)) );
+}
+
+int Object::getMaxID() {
+	int result = 0;
+	for(int i=0; i< getLayerCount(); i++) {
+		Layer* layeri = getLayer(i);
+		if(layeri->id > result) result = layeri->id;
+	}
+	return result;
 }
 
 Layer* Object::getLayer(int i) {

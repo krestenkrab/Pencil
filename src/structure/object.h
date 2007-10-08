@@ -77,6 +77,7 @@ class Object : public QObject
 		void addNewCameraLayer();
 		Layer* getLayer(int i);
 		int getLayerCount() { return layer.size(); }
+		int getMaxID();
 		void moveLayer(int i, int j);
 		void deleteLayer(int i);
 		

@@ -69,6 +69,7 @@ bool LayerBitmap::addImageAtFrame(int frameNumber) {
 		//framesImage.append(new QImage(imageSize, QImage::Format_ARGB32_Premultiplied));
 		framesBitmap.append(new BitmapImage(object));
 		framesPosition.append(frameNumber);
+		framesOriginalPosition.append(frameNumber);
 		framesSelected.append(false);
 		framesFilename.append("");
 		framesModified.append(false);
@@ -86,6 +87,7 @@ void LayerBitmap::removeImageAtFrame(int frameNumber) {
 		delete framesBitmap.at(index);
 		framesBitmap.removeAt(index);
 		framesPosition.removeAt(index);
+		framesOriginalPosition.removeAt(index);
 		framesSelected.removeAt(index);
 		framesFilename.removeAt(index);
 		framesModified.removeAt(index);
@@ -109,19 +111,25 @@ void LayerBitmap::swap(int i, int j) {
 }
 
 void LayerBitmap::saveImage(int index, QString path, int layerNumber) {
-	QString layerNumberString = QString::number(layerNumber);
-	QString frameNumberString = QString::number(framesPosition.at(index));
+	int theFrame = framesPosition.at(index);
+	QString theFileName = fileName(theFrame, id);
+	framesFilename[index] = theFileName;
+	//qDebug() << "Write " << theFileName;
+	framesBitmap[index]->image->save(path +"/"+ theFileName,"PNG");
+	framesModified[index] = false;
+}
+
+QString LayerBitmap::fileName(int frame, int layerID) {
+	QString layerNumberString = QString::number(layerID);
+	QString frameNumberString = QString::number(frame);
 	while( layerNumberString.length() < 3) layerNumberString.prepend("0");
 	while( frameNumberString.length() < 3) frameNumberString.prepend("0");
-	//framesFilename[index] = path+"/"+layerNumberString+"."+frameNumberString+".png";
-	framesFilename[index] = layerNumberString+"."+frameNumberString+".png";
-	//qDebug() << "Write " << framesFilename.at(index);
-	framesBitmap[index]->image->save(path +"/"+ framesFilename.at(index),"PNG");
-	framesModified[index] = false;
+	return layerNumberString+"."+frameNumberString+".png";
 }
 
 QDomElement LayerBitmap::createDomElement(QDomDocument &doc) {
 	QDomElement layerTag = doc.createElement("layer");
+	layerTag.setAttribute("id", id);
 	layerTag.setAttribute("name", name);
 	layerTag.setAttribute("visibility", visible);
 	layerTag.setAttribute("type", type);
@@ -137,6 +145,7 @@ QDomElement LayerBitmap::createDomElement(QDomDocument &doc) {
 }
 
 void LayerBitmap::loadDomElement(QDomElement element, QString filePath) {
+	if(!element.attribute("id").isNull()) id = element.attribute("id").toInt();
 	name = element.attribute("name");
 	visible = (element.attribute("visibility") == "1");
 	type = element.attribute("type").toInt();

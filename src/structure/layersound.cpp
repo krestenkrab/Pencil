@@ -134,6 +134,7 @@ void LayerSound::stopSound() {
 
 QDomElement LayerSound::createDomElement(QDomDocument &doc) {
 	QDomElement layerTag = doc.createElement("layer");
+	layerTag.setAttribute("id",id);
 	layerTag.setAttribute("name", name);
 	layerTag.setAttribute("visibility", visible);
 	layerTag.setAttribute("type", type);
@@ -147,6 +148,7 @@ QDomElement LayerSound::createDomElement(QDomDocument &doc) {
 }
 
 void LayerSound::loadDomElement(QDomElement element, QString filePath) {
+	if(!element.attribute("id").isNull()) id = element.attribute("id").toInt();
 	name = element.attribute("name");
 	visible = (element.attribute("visibility") == "1");
 	type = element.attribute("type").toInt();
