@@ -24,13 +24,13 @@ int main(int argc, char *argv[])
 	QApplication app(argc, argv);
 #ifndef Q_WS_MAC
 	app.setWindowIcon(QIcon(":/icons/icon.png"));
-#endif;
+#endif
 	initialise();
-	/*QDir dir(QApplication::applicationDirPath());
-    dir.cdUp();
-    if(dir.cd("plugins")) {
+	QDir dir(QApplication::applicationDirPath());
+	dir.cdUp();
+	if(dir.cd("plugins")) {
 		QApplication::setLibraryPaths(QStringList(dir.absolutePath()));
-	}*/
+	}
 	MainWindow mainWindow;
 	mainWindow.show();
     return app.exec();

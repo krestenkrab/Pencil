@@ -112,7 +112,8 @@ void Flash::convertToSWFSprite( BitmapImage* bitmapImage, Object* object, QMatri
 	shape->drawLineTo(bitmapImage->left(), bitmapImage->bottom());
 	shape->drawLineTo(bitmapImage->left(), bitmapImage->top());
 	SWFDisplayItem *item = sprite->add( shape );
-	item->setMatrix( view.m11(), view.m12(), view.m21(), view.m22(), view.dx(), view.dy() );
+	//item->setMatrix( view.m11(), view.m12(), view.m21(), view.m22(), view.dx(), view.dy() ); // this C++ method is not defined in mingpp.h version 0.3
+	SWFDisplayItem_setMatrix( item->item, view.m11(), view.m12(), view.m21(), view.m22(), view.dx(), view.dy() ); // we use the C function instead
 	sprite->nextFrame();
 }
 
