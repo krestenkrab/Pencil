@@ -26,11 +26,11 @@ int main(int argc, char *argv[])
 	app.setWindowIcon(QIcon(":/icons/icon.png"));
 #endif
 	initialise();
-	QDir dir(QApplication::applicationDirPath());
+	/*QDir dir(QApplication::applicationDirPath());
 	dir.cdUp();
 	if(dir.cd("plugins")) {
 		QApplication::setLibraryPaths(QStringList(dir.absolutePath()));
-	}
+	}*/
 	MainWindow mainWindow;
 	mainWindow.show();
     return app.exec();

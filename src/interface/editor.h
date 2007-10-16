@@ -217,7 +217,7 @@ private slots:
 	void saveLength(QString);
 	
 private:
-	void openObject(QString);
+	bool openObject(QString);
 	bool saveObject(QString);
 	
 	ScribbleArea *scribbleArea;
@@ -230,6 +230,7 @@ private:
 	QString savedName;
 	bool altpress;
 	bool modified;
+	int numberOfModifications;
 	
 	// backup
 	int backupIndex;

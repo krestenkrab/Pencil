@@ -40,23 +40,18 @@ bool VectorImage::read(QString filePath) {
 		return false;
 	}
 	
-	QDomDocument doc("MyVectorImage");
-	doc.setContent(file);
+	QDomDocument doc;
+	if (!doc.setContent(file)) return false; // this is not a XML file
+	QDomDocumentType type = doc.doctype();
+	if(type.name() != "PencilVectorImage") return false; // this is not a Pencil document
 	
 	int layerNumber = -1;
-	QDomElement docElem = doc.documentElement();
-	QDomNode tag = docElem.firstChild();
-	while(!tag.isNull()) {
-		QDomElement element = tag.toElement(); // try to convert the node to an element.
-		if(!element.isNull()) {
-			if(element.tagName() == "image") {
+	QDomElement element = doc.documentElement();
+	if(element.tagName() == "image") {
 				// --- vector image ---
 				if(element.attribute("type") == "vector") {
 					loadDomElement( element );
 				}
-			}
-		}
-		tag = tag.nextSibling();
 	}
 	return true;
 }
@@ -71,12 +66,12 @@ bool VectorImage::write(QString filePath, QString format) {
 	QTextStream out(file);
 	
 	if(format == "VEC") {
-		QDomDocument doc("MyVectorImage");
-		QDomElement root = doc.createElement("MyVectorImage");
-		doc.appendChild(root);
+		QDomDocument doc("PencilVectorImage");
+		//QDomElement root = doc.createElement("vectorImage");
+		//doc.appendChild(root);
 	
 		QDomElement imageTag = createDomElement(doc);
-		root.appendChild(imageTag);
+		doc.appendChild(imageTag);
 	
 		int IndentSize = 2;
 		doc.save(out, IndentSize);

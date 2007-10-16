@@ -16,7 +16,7 @@ GNU General Public License for more details.
 #include <QString>
 #include <QStringList>
 #include <QDir>
-#include <QMessageBox>
+#include <QProgressDialog>
 #include <QProcess>
 
 #include "object.h"
@@ -38,9 +38,11 @@ void Object::exportMovie(int startFrame, int endFrame, QMatrix view, Layer* curr
 	
 	QDir::temp().mkdir("pencil");
 	QString tempPath = QDir::tempPath()+"pencil/";
-	QMessageBox assembling("Export",tr("Exporting movie..."),QMessageBox::Information,0,0,0);
-	assembling.show();
-	exportFrames(startFrame, endFrame, view, currentLayer, exportSize, tempPath+"tmp", "jpg", 100, true, true, 2);
+	QProgressDialog progress("Exporting movie...", "Abort", 0, 100, NULL);
+	progress.setWindowModality(Qt::WindowModal);
+	progress.show();
+	
+  exportFrames(startFrame, endFrame, view, currentLayer, exportSize, tempPath+"tmp", "jpg", 100, true, true, 2);
 	
 	// --------- Quicktime assemble call ----------
 	
@@ -60,7 +62,8 @@ void Object::exportMovie(int startFrame, int endFrame, QMatrix view, Layer* curr
 	args << QString::number(endFrame+1) << tempPath+"tmp%03d.jpg" << QString::number(fps) << filePath;
 	assemble.start(appPath+"/Contents/Resources/assembler2",args);
 	assemble.waitForFinished();
-	assembling.hide();
+	
+	progress.setValue(100);
 	
 	// --------- Clean up temp directory ---------
 	

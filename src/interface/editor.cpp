@@ -36,6 +36,8 @@ Editor::Editor(QMainWindow* parent)
 	object = NULL; // the editor is initialized with no object
 	savedName = "";
 	altpress=false;
+	modified=false;
+	numberOfModifications = 0;
 	backupIndex = -1;
 	clipboardBitmapOk = false;
 	clipboardVectorOk = false;
@@ -231,7 +233,11 @@ void Editor::openDocument()
 		QString myPath = settings.value("lastFilePath", QVariant(QDir::homePath())).toString();
 		QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), myPath);
 		if (!fileName.isEmpty()) {
-			openObject(fileName);
+			bool ok = openObject(fileName);
+			if(!ok) {
+				QMessageBox::warning(this, "Warning", "Pencil cannot read this file. If you want to import images, use the command import.");
+				newObject();
+			}
 		}
 	}
 }
@@ -239,13 +245,17 @@ void Editor::openDocument()
 void Editor::openRecent() {
 	QSettings settings("Pencil","Pencil");
 	QString myPath = settings.value("lastFilePath", QVariant(QDir::homePath())).toString();
-	openObject(myPath);
+	bool ok = openObject(myPath);
+	if(!ok) {
+		QMessageBox::warning(this, "Warning", "Pencil cannot read this file. If you want to import images, use the command import.");
+		newObject();
+	}
 }
 
 bool Editor::saveDocument()
 {
-	QAction *action = qobject_cast<QAction *>(sender()); // ?
-	QByteArray fileFormat = action->data().toByteArray();  // ?
+	//QAction *action = qobject_cast<QAction *>(sender()); // ? old code from Patrick?
+	//QByteArray fileFormat = action->data().toByteArray();  // ? old code from Patrick?
 	QSettings settings("Pencil","Pencil");
 	QString myPath = settings.value("lastFilePath", QVariant(QDir::homePath())).toString();
 	
@@ -452,6 +462,11 @@ void Editor::modification(int layerNumber) {
 	lastModifiedLayer = layerNumber;
 	scribbleArea->update();
 	timeLine->updateContent();
+	numberOfModifications++;
+	if(numberOfModifications > 20) {
+		numberOfModifications = 0;
+		saveForce();
+	}
 }
 
 void Editor::backup() {
@@ -755,6 +770,10 @@ bool Editor::saveObject(QString filePath)
 	savedName=filePath;
 	mainWindow->setWindowTitle(savedName);
 	
+	QProgressDialog progress("Saving document...", "Abort", 0, 100, mainWindow);
+	progress.setWindowModality(Qt::WindowModal);
+	progress.show();
+	
 	// save data
 	for(int i=0; i < object->getLayerCount(); i++) {
 		Layer* layer = object->getLayer(i);
@@ -769,6 +788,8 @@ bool Editor::saveObject(QString filePath)
 	// save object
 	object->write(filePath);
 
+	progress.setValue(100);
+	
 	object->modified = false;
 	timeLine->updateContent();
 	return true;
@@ -818,8 +839,23 @@ void Editor::updateObject() {
 		scribbleArea->updateAllFrames();
 }
 
-void Editor::openObject(QString fileName) {
-	savedName = fileName;
+bool Editor::openObject(QString filePath) {
+	// ---- test before opening ----
+	QFileInfo fileInfo(filePath);
+	if( fileInfo.isDir() ) return false;
+	QFile* file = new QFile(filePath);
+	if (!file->open(QFile::ReadOnly)) return false;
+	QDomDocument doc;
+	if (!doc.setContent(file)) return false; // this is not a XML file
+	QDomDocumentType type = doc.doctype();
+	if(type.name() != "PencilDocument" && type.name() != "MyObject") return false; // this is not a Pencil document
+	// -----------------------------
+	
+	QProgressDialog progress("Opening document...", "Abort", 0, 100, mainWindow);
+	progress.setWindowModality(Qt::WindowModal);
+	progress.show();
+	
+	savedName = filePath;
 	QSettings settings("Pencil","Pencil");
 	settings.setValue("lastFilePath", QVariant(savedName) );
 	mainWindow->setWindowTitle(savedName);
@@ -827,8 +863,11 @@ void Editor::openObject(QString fileName) {
 	Object* newObject = new Object();
 	if(!newObject->loadPalette(savedName+".data")) newObject->loadDefaultPalette();
 	setObject(newObject);
-	newObject->read(savedName);
-	updateObject();
+	bool ok = newObject->read(savedName);
+	if(ok) updateObject();
+	
+	progress.setValue(100);
+	return ok;
 }
 
 void Editor::saveForce() {
@@ -1145,10 +1184,10 @@ void Editor::importImage()
 }
 
 void Editor::importImage(QString filePath)
-{
+{				
 	Layer* layer = object->getLayer(currentLayer);
 	if(layer != NULL) {
-		if( layer->type == Layer::BITMAP) {
+		if( layer->type == Layer::BITMAP || layer->type == Layer::VECTOR ) {
 			if(filePath == "fromDialog") {
 				QSettings settings("Pencil","Pencil");
 				QString initialPath = settings.value("lastImportPath", QVariant(QDir::homePath())).toString();		
@@ -1162,30 +1201,53 @@ void Editor::importImage(QString filePath)
 				//((LayerBitmap*)layer)->loadImageAtFrame(filePath, currentFrame);
 				// --- option 2
 				// TO BE IMPROVED
-				BitmapImage* bitmapImage = ((LayerBitmap*)layer)->getBitmapImageAtFrame(currentFrame);
-				if(bitmapImage == NULL) { addKey(); bitmapImage = ((LayerBitmap*)layer)->getBitmapImageAtFrame(currentFrame); }
-				QImage* importedImage = new QImage(filePath);
-				QRect boundaries = importedImage->rect();
-				//boundaries.moveTopLeft( scribbleArea->getView().inverted().map(QPoint(0,0)) );
-				boundaries.moveTopLeft( scribbleArea->getCentralPoint().toPoint() - QPoint(boundaries.width()/2, boundaries.height()/2) );
-				BitmapImage* importedBitmapImage = new BitmapImage(NULL, boundaries, *importedImage);
-				if(scribbleArea->somethingSelected) {
-					QRectF selection = scribbleArea->getSelection();
-					if( importedImage->width() <= selection.width() && importedImage->height() <= selection.height() ) {
-						importedBitmapImage->boundaries.moveTopLeft( selection.topLeft().toPoint() );
+				if(layer->type == Layer::BITMAP) {
+					BitmapImage* bitmapImage = ((LayerBitmap*)layer)->getBitmapImageAtFrame(currentFrame);
+					if(bitmapImage == NULL) { addKey(); bitmapImage = ((LayerBitmap*)layer)->getBitmapImageAtFrame(currentFrame); }
+					QImage* importedImage = new QImage(filePath);
+					if(!importedImage->isNull()) {
+						QRect boundaries = importedImage->rect();
+						//boundaries.moveTopLeft( scribbleArea->getView().inverted().map(QPoint(0,0)) );
+						boundaries.moveTopLeft( scribbleArea->getCentralPoint().toPoint() - QPoint(boundaries.width()/2, boundaries.height()/2) );
+						BitmapImage* importedBitmapImage = new BitmapImage(NULL, boundaries, *importedImage);
+						if(scribbleArea->somethingSelected) {
+							QRectF selection = scribbleArea->getSelection();
+							if( importedImage->width() <= selection.width() && importedImage->height() <= selection.height() ) {
+								importedBitmapImage->boundaries.moveTopLeft( selection.topLeft().toPoint() );
+							} else {
+								importedBitmapImage->transform( selection.toRect(), true );
+							}
+						}
+						bitmapImage->paste( importedBitmapImage );
 					} else {
-						importedBitmapImage->transform( selection.toRect(), true );
+						QMessageBox::warning(this, tr("Warning"),
+							tr("This is not a bitmap image that Pencil can read."),
+							QMessageBox::Ok,
+							QMessageBox::Ok);
 					}
 				}
-				bitmapImage->paste( importedBitmapImage );
-				
+				if(layer->type == Layer::VECTOR) {
+					VectorImage* vectorImage = ((LayerVector*)layer)->getVectorImageAtFrame(currentFrame);
+					if(vectorImage == NULL) { addKey(); vectorImage = ((LayerVector*)layer)->getVectorImageAtFrame(currentFrame); }
+					VectorImage* importedVectorImage = new VectorImage(NULL);
+					bool ok = importedVectorImage->read(filePath);
+					if(ok) {
+						importedVectorImage->selectAll();
+						vectorImage->paste( *importedVectorImage );
+					} else {
+						QMessageBox::warning(this, tr("Warning"),
+							tr("This is not a vector image that Pencil can read."),
+							QMessageBox::Ok,
+							QMessageBox::Ok);
+					}
+				}
 				scribbleArea->updateFrame();
 				timeLine->updateContent();
 			}
 		}  else {
 			// create a new Bitmap layer ?
 			QMessageBox::warning(this, tr("Warning"),
-				tr("Please select a bitmap layer in order to import images."),
+				tr("Please select a bitmap or vector layer in order to import images."),
 				QMessageBox::Ok,
 				QMessageBox::Ok);
 		}

@@ -1157,7 +1157,7 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 			painter.setBrush(backgroundBrush);
 			painter.drawRect(  (myTempView).inverted().mapRect( QRect(-2,-2, width()+3, height()+3) )  ); // this is necessary to have the background move with the view
 	}
-
+	
 	// process the canvas (or not)
 	if(!mouseInUse && readCanvasFromCache) {
 		// --- we retrieve the canvas from the cache; we create it if it doesn't exist
@@ -1178,13 +1178,14 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 	painter.drawPixmap( QPoint(0,0), canvas );
 	
 	Layer* layer = editor->getCurrentLayer();
+	if(!layer) return;
 	
 	if(!editor->playing) {  // we don't need to display the following when the animation is playing
 		painter.setWorldMatrix(myTempView);
 		
 		if(layer->type == Layer::VECTOR) {
 			VectorImage* vectorImage = ((LayerVector*)layer)->getLastVectorImageAtFrame(editor->currentFrame, 0);
-					
+			
 			if(toolMode == EDIT || toolMode == HAND) {
 				//bufferImg->clear();
 				painter.save();
@@ -1272,7 +1273,7 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 			if(editor->getCurrentLayer()->type == Layer::VECTOR) painter.setWorldMatrixEnabled(false);
 			bufferImg->paintImage(painter);
 		}
-	
+		
 		// paints the selection outline
 		if( somethingSelected && myTempTransformedSelection.isValid() ) {
 			// outline of the transformed selection
@@ -1301,9 +1302,9 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 					painter.drawRect( tempRect.point(3).x()-3, tempRect.point(3).y()-3, 6, 6 );
 				}
 			}
-		} 
+		}
+		 
 	}
-	
 	// clips to the frame of the camera
 	if(layer->type == Layer::CAMERA) {
 		QRect rect = ((LayerCamera*)layer)->getViewRect();
@@ -1319,7 +1320,6 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 		painter.setBrush(Qt::NoBrush);
 		painter.drawRect(rect);
 	}
-																	
 	// outlines the frame of the viewport
 	painter.setWorldMatrixEnabled(false);
 	painter.setPen( QPen(Qt::gray, 2) );

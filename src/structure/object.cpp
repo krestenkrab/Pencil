@@ -50,21 +50,21 @@ bool Object::read(QString filePath) {
 	if( fileInfo.isDir() ) return false;
 	
 	QFile* file = new QFile(filePath);
-	if (!file->open(QFile::ReadOnly)) {
-		//QMessageBox::warning(this, "Warning", "Cannot read file");
-		return false;
-	}
+	if (!file->open(QFile::ReadOnly)) return false;
 	
-	QDomDocument doc("MyObject");
+	QDomDocument doc;
 	doc.setContent(file);
 	
 	int layerNumber = -1;
 	QDomElement docElem = doc.documentElement();
+	if(docElem.isNull()) return false;
 	QDomNode tag = docElem.firstChild();
+	bool someRelevantData = false;
 	while(!tag.isNull()) {
 		QDomElement element = tag.toElement(); // try to convert the node to an element.
 		if(!element.isNull()) {
 			if(element.tagName() == "layer") {
+				someRelevantData = true;
 				// --- bitmap layer ---
 				if(element.attribute("type").toInt() == Layer::BITMAP) {
 					addNewBitmapLayer();
@@ -94,7 +94,7 @@ bool Object::read(QString filePath) {
 		}
 		tag = tag.nextSibling();
 	}
-    return true;
+	return someRelevantData;
 	
 	
 	/*
@@ -114,8 +114,8 @@ bool Object::write(QString filePath) {
 	}
 	QTextStream out(file);
 	
-	QDomDocument doc("MyObject");
-	QDomElement root = doc.createElement("MyOject");
+	QDomDocument doc("PencilDocument");
+	QDomElement root = doc.createElement("object");
 	doc.appendChild(root);
 	
 	for(int i=0; i < getLayerCount(); i++) {
@@ -262,8 +262,8 @@ bool Object::exportPalette(QString filePath) {
 	}
 	QTextStream out(file);
 	
-	QDomDocument doc("MyPalette");
-	QDomElement root = doc.createElement("MyPalette");
+	QDomDocument doc("PencilPalette");
+	QDomElement root = doc.createElement("palette");
 	doc.appendChild(root);
 	for(int i=0; i < myPalette.size(); i++) {
 		QDomElement tag = doc.createElement("Colour");
@@ -293,7 +293,7 @@ bool Object::importPalette(QString filePath) {
 		return false;
 	}
 	
-	QDomDocument doc("MyPalette");
+	QDomDocument doc;
 	doc.setContent(file);
 	
 	myPalette.clear();
