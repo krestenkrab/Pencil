@@ -33,16 +33,20 @@ Editor::Editor(QMainWindow* parent)
 {
 	mainWindow = parent;
 	
+	QSettings settings("Pencil","Pencil");
+	
 	object = NULL; // the editor is initialized with no object
 	savedName = "";
 	altpress=false;
 	modified=false;
 	numberOfModifications = 0;
+	autosave=settings.value("autosave").toBool();
+	autosaveNumber=settings.value("autosaveNumber").toInt();
+	if (autosaveNumber==0) { autosaveNumber=20; settings.setValue("autosaveNumber", 20); }
 	backupIndex = -1;
 	clipboardBitmapOk = false;
 	clipboardVectorOk = false;
 	
-	QSettings settings("Pencil","Pencil");
 	
 	fps = settings.value("fps").toInt();
 	if (fps==0) { fps=12; settings.setValue("fps", 12); }
@@ -155,6 +159,9 @@ Editor::Editor(QMainWindow* parent)
 	connect(preferences, SIGNAL(shadowsChange(int)), scribbleArea, SLOT(setShadows(int)));
 	connect(preferences, SIGNAL(toolCursorsChange(int)), scribbleArea, SLOT(setToolCursors(int)));
 	connect(preferences, SIGNAL(styleChange(int)), scribbleArea, SLOT(setStyle(int)));
+	
+	connect(preferences, SIGNAL(autosaveChange(int)), this, SLOT(changeAutosave(int)));
+	connect(preferences, SIGNAL(autosaveNumberChange(int)), this, SLOT(changeAutosaveNumber(int)));
 	
 	connect(preferences, SIGNAL(lengthSizeChange(QString)), timeLine, SIGNAL(lengthChange(QString)));
 	connect(preferences, SIGNAL(fontSizeChange(int)), timeLine, SIGNAL(fontSizeChange(int)));
@@ -451,6 +458,18 @@ void Editor::removeColour(int i) {
 	}
 }
 
+void Editor::changeAutosave(int x) {
+	QSettings settings("Pencil","Pencil");
+	if (x==0) { autosave=false; settings.setValue("autosave","false"); }
+	else { autosave=true; settings.setValue("autosave","true"); }
+}
+
+void Editor::changeAutosaveNumber(int number) {
+	autosaveNumber = number;
+	QSettings settings("Pencil","Pencil");
+	settings.setValue("autosaveNumber", number);
+}
+
 void Editor::modification() {
 	modification(currentLayer);
 }
@@ -463,9 +482,10 @@ void Editor::modification(int layerNumber) {
 	scribbleArea->update();
 	timeLine->updateContent();
 	numberOfModifications++;
-	if(numberOfModifications > 20) {
+	if(autosave && numberOfModifications > autosaveNumber) {
 		numberOfModifications = 0;
-		saveForce();
+		//saveForce();
+		if (savedName!="") saveObject(savedName);
 	}
 }
 

@@ -175,6 +175,9 @@ public slots:
 	void addColour();
 	void removeColour(int);
 	
+	void changeAutosave(int);
+	void changeAutosaveNumber(int);
+	
 	void modification();
 	void modification(int);
 	void backup();
@@ -231,6 +234,9 @@ private:
 	bool altpress;
 	bool modified;
 	int numberOfModifications;
+	
+	bool autosave;
+	int autosaveNumber;
 	
 	// backup
 	int backupIndex;

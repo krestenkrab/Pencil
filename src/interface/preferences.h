@@ -38,7 +38,10 @@ class Preferences : public QDialog {
 		void shadowsChange(int);
 		void toolCursorsChange(int);
 		void styleChange(int);
-		
+	
+		void autosaveChange(int);
+		void autosaveNumberChange(int);
+				
 		void lengthSizeChange(QString);
 		void fontSizeChange(int);
 		void frameSizeChange(int);
@@ -73,3 +76,12 @@ class TimelinePage : public QWidget
 
 };
 
+
+class FilesPage : public QWidget
+{
+    Q_OBJECT
+
+	public:
+    FilesPage(QWidget *parent = 0);
+
+};

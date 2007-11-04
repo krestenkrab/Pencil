@@ -28,6 +28,7 @@ Preferences::Preferences()
 
      pagesWidget = new QStackedWidget;
      pagesWidget->addWidget(new GeneralPage(this));
+     pagesWidget->addWidget(new FilesPage(this));
      pagesWidget->addWidget(new TimelinePage(this));
      //pagesWidget->addWidget(new QueryPage);
 
@@ -63,6 +64,12 @@ Preferences::Preferences()
      generalButton->setText(tr("General"));
      generalButton->setTextAlignment(Qt::AlignHCenter);
      generalButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+		 
+		 QListWidgetItem *filesButton = new QListWidgetItem(contentsWidget);
+     filesButton->setIcon(QIcon(":icons/prefs-files.png"));
+     filesButton->setText(tr("Files"));
+     filesButton->setTextAlignment(Qt::AlignHCenter);
+     filesButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 		 
 		 QListWidgetItem *timelineButton = new QListWidgetItem(contentsWidget);
      timelineButton->setIcon(QIcon(":icons/prefstimeline.png"));
@@ -149,8 +156,8 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 	if( settings.value("background").toString() == "weave" ) weaveBackgroundButton->setChecked(true);
 	
 	QCheckBox *shadowsBox = new QCheckBox(tr("Shadows"));
-	shadowsBox->setChecked(true); // default
-	if (settings.value("shadows").toString()=="false") shadowsBox->setChecked(false);
+	shadowsBox->setChecked(false); // default
+	if (settings.value("shadows").toString()=="true") shadowsBox->setChecked(true);
 	
 	QCheckBox *toolCursorsBox = new QCheckBox(tr("Tool Cursors"));
 	toolCursorsBox->setChecked(true); // default
@@ -308,6 +315,40 @@ TimelinePage::TimelinePage(QWidget *parent) : QWidget(parent) {
 	
 	QVBoxLayout *lay2 = new QVBoxLayout();
 	lay2->addWidget(timeLineBox);
+	lay2->addStretch(1);
+	setLayout(lay2);
+}
+
+FilesPage::FilesPage(QWidget *parent) : QWidget(parent) {
+	QSettings settings("Pencil","Pencil");
+	
+	QVBoxLayout *lay = new QVBoxLayout();
+	
+	QGroupBox* autosaveBox = new QGroupBox(tr("Autosave documents"));
+	QCheckBox *autosaveCheckBox = new QCheckBox(tr("Enable autosave"));
+	QLabel *autosaveNumberLabel = new QLabel(tr("Number of modifications before autosaving:"));
+	QSpinBox *autosaveNumberBox = new QSpinBox();
+	
+	autosaveNumberBox->setMinimum(5);
+	autosaveNumberBox->setMaximum(200);
+	autosaveNumberBox->setFixedWidth(50);
+	
+	autosaveCheckBox->setChecked(false);
+	if (settings.value("autosave")=="true") autosaveCheckBox->setChecked(true);
+	
+	autosaveNumberBox->setValue(settings.value("autosaveNumber").toInt()); 
+	if (settings.value("autosaveNumber").toInt()==0) autosaveNumberBox->setValue(20);
+	
+	connect(autosaveNumberBox, SIGNAL(valueChanged(int)), parent, SIGNAL(autosaveNumberChange(int)));
+	connect(autosaveCheckBox, SIGNAL(stateChanged(int)), parent, SIGNAL(autosaveChange(int)));
+	
+	lay->addWidget(autosaveCheckBox);
+	lay->addWidget(autosaveNumberLabel);
+	lay->addWidget(autosaveNumberBox);
+	autosaveBox->setLayout(lay);
+	
+	QVBoxLayout *lay2 = new QVBoxLayout();
+	lay2->addWidget(autosaveBox);
 	lay2->addStretch(1);
 	setLayout(lay2);
 }

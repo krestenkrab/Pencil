@@ -108,8 +108,8 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	if( settings.value("highResPosition").toString() == "true") highResPosition = true;
 	antialiasing = true; // default value is true (because it's prettier)
 	if( settings.value("antialiasing").toString() == "false") antialiasing = false;
-	shadows = true; // default value is true (because it's prettier)
-	if( settings.value("shadows").toString() == "false") shadows = false;
+	shadows = false; // default value is false
+	if( settings.value("shadows").toString() == "true") shadows = true;
 	toolCursors = true; // default value is true
 	if( settings.value("toolCursors").toString() == "false") toolCursors = false;
 	gradients = 2;
