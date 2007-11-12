@@ -720,8 +720,8 @@ void VectorImage::paintImage(QPainter &painter, bool simplified, bool showThinCu
 			//if(method == 2) Gradient::paint2(painter, this, i, gradients);
 			
 			if(gradients == 2) Gradient::paint3(painter, this, i, gradients);
-			if(gradients == 1) Gradient::paint5(painter, this, i, gradients);
-			if(gradients == 0) {
+			if(gradients >= 3) Gradient::paint5(painter, this, i, gradients);
+			if(gradients <= 1) {
 				painter.setClipRect( viewRect );
 				painter.setClipping(true);
 				painter.fillPath( area[i].path, colour );

@@ -82,7 +82,6 @@ class BitmapImage
 	void drawPath( QPainterPath path, QPen pen, QBrush brush, QPainter::CompositionMode cm, bool antialiasing);
 	void blur(qreal radius);
 	void blur2(qreal radius);
-	void fastBlur(qreal radius);
 	
 	QPoint topLeft() { return boundaries.topLeft(); }
 	QPoint topRight() { return boundaries.topRight(); }

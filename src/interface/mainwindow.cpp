@@ -222,6 +222,12 @@ menuBar()->addMenu(windowsMenu);
 		readSettings();
 }
 
+void MainWindow::setOpacity(int opacity) {
+	QSettings settings("Pencil","Pencil");
+	settings.setValue("windowOpacity", 100-opacity);
+	setWindowOpacity(opacity/100.0);
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
 	if (editor->maybeSave()) {
@@ -295,6 +301,7 @@ void MainWindow::readSettings() {
 	QString myPath = settings.value("lastFilePath", QVariant(QDir::homePath())).toString();
 	addRecentFile(myPath);
 
+	setOpacity(100-settings.value("windowOpacity").toInt());	
 	//initialiseStyle();
 }
 

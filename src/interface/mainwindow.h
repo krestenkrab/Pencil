@@ -24,6 +24,9 @@ public:
     MainWindow();
 		//void initialiseStyle();
     void addRecentFile(QString filePath);
+
+public slots:
+		void setOpacity(int opacity);
 		
 private:
  	void closeEvent(QCloseEvent *);

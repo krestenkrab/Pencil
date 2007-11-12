@@ -150,6 +150,7 @@ Editor::Editor(QMainWindow* parent)
 	connect(timeLine, SIGNAL(onionPrevClick()), scribbleArea, SLOT(onionPrevSlot()));
 	connect(timeLine, SIGNAL(onionNextClick()), scribbleArea, SLOT(onionNextSlot()));
 	
+	connect(preferences, SIGNAL(windowOpacityChange(int)), mainWindow, SLOT(setOpacity(int)));
 	connect(preferences, SIGNAL(curveOpacityChange(int)), scribbleArea, SLOT(setCurveOpacity(int)));
 	connect(preferences, SIGNAL(curveSmoothingChange(int)), scribbleArea, SLOT(setCurveSmoothing(int)));
 	connect(preferences, SIGNAL(highResPositionChange(int)), scribbleArea, SLOT(setHighResPosition(int)));

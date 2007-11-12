@@ -102,9 +102,19 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 	QSettings settings("Pencil","Pencil");
 	QVBoxLayout *lay = new QVBoxLayout();
 	
+	QGroupBox* windowOpacityBox = new QGroupBox(tr("Window opacity"));
 	QGroupBox* backgroundBox = new QGroupBox(tr("Background"));
-	QGroupBox* displayBox = new QGroupBox(tr("Display"));
+	QGroupBox* appearanceBox = new QGroupBox(tr("Appearance"));
+	QGroupBox* displayBox = new QGroupBox(tr("Rendering"));
 	QGroupBox* editingBox = new QGroupBox(tr("Editing"));
+	
+	QLabel *windowOpacityLabel = new QLabel(tr("Opacity"));
+	QSlider *windowOpacityLevel = new QSlider(Qt::Horizontal);
+	windowOpacityLevel->setMinimum(30);
+	windowOpacityLevel->setMaximum(100);
+	int value = settings.value("windowOpacity").toInt();
+	windowOpacityLevel->setValue( 100 - value );
+	
 	QButtonGroup* backgroundButtons = new QButtonGroup();
 	QRadioButton* checkerBackgroundButton = new QRadioButton(); 
 	QRadioButton* whiteBackgroundButton = new QRadioButton();
@@ -171,9 +181,36 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 	antialiasingBox->setChecked(true); // default
 	if (settings.value("antialiasing").toString()=="false") antialiasingBox->setChecked(false);
 	
-	QCheckBox *gradientsBox = new QCheckBox(tr("Gradients"));
+	QButtonGroup *gradientsButtons = new QButtonGroup();
+	QRadioButton* gradient1Button = new QRadioButton(tr("None")); 
+	QRadioButton* gradient2Button = new QRadioButton(tr("Quick"));
+	QRadioButton* gradient3Button = new QRadioButton(tr("Gradient1"));
+	QRadioButton* gradient4Button = new QRadioButton(tr("Gradient2"));
+	gradientsButtons->addButton(gradient1Button);
+	gradientsButtons->addButton(gradient2Button);
+	gradientsButtons->addButton(gradient3Button);
+	gradientsButtons->addButton(gradient4Button);
+	gradientsButtons->setId(gradient1Button, 1);
+	gradientsButtons->setId(gradient2Button, 2);
+	gradientsButtons->setId(gradient3Button, 3);
+	gradientsButtons->setId(gradient4Button, 4);
+	QGroupBox* gradientsBox = new QGroupBox(tr("Gradients"));
+	QHBoxLayout *gradientsLayout = new QHBoxLayout();
+	gradientsBox->setLayout(gradientsLayout);
+	gradientsLayout->addWidget(gradient1Button);
+	gradientsLayout->addWidget(gradient2Button);
+	gradientsLayout->addWidget(gradient3Button);
+	gradientsLayout->addWidget(gradient4Button);
+	if( settings.value("gradients").toString() == "1" ) gradient1Button->setChecked(true);
+	if( settings.value("gradients").toString() == "2" ) gradient2Button->setChecked(true);
+	if( settings.value("gradients").toString() == "" )  gradient2Button->setChecked(true); // default
+	if( settings.value("gradients").toString() == "3" ) gradient3Button->setChecked(true);
+	if( settings.value("gradients").toString() == "4" ) gradient4Button->setChecked(true);
+	
+	
+	/*QCheckBox *gradientsBox = new QCheckBox(tr("Gradients"));
 	gradientsBox->setChecked(true); // default
-	if (settings.value("gradients").toString()=="0") gradientsBox->setChecked(false);
+	if (settings.value("gradients").toString()=="0") gradientsBox->setChecked(false);*/
 	
 	QLabel *curveOpacityLabel = new QLabel(tr("Vector curve opacity"));
 	QSlider *curveOpacityLevel = new QSlider(Qt::Horizontal);
@@ -181,6 +218,19 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 	curveOpacityLevel->setMaximum(100);
 	curveOpacityLevel->setValue( 100 - settings.value("curveOpacity").toInt() );
 	
+	QGridLayout *windowOpacityLayout = new QGridLayout();
+	windowOpacityBox->setLayout(windowOpacityLayout);
+	windowOpacityLayout->addWidget(windowOpacityLabel, 0, 0);
+	windowOpacityLayout->addWidget(windowOpacityLevel, 0, 1);
+	
+	QVBoxLayout *appearanceLayout = new QVBoxLayout();
+	appearanceBox->setLayout(appearanceLayout);
+	appearanceLayout->addWidget(shadowsBox);
+	appearanceLayout->addWidget(toolCursorsBox);
+#ifdef Q_WS_MAC	
+	appearanceLayout->addWidget(aquaBox);
+#endif
+
 	QGridLayout *displayLayout = new QGridLayout();
 	displayBox->setLayout(displayLayout);
 	displayLayout->addWidget(antialiasingBox, 0, 0);
@@ -192,7 +242,7 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 	QSlider *curveSmoothingLevel = new QSlider(Qt::Horizontal);
 	curveSmoothingLevel->setMinimum(1);
 	curveSmoothingLevel->setMaximum(100);
-	int value = settings.value("curveSmoothing").toInt();
+	value = settings.value("curveSmoothing").toInt();
 	curveSmoothingLevel->setValue( value );
 	
 	QCheckBox *highResBox = new QCheckBox(tr("Tablet high-resolution position"));
@@ -231,21 +281,19 @@ GeneralPage::GeneralPage(QWidget *parent) : QWidget(parent) {
 	connect(lengthSize, SIGNAL(textChanged(QString)), this, SIGNAL(lengthSizeChange(QString)));
 	connect(drawLabel, SIGNAL(stateChanged(int)), this, SIGNAL(labelChange(int)));*/
 	
+	lay->addWidget(windowOpacityBox);
+	lay->addWidget(appearanceBox);
 	lay->addWidget(backgroundBox);
-	lay->addWidget(shadowsBox);
-	lay->addWidget(toolCursorsBox);
-#ifdef Q_WS_MAC	
-	lay->addWidget(aquaBox);
-#endif
 	lay->addWidget(displayBox);
 	lay->addWidget(editingBox);
 	
+	connect(windowOpacityLevel, SIGNAL(valueChanged(int)), parent, SIGNAL(windowOpacityChange(int)));
 	connect(backgroundButtons, SIGNAL(buttonClicked(int)), parent, SIGNAL(backgroundChange(int)));
+	connect(gradientsButtons, SIGNAL(buttonClicked(int)), parent, SIGNAL(gradientsChange(int)));
 	connect(shadowsBox, SIGNAL(stateChanged(int)), parent, SIGNAL(shadowsChange(int)));
 	connect(toolCursorsBox, SIGNAL(stateChanged(int)), parent, SIGNAL(toolCursorsChange(int)));
 	connect(aquaBox, SIGNAL(stateChanged(int)), parent, SIGNAL(styleChange(int)));
 	connect(antialiasingBox, SIGNAL(stateChanged(int)), parent, SIGNAL(antialiasingChange(int)));
-	connect(gradientsBox, SIGNAL(stateChanged(int)), parent, SIGNAL(gradientsChange(int)));
 	connect(curveOpacityLevel, SIGNAL(valueChanged(int)), parent, SIGNAL(curveOpacityChange(int)));
 	connect(curveSmoothingLevel, SIGNAL(valueChanged(int)), parent, SIGNAL(curveSmoothingChange(int)));
 	connect(highResBox, SIGNAL(stateChanged(int)), parent, SIGNAL(highResPositionChange(int)));

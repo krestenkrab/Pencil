@@ -29,6 +29,7 @@ class Preferences : public QDialog {
 		void changePage(QListWidgetItem *current, QListWidgetItem *previous);
 
 	signals:
+		void windowOpacityChange(int);
 		void curveOpacityChange(int);
 		void curveSmoothingChange(int);
 		void highResPositionChange(int);

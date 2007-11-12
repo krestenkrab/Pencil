@@ -41,7 +41,7 @@ class Palette : public QDockWidget
 		QListWidget* listOfColours;
 		QToolButton *addButton, *removeButton;
 		QSlider *sliderRed, *sliderGreen, *sliderBlue, *sliderAlpha;
-		QLabel *colourSwatch;
+		QToolButton *colourSwatch;
 	
 	public slots:
 		void updateList();
@@ -51,6 +51,7 @@ class Palette : public QDockWidget
 		void setColour(int, int, int, int);
 		
   private slots:
+		void colourSwatchClicked();
 		void selectColour(QListWidgetItem*, QListWidgetItem*);
 		void selectAndApplyColour(QListWidgetItem*);
 		void updateColour();

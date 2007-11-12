@@ -1114,7 +1114,8 @@ void Gradient::paint5(QPainter &painter, VectorImage* v, int i, int gradients) {
 	BitmapImage* buffer = new BitmapImage(NULL);
 	//buffer->drawPath( path, Qt::NoPen, colour, QPainter::CompositionMode_SourceOver, false);
 	buffer->drawPath( path, QPen(colour, gradientWidth), colour, QPainter::CompositionMode_SourceOver, false);
-	buffer->blur(gradientWidth);
+	if(gradients == 3) buffer->blur2(0.9*gradientWidth);
+	if(gradients == 4) buffer->blur(0.9*gradientWidth);
 	
 	
 	/*QPointF P1, P2, C1, C2;

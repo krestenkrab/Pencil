@@ -159,8 +159,9 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	
 	setSizePolicy( QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding) );
 	QPixmapCache::setCacheLimit(30*2*1024);
-	setAttribute(Qt::WA_OpaquePaintEvent, false);
-	setAttribute(Qt::WA_NoSystemBackground, true);
+	//setAutoFillBackground (false);
+	//setAttribute(Qt::WA_OpaquePaintEvent, false);
+	//setAttribute(Qt::WA_NoSystemBackground, true);
 }
 
 void ScribbleArea::setColour(const int i)
@@ -334,10 +335,11 @@ void ScribbleArea::setGradients(int x)
 {
 	//if(x==0) { gradients = x; } else { gradients = x; }
 	QSettings settings("Pencil","Pencil");
-	if(x >= 0) {
+	if(x > 0) {
 		gradients = x;
 		settings.setValue("gradients", gradients);
 	} else {
+		gradients = 2;
 		gradients = settings.value("gradients").toInt();
 	}
 	//if (x==0) { antialiasing=false; settings.setValue("antialiasing","false"); }
@@ -1361,7 +1363,6 @@ void ScribbleArea::updateCanvas(int frame, QRect rect)
 	}
 	painter.setClipRect(rect);
 	painter.setClipping(true);
-	painter.fillRect(rect, Qt::red);
 	setView();
 	painter.setWorldMatrix(myTempView);
 	painter.setWorldMatrixEnabled(true);

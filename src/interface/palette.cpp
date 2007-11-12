@@ -76,12 +76,17 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 	QLabel* spacer = new QLabel();
 	spacer->setFixedWidth(10);
 	
-	colourSwatch = new QLabel();
-	colourSwatch->setFixedSize( 32, 32 );
-	QPixmap colourPixmap(32,32);
+	colourSwatch = new QToolButton(); //QLabel();
+	colourSwatch->setFixedSize( 40, 40 );
+	QPixmap colourPixmap(30,30);
 	colourPixmap.fill( Qt::black );
-	colourSwatch->setPixmap(colourPixmap);
-	colourSwatch->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+	colourSwatch->setIcon(QIcon(colourPixmap)); //colourSwatch->setPixmap(colourPixmap);
+	/*QFrame* colourSwatchFrame = new QFrame();
+	colourSwatchFrame->setFixedSize( 50, 50 );
+	//colourSwatchFrame->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+	QVBoxLayout *colourSwatchLayout = new QVBoxLayout();
+	colourSwatchLayout->addWidget(colourSwatch);
+	colourSwatchFrame->setLayout(colourSwatchLayout);*/
 	
 	//QGridLayout *buttonLayout = new QGridLayout();
 	buttons->addWidget(spacer);
@@ -143,6 +148,8 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 	connect(addButton, SIGNAL(clicked()), this, SLOT(addClick()));
 	connect(removeButton, SIGNAL(clicked()), this, SLOT(rmClick()));
 	
+	connect(colourSwatch, SIGNAL(clicked()), this, SLOT(colourSwatchClicked()));
+	
 	connect(this, SIGNAL(topLevelChanged(bool)), this, SLOT(closeIfDocked(bool)));
 }
 
@@ -168,6 +175,10 @@ void Palette::updateList() {
 	update();
 }
 
+void Palette::colourSwatchClicked() {
+	editor->changeColour(currentColour());
+}
+
 void Palette::selectColour(QListWidgetItem* current, QListWidgetItem* previous) {
 	if (!current) current = previous;
 	editor->selectColour(listOfColours->row(current));
@@ -188,9 +199,9 @@ void Palette::updateColour() {
 }
 
 void Palette::updateSwatch(QColor colour) {
-	QPixmap colourPixmap(36,36);
+	QPixmap colourPixmap(30,30);
 	colourPixmap.fill( colour );
-	if(colourSwatch != NULL) colourSwatch->setPixmap(colourPixmap);
+	if(colourSwatch != NULL) colourSwatch->setIcon(QIcon(colourPixmap)); //colourSwatch->setPixmap(colourPixmap);
 }
 
 void Palette::changeColour( QListWidgetItem * item ) {
