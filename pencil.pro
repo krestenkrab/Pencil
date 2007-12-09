@@ -42,6 +42,7 @@ HEADERS += src/external/flash/flash.h \
            src/interface/timecontrols.h \
            src/interface/toolset.h
 SOURCES += src/external/flash/flash.cpp \
+					 src/graphics/bitmap/blur.cpp \
            src/graphics/bitmap/bitmapimage.cpp \
            src/graphics/vector/bezierarea.cpp \
            src/graphics/vector/beziercurve.cpp \
