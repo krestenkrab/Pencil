@@ -212,7 +212,7 @@ void LayerVector::swap(int i, int j) {
 }
 
 
-void LayerVector::saveImage(int index, QString path, int layerNumber) {
+bool LayerVector::saveImage(int index, QString path, int layerNumber) {
 	int theFrame = framesPosition.at(index);
 	QString theFileName = fileName(theFrame, id);
 	framesFilename[index] = theFileName;

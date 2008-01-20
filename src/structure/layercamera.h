@@ -65,7 +65,7 @@ class LayerCamera : public LayerImage
 		void removeImageAtFrame(int frameNumber);
 	
 		void loadImageAtFrame(int, QMatrix);
-		void saveImage(int, QString, int);
+		bool saveImage(int, QString, int);
 	
 		void editProperties();
 		

@@ -40,7 +40,7 @@ class LayerSound : public LayerImage
 	
 	void loadSoundAtFrame( QString filePathString, int frame );
 	
-	void saveImage(int index, QString path, int layerNumber);
+	bool saveImage(int index, QString path, int layerNumber);
 	void playSound(int frame);
 	void stopSound();
 	

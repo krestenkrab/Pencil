@@ -59,8 +59,12 @@ bool VectorImage::read(QString filePath) {
 
 bool VectorImage::write(QString filePath, QString format) {
 	QFile* file = new QFile(filePath);
-	if (!file->open(QFile::WriteOnly | QFile::Text)) {
+	//if (!file->open(QIODevice::WriteOnly | QIODevice::Text)) {
+	//bool result = file->open(QIODevice::WriteOnly | QIODevice::Text);
+	bool result = file->open(QIODevice::WriteOnly);
+	if (!result) {
 		//QMessageBox::warning(this, "Warning", "Cannot write file");
+		qDebug() << "VectorImage - Cannot write file" << filePath << file->error();
 		return false;
 	}
 	QTextStream out(file);
@@ -74,9 +78,14 @@ bool VectorImage::write(QString filePath, QString format) {
 		doc.appendChild(imageTag);
 	
 		int IndentSize = 2;
+		qDebug() << "--- Starting to write XML file...";
 		doc.save(out, IndentSize);
+		qDebug() << "--- Writing XML file done.";
+		file->close();
 		return true;
 	} else {
+		file->close();
+		qDebug() << "--- Not the VEC format!";
 		return false;
 	}
 }

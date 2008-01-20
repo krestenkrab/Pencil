@@ -44,7 +44,7 @@ class LayerVector : public LayerImage
 		QImage* getImageAtFrame(int, QSize, bool, bool, qreal, bool, int);
 		QImage* getLastImageAtFrame(int, int, QSize, bool, bool, qreal, bool, int);
 			
-		void saveImage(int, QString, int);
+		bool saveImage(int, QString, int);
 		void setView(QMatrix view);
 		QString fileName(int index, int layerNumber);
 		void setModified(bool trueOrFalse);

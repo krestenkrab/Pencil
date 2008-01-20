@@ -165,6 +165,8 @@ public slots:
 	void applyInvisibility(int);
 	void setPressure(int);
 	void applyPressure(int);
+	void setPreserveAlpha(int);
+	void applyPreserveAlpha(int);
 	void selectColour(int);
 	void selectAndApplyColour(int);
 	void setColour(QColor);
@@ -267,6 +269,10 @@ private:
 	QComboBox *exportFramesDialog_format;
 	QComboBox *exportMovieDialog_format;
 	QSlider* exportFlashDialog_compression;
+	
+	// saving (XML)
+	QDomElement createDomElement(QDomDocument &doc);
+	bool loadDomElement(QDomElement element,  QString filePath);		
 };
 
 #endif

@@ -33,6 +33,8 @@ int main(int argc, char *argv[])
 	}*/
 	MainWindow mainWindow;
 	mainWindow.show();
-    return app.exec();
+	qDebug() << "MainWindow thread" << mainWindow.thread();
+	qDebug() << "App thread" << app.thread();
+	return app.exec();
 }
 

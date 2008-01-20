@@ -18,7 +18,8 @@ INCLUDEPATH += . 	src \
 			src/structure
 
 # Input
-HEADERS += src/external/flash/flash.h \
+HEADERS += src/interfaces.h \
+					 src/external/flash/flash.h \
            src/graphics/bitmap/bitmapimage.h \
            src/graphics/vector/bezierarea.h \
            src/graphics/vector/beziercurve.h \

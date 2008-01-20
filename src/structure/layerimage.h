@@ -44,8 +44,8 @@ class LayerImage : public Layer
 		virtual void setModified(int frameNumber, bool trueOrFalse);
 		void deselectAllFrames();
 		
-		void saveImages(QString path, int layerNumber);
-		virtual void saveImage(int index, QString path, int layerNumber);
+		bool saveImages(QString path, int layerNumber);
+		virtual bool saveImage(int index, QString path, int layerNumber);
 		virtual QString fileName(int index, int layerNumber);
 		
 		// graphic representation -- could be put in another class

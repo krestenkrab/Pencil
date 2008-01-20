@@ -48,7 +48,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	// --------- layer buttons ---------
 	//QFrame* layerButtons = new QFrame(this);
 	QToolBar* layerButtons = new QToolBar(this);
-	QHBoxLayout* layerButtonLayout = new QHBoxLayout();
+	//QHBoxLayout* layerButtonLayout = new QHBoxLayout();
 		QLabel* layerLabel = new QLabel(tr("Layers:"));
 		layerLabel->setIndent(5);
 		layerLabel->setFont( QFont("Helvetica", 10) );
@@ -232,7 +232,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	connect(newCameraLayerAct, SIGNAL(triggered()), this, SIGNAL(newCameraLayer()));
 	connect(removeLayerButton, SIGNAL(clicked()), this, SIGNAL(deleteCurrentLayer()));
 
-	//scrubbing = false;
+	scrubbing = false;
 	//QSettings settings("Pencil","Pencil");
 	//layerHeight = (settings.value("layerHeight").toInt());
 	//if(layerHeight==0) { layerHeight=20; settings.setValue("layerHeight", layerHeight); }
@@ -426,6 +426,7 @@ void TimeLineCells::updateContent() {
 void TimeLineCells::drawContent() {
 	//qDebug() << "draw content" << QDateTime::currentDateTime() << timeLine->scrubbing;
 	if(cache == NULL) { cache = new QPixmap(size()); }
+	if(cache->isNull()) return;
 	QPainter painter( cache );
 	Object* object = editor->object;
         if(object == NULL) return;

@@ -67,7 +67,7 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	brush.width = settings.value("brushWidth").toDouble();
 	if (brush.width == 0) { brush.width = 48; settings.setValue("brushWidth", brush.width); }
 	eraser.width = settings.value("eraserWidth").toDouble();
-	if (eraser.width == 0) { eraser.width = 24; settings.setValue("brushWidth", brush.width); }
+	if (eraser.width == 0) { eraser.width = 24; settings.setValue("eraserWidth", brush.width); }
 	currentWidth = pencil.width;
 	
 	pencil.colour = Qt::black;
@@ -99,6 +99,11 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	brush.invisibility = -1;
 	eraser.invisibility = -1;
 	
+	pencil.preserveAlpha = 0;
+	pen.preserveAlpha = 0;
+	brush.preserveAlpha = 0;
+	eraser.preserveAlpha = 0;
+	
 	curveOpacity = (100-settings.value("curveOpacity").toInt())/100.0; // default value is 1.0
 	int curveSmoothingLevel = settings.value("curveSmoothing").toInt();
 	if(curveSmoothingLevel == 0) { curveSmoothingLevel = 20; settings.setValue("curveSmoothing", curveSmoothingLevel); } // default
@@ -116,7 +121,7 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	if( settings.value("gradients").toString() != "") gradients = settings.value("gradients").toInt();;
 	
 	toolMode = PENCIL;
-	tabletEraser=false;
+	tabletEraserBackupToolMode=-1;
 	tabletInUse=false;
 	tabletPressure=1.0;
 	setAttribute(Qt::WA_StaticContents); // ?
@@ -299,6 +304,25 @@ void ScribbleArea::setPressure(const bool pressure)
 	}
 	usePressure = pressure;
 	updateAllFrames();
+}
+
+void ScribbleArea::setPreserveAlpha(const bool preserveAlpha)
+{
+	QSettings settings("Pencil","Pencil");
+	if(toolMode == PENCIL) {
+		pencil.preserveAlpha = preserveAlpha;
+		//settings.setValue("pencilCompositionMode", preserveAlpha);
+	}
+	if(toolMode == PEN || toolMode == POLYLINE) {
+		pen.preserveAlpha = preserveAlpha;
+		//settings.setValue("penCompositionMode", preserveAlpha);
+	}
+	if(toolMode == COLOURING) {
+		brush.preserveAlpha = preserveAlpha;
+		//settings.setValue("brushCompositionMode", preserveAlpha);
+	}
+	//this->preserveAlpha = preserveAlpha;
+	//updateAllFrames();
 }
 
 void ScribbleArea::setCurveOpacity(int newOpacity)
@@ -568,11 +592,28 @@ void ScribbleArea::tabletEvent(QTabletEvent *event)
 		if(usePressure) { currentWidth = 2.0*pen.width*tabletPressure; } else { currentWidth = pen.width; }
 	}
 	if(event->pointerType() == QTabletEvent::Eraser) {
-		if(tabletEraser == false) eraserOn();
-		tabletEraser = true;
+		//if(tabletEraser == false) eraserOn();
+		//tabletEraser = true;
+		if(tabletEraserBackupToolMode == -1) {
+			tabletEraserBackupToolMode = toolMode; // memorise which tool was being used before switching to the eraser
+			eraserOn();
+		}
 	} else {
-		if(tabletEraser == true) pencilOn();
-		tabletEraser = false;
+		//if(tabletEraser == true) pencilOn();
+		//tabletEraser = false;
+		if(tabletEraserBackupToolMode != -1) { // restore the tool in use
+			switch(tabletEraserBackupToolMode) {
+				case ScribbleArea::PENCIL: 
+					pencilOn();
+					break;
+				case ScribbleArea::PEN: 
+					penOn();
+					break;
+				default:
+					pencilOn();
+			}
+			tabletEraserBackupToolMode = -1;
+		}
 	}
 	event->ignore(); // indicates that the tablet event is not accepted yet, so that it is propagated as a mouse event)
 }
@@ -964,23 +1005,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 			}
 			// ----------------------------------------------------------------------
 			if( toolMode == PENCIL || toolMode == PEN || toolMode == ERASER || toolMode == COLOURING ) {
-				// Clear the temporary pixel path
-				BitmapImage* targetImage = ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
-				if(toolMode == ERASER) {
-					targetImage->paste(bufferImg, QPainter::CompositionMode_DestinationOut);
-				} else {
-					targetImage->paste(bufferImg);
-				}
-				QRect rect = myTempView.mapRect(bufferImg->boundaries);
-				bufferImg->clear();
-				
-				//setModified(layer, editor->currentFrame);
-				((LayerImage*)layer)->setModified(editor->currentFrame, true);
-				emit modification();
-				QPixmapCache::remove("frame"+QString::number(editor->currentFrame));
-				readCanvasFromCache = false;
-				updateCanvas(editor->currentFrame, rect);
-				update(rect);
+				paintBitmapBuffer();
 			}
 		}
 		
@@ -1144,6 +1169,43 @@ void ScribbleArea::mouseDoubleClickEvent(QMouseEvent *event)
 			mousePressEvent(event);
 		}
 	}
+}
+
+void ScribbleArea::paintBitmapBuffer() {
+	Layer* layer = editor->getCurrentLayer();
+	// ---- checks ------
+	if(layer==NULL) return;
+				// Clear the temporary pixel path
+				BitmapImage* targetImage = ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
+				if(targetImage!=NULL) {
+					QPainter::CompositionMode cm = QPainter::CompositionMode_SourceOver;
+					switch(toolMode) {
+						case ERASER:
+							cm = QPainter::CompositionMode_DestinationOut;
+							break;
+						case COLOURING:
+							if(brush.preserveAlpha) cm = QPainter::CompositionMode_SourceAtop;
+							break;
+						case PEN:
+							if(pen.preserveAlpha) cm = QPainter::CompositionMode_SourceAtop;
+							break;
+						case PENCIL:
+							if(pencil.preserveAlpha) cm = QPainter::CompositionMode_SourceAtop;
+							break;
+					}
+					targetImage->paste(bufferImg, cm);
+				}
+				QRect rect = myTempView.mapRect(bufferImg->boundaries);
+				// Clear the buffer
+				bufferImg->clear();
+				
+				//setModified(layer, editor->currentFrame);
+				((LayerImage*)layer)->setModified(editor->currentFrame, true);
+				emit modification();
+				QPixmapCache::remove("frame"+QString::number(editor->currentFrame));
+				readCanvasFromCache = false;
+				updateCanvas(editor->currentFrame, rect);
+				update(rect);
 }
 
 void ScribbleArea::paintEvent(QPaintEvent* event)
@@ -1647,6 +1709,14 @@ void ScribbleArea::recentre() {
 	setView();
 	QPixmapCache::clear();
 	update();
+}
+
+void ScribbleArea::setMyView(QMatrix view) {
+	myView = view;
+}
+
+QMatrix ScribbleArea::getMyView() {
+	return myView;
 }
 
 void ScribbleArea::setView() {
@@ -2209,16 +2279,18 @@ void ScribbleArea::updateCursor() {
 		if(layer->type == Layer::BITMAP) {
 			qreal width = brush.width*0.66;
 			QPixmap pixmap(width,width);
-			pixmap.fill( QColor(255,255,255,0) );
-			QPainter painter(&pixmap);
-			painter.setPen( QColor(0,0,0,190) );
-			painter.setBrush( Qt::NoBrush );
-			painter.drawLine( QPointF(width/2-2,width/2), QPointF(width/2+2,width/2) );
-			painter.drawLine( QPointF(width/2,width/2-2), QPointF(width/2,width/2+2) );
-			painter.setRenderHints(QPainter::Antialiasing, true);
-			painter.setPen( QColor(0,0,0,100) );
-			painter.drawEllipse( QRectF(1,1,width-2,width-2) );
-			painter.end();
+			if(!pixmap.isNull()) {
+				pixmap.fill( QColor(255,255,255,0) );
+				QPainter painter(&pixmap);
+				painter.setPen( QColor(0,0,0,190) );
+				painter.setBrush( Qt::NoBrush );
+				painter.drawLine( QPointF(width/2-2,width/2), QPointF(width/2+2,width/2) );
+				painter.drawLine( QPointF(width/2,width/2-2), QPointF(width/2,width/2+2) );
+				painter.setRenderHints(QPainter::Antialiasing, true);
+				painter.setPen( QColor(0,0,0,100) );
+				painter.drawEllipse( QRectF(1,1,width-2,width-2) );
+				painter.end();
+			}
 			setCursor(pixmap);
 		}
 	}
@@ -2242,6 +2314,7 @@ void ScribbleArea::pencilOn() {
 	editor->setOpacity(pencil.opacity);
 	editor->setPressure(pencil.pressure);
 	editor->setInvisibility(pencil.invisibility);
+	editor->setPreserveAlpha(pencil.preserveAlpha);
 	editor->setInvisibility(-1); // by definition the pencil is invisible in vector mode
 	// --- change cursor ---
 	updateCursor();
@@ -2260,6 +2333,7 @@ void ScribbleArea::penOn() {
 	if(pen.opacity<0) pen.opacity = 1.0; editor->setOpacity(pen.opacity);
 	editor->setPressure(pen.pressure);
 	editor->setInvisibility(pen.invisibility);
+	editor->setPreserveAlpha(pen.preserveAlpha);
 	editor->setInvisibility(-1); // by definition the pen is visible in vector mode
 	// --- change cursor ---
 	updateCursor();
@@ -2273,6 +2347,8 @@ void ScribbleArea::eraserOn() {
 	editor->setFeather(eraser.feather);
 	editor->setOpacity(eraser.opacity);
 	editor->setPressure(eraser.pressure);
+	editor->setPreserveAlpha(0);
+	editor->setPreserveAlpha(-1);
 	editor->setInvisibility(1);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
@@ -2290,6 +2366,7 @@ void ScribbleArea::selectOn() {
 	editor->setOpacity(-1);
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
+	editor->setPreserveAlpha(-1);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2302,6 +2379,7 @@ void ScribbleArea::moveOn() {
 	editor->setOpacity(-1);
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
+	editor->setPreserveAlpha(-1);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2315,6 +2393,7 @@ void ScribbleArea::handOn() {
 	editor->setOpacity(-1);
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
+	editor->setPreserveAlpha(-1);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2332,6 +2411,7 @@ void ScribbleArea::polylineOn() {
 	editor->setOpacity(pen.opacity);
 	editor->setPressure(pen.pressure);
 	editor->setInvisibility(pen.invisibility);
+	editor->setPreserveAlpha(pen.preserveAlpha);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2347,9 +2427,13 @@ void ScribbleArea::bucketOn() {
 	editor->setWidth(-1);
 	editor->setFeather(brush.feather);
 	editor->setOpacity(1); // the bucket has full opacity (but one should be able to use it with translucent colours)
-	editor->setOpacity(-1);
-	editor->setPressure(-1);
-	editor->setInvisibility(-1);
+	editor->setOpacity(-1); // disable the button
+	editor->setPressure(0);	
+	editor->setPressure(-1); // disable the button
+	editor->setInvisibility(0);
+	editor->setInvisibility(-1); // disable the button
+	editor->setPreserveAlpha(0);
+	editor->setPreserveAlpha(-1); // disable the button
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2363,6 +2447,7 @@ void ScribbleArea::eyedropperOn() {
 	editor->setOpacity(-1);
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
+	editor->setPreserveAlpha(-1);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2379,6 +2464,7 @@ void ScribbleArea::colouringOn() {
 	editor->setFeather(brush.feather);
 	editor->setOpacity(brush.opacity);
 	editor->setPressure(brush.pressure);
+	editor->setPreserveAlpha(brush.preserveAlpha);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
 	updateCursor();
@@ -2393,6 +2479,7 @@ void ScribbleArea::smudgeOn() {
 	editor->setOpacity(-1);
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
+	editor->setPreserveAlpha(-1);
 	// --- change cursor ---
 	updateCursor();
 }

@@ -103,7 +103,7 @@ void LayerSound::swap(int i, int j) {
 	soundFilepath.swap(i,j);
 }
 
-void LayerSound::saveImage(int index, QString path, int layerNumber) {
+bool LayerSound::saveImage(int index, QString path, int layerNumber) {
 	/*QString layerNumberString = QString::number(layerNumber);
 	QString frameNumberString = QString::number(framesPosition.at(index));
 	while( layerNumberString.length() < 3) layerNumberString.prepend("0");

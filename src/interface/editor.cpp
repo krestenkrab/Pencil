@@ -111,6 +111,7 @@ Editor::Editor(QMainWindow* parent)
 	
 	connect(toolSet, SIGNAL(pressureClick(int)), this, SLOT(applyPressure(int)));
 	connect(toolSet, SIGNAL(invisibleClick(int)), this, SLOT(applyInvisibility(int)));
+	connect(toolSet, SIGNAL(preserveAlphaClick(int)), this, SLOT(applyPreserveAlpha(int)));
 	
 	connect(toolSet, SIGNAL(widthClick(qreal)), this, SLOT(applyWidth(qreal)));
 	connect(toolSet, SIGNAL(featherClick(qreal)), this, SLOT(applyFeather(qreal)));
@@ -328,6 +329,17 @@ void Editor::applyInvisibility(int invisibility)
 	setInvisibility(invisibility);
 	Layer* layer = getCurrentLayer(); if(layer == NULL) return;
 	if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->getLastVectorImageAtFrame(currentFrame, 0)->applyInvisibilityToSelection(invisibility>0);
+}
+
+void Editor::setPreserveAlpha(int preserveAlpha)
+{
+	if(preserveAlpha>=0) scribbleArea->setPreserveAlpha(preserveAlpha>0);
+	toolSet->setPreserveAlpha(preserveAlpha);
+}
+
+void Editor::applyPreserveAlpha(int preserveAlpha)
+{
+	setPreserveAlpha(preserveAlpha);
 }
 
 void Editor::setPressure(int pressure)
@@ -794,9 +806,14 @@ bool Editor::saveObject(QString filePath)
 	QProgressDialog progress("Saving document...", "Abort", 0, 100, mainWindow);
 	progress.setWindowModality(Qt::WindowModal);
 	progress.show();
+	int progressValue = 0;
 	
 	// save data
-	for(int i=0; i < object->getLayerCount(); i++) {
+	int nLayers = object->getLayerCount();
+	for(int i=0; i < nLayers; i++) {
+		qDebug() << "Saving Layer " << i;
+		progressValue = (i*100)/nLayers;
+		progress.setValue(progressValue);
 		Layer* layer = object->getLayer(i);
 		if(layer->type == Layer::BITMAP) ((LayerBitmap*)layer)->saveImages(filePath+".data", i);
 		if(layer->type == Layer::VECTOR) ((LayerVector*)layer)->saveImages(filePath+".data", i);
@@ -806,8 +823,27 @@ bool Editor::saveObject(QString filePath)
 	// save palette
 	object->savePalette(filePath+".data");
 	
+	// -------- save main XML file -----------
+	QFile* file = new QFile(filePath);
+	if (!file->open(QFile::WriteOnly | QFile::Text)) {
+		//QMessageBox::warning(this, "Warning", "Cannot write file");
+		return false;
+	}
+	QTextStream out(file);
+	QDomDocument doc("PencilDocument");
+	QDomElement root = doc.createElement("document");
+	doc.appendChild(root);
+	
+	// save editor information
+	QDomElement editorElement = createDomElement(doc);
+	root.appendChild(editorElement);
 	// save object
-	object->write(filePath);
+	QDomElement objectElement = object->createDomElement(doc);
+	root.appendChild(objectElement);
+	
+	int IndentSize = 2;
+	doc.save(out, IndentSize);
+	// -----------------------------------
 
 	progress.setValue(100);
 	
@@ -851,7 +887,7 @@ void Editor::updateObject() {
 		
 		//scribbleArea->resize(object->size);
 		//scribbleArea->updateAllFrames();
-		scribbleArea->resetView();
+		//scribbleArea->resetView();
 		timeLine->updateLayerNumber(object->getLayerCount());
 		palette->updateList();
 		clearBackup();
@@ -884,7 +920,31 @@ bool Editor::openObject(QString filePath) {
 	Object* newObject = new Object();
 	if(!newObject->loadPalette(savedName+".data")) newObject->loadDefaultPalette();
 	setObject(newObject);
-	bool ok = newObject->read(savedName);
+	
+	// ------- reads the XML file -------
+	bool ok = true;
+	QDomElement docElem = doc.documentElement();
+	if(docElem.isNull()) return false;
+	if(docElem.tagName() == "document") {
+		QDomNode tag = docElem.firstChild();
+		while(!tag.isNull()) {
+			QDomElement element = tag.toElement(); // try to convert the node to an element.
+			if(!element.isNull()) {
+				if(element.tagName() == "editor") {
+					loadDomElement(element, filePath);
+				}
+				if(element.tagName() == "object") {
+					ok = newObject->loadDomElement(element, filePath);
+				}
+			}
+			tag = tag.nextSibling();
+		}
+	} else {
+		if(docElem.tagName() == "object" || docElem.tagName() == "MyOject") { // old Pencil format (<=0.4.3)
+			ok = newObject->loadDomElement(docElem, filePath);
+		}
+	}
+	// ------------------------------
 	if(ok) updateObject();
 	
 	progress.setValue(100);
@@ -1596,4 +1656,53 @@ void Editor::restorePalettesSettings(bool restoreFloating, bool restorePosition,
 		if(restoreSize) displayPalette->resize(size);
 		displayPalette->show();
 	}
+}
+
+QDomElement Editor::createDomElement(QDomDocument &doc) {
+	QDomElement tag = doc.createElement("editor");
+	
+	QDomElement tag1 = doc.createElement("currentLayer");
+	tag1.setAttribute("value", currentLayer);
+	tag.appendChild(tag1);
+	QDomElement tag2 = doc.createElement("currentFrame");
+	tag2.setAttribute("value", currentFrame);
+	tag.appendChild(tag2);
+	QDomElement tag3 = doc.createElement("currentView");
+	QMatrix myView = scribbleArea->getMyView();
+	tag3.setAttribute("m11", myView.m11());
+	tag3.setAttribute("m12", myView.m12());
+	tag3.setAttribute("m21", myView.m21());
+	tag3.setAttribute("m22", myView.m22());
+	tag3.setAttribute("dx", myView.dx());
+	tag3.setAttribute("dy", myView.dy());
+	tag.appendChild(tag3);
+
+	return tag;
+}
+
+bool Editor::loadDomElement(QDomElement docElem, QString filePath) {
+	if(docElem.isNull()) return false;
+	QDomNode tag = docElem.firstChild();
+	while(!tag.isNull()) {
+		QDomElement element = tag.toElement(); // try to convert the node to an element.
+		if(!element.isNull()) {
+			if(element.tagName() == "currentLayer") {
+				currentLayer = element.attribute("value").toInt();
+			}
+			if(element.tagName() == "currentFrame") {
+				currentFrame = element.attribute("value").toInt();
+			}
+			if(element.tagName() == "currentView") {
+				qreal m11 = element.attribute("m11").toDouble();
+				qreal m12 = element.attribute("m12").toDouble();
+				qreal m21 = element.attribute("m21").toDouble();
+				qreal m22 = element.attribute("m22").toDouble();
+				qreal dx = element.attribute("dx").toDouble();
+				qreal dy = element.attribute("dy").toDouble();
+				scribbleArea->setMyView( QMatrix(m11,m12,m21,m22,dx,dy) ); 
+			}
+		}
+		tag = tag.nextSibling();
+	}
+	return true;
 }

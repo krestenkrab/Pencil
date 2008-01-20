@@ -60,6 +60,7 @@ public slots:
 	void setOpacity(qreal);
 	void setInvisibility(int);
 	void setPressure(int);
+	void setPreserveAlpha(int);
 	void setColour(QColor);
 	//void playStart();
 	void changePencilButton();
@@ -79,6 +80,7 @@ public slots:
 	void resetMirror();
 	void pressureClick(bool);
 	void invisibleClick(bool);
+	void preserveAlphaClick(bool);
 	
 signals:
 	void rmClick();
@@ -92,6 +94,7 @@ signals:
 	void penClick();
 	void pressureClick(int);
 	void invisibleClick(int);
+	void preserveAlphaClick(int);
 	void polylineClick();
 	void bucketClick();
 	void eyedropperClick();
@@ -151,6 +154,7 @@ private:
 	
 	QCheckBox *usePressureBox;
 	QCheckBox *makeInvisibleBox;
+	QCheckBox *preserveAlphaBox;
 	
 	QCheckBox *onionPrevBox;
 	QCheckBox *onionNextBox;

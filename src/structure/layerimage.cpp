@@ -278,7 +278,7 @@ void LayerImage::deselectAllFrames() {
 	}
 }
 
-void LayerImage::saveImages(QString path, int layerNumber) {
+bool LayerImage::saveImages(QString path, int layerNumber) {
 	qDebug() << "Save images... ";
 	QDir dir(path);
 	//qDebug() << dir.exists() << dir.path();
@@ -288,8 +288,10 @@ void LayerImage::saveImages(QString path, int layerNumber) {
 	// --- we test if all the files already exists
 	for(int i=0; i < framesPosition.size(); i++) {
 		QString fileName = framesFilename.at(i);
+		qDebug() << "Testing if (" << i << ") " << fileName << " exists";
 		bool test = dir.exists(fileName);
 		if(!test) {
+			qDebug() << "--- The file does not seem to exist.";
 			framesModified[i] = true;
 		}
 	}
@@ -327,14 +329,14 @@ void LayerImage::saveImages(QString path, int layerNumber) {
 	// --- we now save the files for the images which have been modified
 	for(int i=0; i < framesPosition.size(); i++) {
 		if(framesModified.at(i)) {
+			qDebug() << "Trying to save " << framesFilename.at(i);
 			saveImage(i, path, layerNumber);
-			qDebug() << "Save " << framesFilename.at(i);
 		}
 	}
 	qDebug() << "done";
 }
 
-void LayerImage::saveImage(int index, QString path, int layerNumber) {
+bool LayerImage::saveImage(int index, QString path, int layerNumber) {
 	// implemented in subclasses
 }
 

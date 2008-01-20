@@ -45,6 +45,9 @@ class Object : public QObject
 		Object();
 		virtual ~Object();
 		
+		QDomElement createDomElement(QDomDocument &doc);
+		bool loadDomElement(QDomElement element,  QString filePath);
+		
 		bool read(QString filePath);
 		bool write(QString filePath);
 		

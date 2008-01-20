@@ -17,6 +17,7 @@ GNU General Public License for more details.
 #include "editor.h"
 #include "mainwindow.h"
 #include "object.h"
+#include <interfaces.h>
 
 MainWindow::MainWindow() {
 	editor = new Editor(this);
@@ -25,6 +26,16 @@ MainWindow::MainWindow() {
 	//editor->setObject( object );
 	editor->newObject();
 
+	arrangePalettes();
+	
+	//editor->getTimeLine()->close();
+	
+	createMenus();
+	loadPlugins();
+	readSettings();
+}
+
+void MainWindow::arrangePalettes() {
 	setCentralWidget(editor);
 	addDockWidget(Qt::RightDockWidgetArea, editor->getPalette());
 	//editor->getPalette()->close();
@@ -46,9 +57,10 @@ MainWindow::MainWindow() {
 	editor->getToolSet()->onionPalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	editor->getToolSet()->timePalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	editor->getTimeLine()->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
+}
 
-	//editor->getTimeLine()->close();
-	
+void MainWindow::createMenus() {
+	// ---------- Actions -------------
 	exitAct = new QAction(tr("E&xit"), this);
 	exitAct->setShortcut(tr("Ctrl+Q"));
 	connect(exitAct, SIGNAL(triggered()), editor, SLOT(close()));
@@ -118,7 +130,7 @@ MainWindow::MainWindow() {
 	connect(undoAct, SIGNAL(triggered()), editor, SLOT(undo()));
 
 	redoAct = new QAction(tr("Redo"), this);
-	redoAct->setShortcut(tr("Ctrl+R"));
+	redoAct->setShortcut(tr("Ctrl+Shift+Z"));
 	connect(redoAct, SIGNAL(triggered()), editor, SLOT(redo()));
 
 	copyAct = new QAction(tr("Copy"), this);
@@ -159,67 +171,141 @@ MainWindow::MainWindow() {
 	detachAllPalettesAct = new QAction(tr("Detach All Palettes"), this);
 	connect(detachAllPalettesAct, SIGNAL(triggered()), editor, SLOT(detachAllPalettes()));
 	
-importMenu = new QMenu(tr("Import"), this);
-importMenu->addAction(importPaletteAct);
+	// --------------- Menus ------------------
+	
+	importMenu = new QMenu(tr("Import"), this);
+	importMenu->addAction(importPaletteAct);
 
-exportMenu = new QMenu(tr("Export"), this);
-exportMenu->addAction(exportXAct);
-exportMenu->addAction(exportAct);
-exportMenu->addAction(exportMovAct);
-exportMenu->addAction(exportFlashAct);
-exportMenu->addSeparator();
-exportMenu->addAction(exportPaletteAct);
+	exportMenu = new QMenu(tr("Export"), this);
+	exportMenu->addAction(exportXAct);
+	exportMenu->addAction(exportAct);
+	exportMenu->addAction(exportMovAct);
+	exportMenu->addAction(exportFlashAct);
+	exportMenu->addSeparator();
+	exportMenu->addAction(exportPaletteAct);
 
-openRecentMenu = new QMenu(tr("Open recent..."), this);
+	openRecentMenu = new QMenu(tr("Open recent..."), this);
 
-fileMenu = new QMenu(tr("&File"), this);
-fileMenu->addAction(newAct);
-fileMenu->addAction(openAct);
-fileMenu->addMenu(openRecentMenu);
-fileMenu->addAction(savAct);
-fileMenu->addAction(saveAct);
-fileMenu->addSeparator();
-fileMenu->addMenu(importMenu);
-fileMenu->addMenu(exportMenu);
+	fileMenu = new QMenu(tr("&File"), this);
+	fileMenu->addAction(newAct);
+	fileMenu->addAction(openAct);
+	fileMenu->addMenu(openRecentMenu);
+	fileMenu->addAction(savAct);
+	fileMenu->addAction(saveAct);
+	fileMenu->addSeparator();
+	fileMenu->addMenu(importMenu);
+	fileMenu->addMenu(exportMenu);
 
-editMenu = new QMenu(tr("&Edit"), this);
-editMenu->addAction(undoAct);
-editMenu->addAction(redoAct);
-editMenu->addSeparator();
-editMenu->addAction(copyAct);
-editMenu->addAction(pasteAct);
-editMenu->addSeparator();
-editMenu->addAction(selectAllAct);
-editMenu->addSeparator();
-editMenu->addAction(importAct);
-editMenu->addAction(importSndAct);
-editMenu->addSeparator();
-editMenu->addAction(preferencesAct);
+	editMenu = new QMenu(tr("&Edit"), this);
+	editMenu->addAction(undoAct);
+	editMenu->addAction(redoAct);
+	editMenu->addSeparator();
+	editMenu->addAction(copyAct);
+	editMenu->addAction(pasteAct);
+	editMenu->addSeparator();
+	editMenu->addAction(selectAllAct);
+	editMenu->addSeparator();
+	editMenu->addAction(importAct);
+	editMenu->addAction(importSndAct);
+	editMenu->addSeparator();
+	editMenu->addAction(preferencesAct);
 
-layerMenu = new QMenu(tr("&Layer"), this);
-layerMenu->addAction(newBitmapLayerAct);
-layerMenu->addAction(newVectorLayerAct);
-layerMenu->addAction(newSoundLayerAct);
-layerMenu->addAction(newCameraLayerAct);
-layerMenu->addSeparator();
-layerMenu->addAction(deleteLayerAct);
+	layerMenu = new QMenu(tr("&Layer"), this);
+	layerMenu->addAction(newBitmapLayerAct);
+	layerMenu->addAction(newVectorLayerAct);
+	layerMenu->addAction(newSoundLayerAct);
+	layerMenu->addAction(newCameraLayerAct);
+	layerMenu->addSeparator();
+	layerMenu->addAction(deleteLayerAct);
 
-helpMenu = new QMenu(tr("&Help"), this);
-helpMenu->addAction(helpMe);
-helpMenu->addAction(aboutAct);
-helpMenu->addAction(aboutQtAct);
+	helpMenu = new QMenu(tr("&Help"), this);
+	helpMenu->addAction(helpMe);
+	helpMenu->addAction(aboutAct);
+	helpMenu->addAction(aboutQtAct);
 
-windowsMenu = new QMenu(tr("Windows"), this);
-windowsMenu->addAction(dockAllPalettesAct);
-windowsMenu->addAction(detachAllPalettesAct);
+	windowsMenu = new QMenu(tr("Windows"), this);
+	windowsMenu->addAction(dockAllPalettesAct);
+	windowsMenu->addAction(detachAllPalettesAct);
 
-menuBar()->addMenu(fileMenu);
-menuBar()->addMenu(editMenu);
-menuBar()->addMenu(layerMenu);
-menuBar()->addMenu(helpMenu);
-menuBar()->addMenu(windowsMenu);
+	menuBar()->addMenu(fileMenu);
+	menuBar()->addMenu(editMenu);
+	menuBar()->addMenu(layerMenu);
+	menuBar()->addMenu(helpMenu);
+	menuBar()->addMenu(windowsMenu);
+}
 
-		readSettings();
+void MainWindow::loadPlugins() {
+	qDebug() << "MainWindow loadplugins" << this << this->thread();
+	// foreach (QObject *plugin, QPluginLoader::staticInstances()) populateMenus(plugin); // static plugins
+	QDir pluginsDir = QDir(qApp->applicationDirPath());
+ #if defined(Q_OS_WIN)
+     if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
+         pluginsDir.cdUp();
+ #elif defined(Q_OS_MAC)
+     if (pluginsDir.dirName() == "MacOS") {
+         pluginsDir.cdUp();
+     }
+ #endif
+	pluginsDir.cd("plugins");
+
+	qDebug() << "Plugin dir = " << pluginsDir.dirName();
+	/*foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
+		QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
+		QObject *plugin = loader.instance();
+		qDebug() << "loader " << loader.thread();
+		qDebug() << "plugin " << fileName << plugin << plugin->thread();
+		if (plugin) {
+			plugin->moveToThread(this->thread());
+			populateMenus(plugin);
+			//pluginFileNames += fileName;
+		}
+	}*/
+
+	//brushMenu->setEnabled(!brushActionGroup->actions().isEmpty());
+	//shapesMenu->setEnabled(!shapesMenu->actions().isEmpty());
+	//filterMenu->setEnabled(!filterMenu->actions().isEmpty());
+}
+
+void MainWindow::populateMenus(QObject *plugin) {
+	qDebug() << "MainWindow populateMenus" << this << this->thread();
+	qDebug() << "MainWindow populateMenus" << plugin << plugin->thread();
+	/*BrushInterface *iBrush = qobject_cast<BrushInterface *>(plugin);
+	if (iBrush) addToMenu(plugin, iBrush->brushes(), brushMenu, SLOT(changeBrush()), brushActionGroup);
+
+	ShapeInterface *iShape = qobject_cast<ShapeInterface *>(plugin);
+	if (iShape) addToMenu(plugin, iShape->shapes(), shapesMenu, SLOT(insertShape()));
+
+	FilterInterface *iFilter = qobject_cast<FilterInterface *>(plugin);
+	if (iFilter) addToMenu(plugin, iFilter->filters(), filterMenu, SLOT(applyFilter()));*/
+	
+	ExportInterface *exportPlugin = qobject_cast<ExportInterface *>(plugin);
+	if (exportPlugin) addToMenu(plugin, exportPlugin->name(), exportMenu, SLOT(exportFile()));
+}
+
+void MainWindow::addToMenu(QObject *plugin, const QString text, QMenu *menu, const char *member, QActionGroup *actionGroup) {
+	qDebug() << "MainWindow populateMenus" << this << this->thread();
+	qDebug() << "MainWindow populateMenus" << plugin << plugin->thread();
+	qDebug() << "addToMenu 1";
+	QAction *action = new QAction(text, plugin);
+	qDebug() << "addToMenu 2";
+	connect(action, SIGNAL(triggered()), this, member);
+	menu->addAction(action);
+	if (actionGroup) {
+		action->setCheckable(true);
+		actionGroup->addAction(action);
+	}
+}
+
+void MainWindow::exportFile() {
+	QAction *action = qobject_cast<QAction *>(sender());
+	ExportInterface *exportPlugin = qobject_cast<ExportInterface *>(action->parent());
+	if(exportPlugin) {
+		//exportPlugin->exportFile();
+	} else {
+		qDebug() << "exportPlugin is null";
+	}
+	//const QImage image = iFilter->filterImage(action->text(), paintArea->image(), this);
+	//paintArea->setImage(image);
 }
 
 void MainWindow::setOpacity(int opacity) {

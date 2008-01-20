@@ -6,7 +6,7 @@ pencil="build/Release/Pencil.app"
 echo $pencil
 
 #qtlib="/usr/local/Trolltech/Qt-4.2.2/lib/"
-qtlib="/Library/Frameworks"
+#qtlib="/Library/Frameworks"
 qtlib=""
 echo $qtlib
 

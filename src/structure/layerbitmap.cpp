@@ -110,7 +110,7 @@ void LayerBitmap::swap(int i, int j) {
 	framesBitmap.swap(i,j);
 }
 
-void LayerBitmap::saveImage(int index, QString path, int layerNumber) {
+bool LayerBitmap::saveImage(int index, QString path, int layerNumber) {
 	int theFrame = framesPosition.at(index);
 	QString theFileName = fileName(theFrame, id);
 	framesFilename[index] = theFileName;

@@ -222,7 +222,7 @@ void LayerCamera::swap(int i, int j) {
 	framesCamera.swap(i,j);
 }
 
-void LayerCamera::saveImage(int index, QString path, int layerNumber) {
+bool LayerCamera::saveImage(int index, QString path, int layerNumber) {
 	QString layerNumberString = QString::number(layerNumber);
 	QString frameNumberString = QString::number(framesPosition.at(index));
 	while( layerNumberString.length() < 3) layerNumberString.prepend("0");

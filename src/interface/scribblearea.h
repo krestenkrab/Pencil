@@ -39,6 +39,7 @@ class Properties
 		int colourNumber;
 		bool pressure;
 		bool invisibility;
+		bool preserveAlpha;
 };
 
 class VectorSelection
@@ -129,6 +130,8 @@ public slots:
 	void moveOn();
 	void handOn();
 	void resetView();
+	void setMyView(QMatrix view);
+	QMatrix getMyView();
 	void penOn();
 	void polylineOn();
 	void bucketOn();
@@ -141,6 +144,7 @@ public slots:
 	void setOpacity(const qreal);
 	void setPressure(const bool);
 	void setInvisibility(const bool);
+	void setPreserveAlpha(const bool);
 	
 	void setCurveOpacity(int);
 	void setCurveSmoothing(int);
@@ -178,6 +182,7 @@ protected:
 	void setView(QMatrix);
 	
 private:
+	void paintBitmapBuffer();
 	void updateCanvas(int frame, QRect rect);
 	void setGaussianGradient(QGradient &gradient, QColor coulour, qreal opacity);
 	void drawBrush(QPointF thePoint, qreal brushWidth, QColor fillColour, qreal opacity);
@@ -199,7 +204,7 @@ private:
 	
 	Editor* editor;
 	
-	bool tabletEraser;
+	int tabletEraserBackupToolMode;
 	bool modified;
 	bool simplified;
 	

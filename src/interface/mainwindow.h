@@ -27,8 +27,17 @@ public:
 
 public slots:
 		void setOpacity(int opacity);
-		
+
+private slots:
+		void exportFile();
+				
 private:
+	void arrangePalettes();
+	void createMenus();
+	void loadPlugins();
+	void populateMenus(QObject *plugin);
+	void addToMenu(QObject *plugin, const QString text, QMenu *menu, const char *member, QActionGroup *actionGroup = 0);
+	
  	void closeEvent(QCloseEvent *);
 	void keyPressEvent( QKeyEvent *e);
 	void keyReleaseEvent( QKeyEvent *e);

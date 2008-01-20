@@ -45,19 +45,20 @@ Object::~Object() {
 	}
 }
 
-bool Object::read(QString filePath) {
-	QFileInfo fileInfo(filePath);
-	if( fileInfo.isDir() ) return false;
+QDomElement Object::createDomElement(QDomDocument &doc) {
+	QDomElement tag = doc.createElement("object");
 	
-	QFile* file = new QFile(filePath);
-	if (!file->open(QFile::ReadOnly)) return false;
-	
-	QDomDocument doc;
-	doc.setContent(file);
-	
-	int layerNumber = -1;
-	QDomElement docElem = doc.documentElement();
+	for(int i=0; i < getLayerCount(); i++) {
+		Layer* layer = getLayer(i);
+		QDomElement layerTag = layer->createDomElement(doc);
+		tag.appendChild(layerTag);
+	}
+	return tag;
+}
+
+bool Object::loadDomElement(QDomElement docElem, QString filePath) {
 	if(docElem.isNull()) return false;
+	int layerNumber = -1;
 	QDomNode tag = docElem.firstChild();
 	bool someRelevantData = false;
 	while(!tag.isNull()) {
@@ -95,7 +96,21 @@ bool Object::read(QString filePath) {
 		tag = tag.nextSibling();
 	}
 	return someRelevantData;
+}
+
+
+bool Object::read(QString filePath) {
+	QFileInfo fileInfo(filePath);
+	if( fileInfo.isDir() ) return false;
 	
+	QFile* file = new QFile(filePath);
+	if (!file->open(QFile::ReadOnly)) return false;
+	
+	QDomDocument doc;
+	doc.setContent(file);
+	
+	QDomElement docElem = doc.documentElement();
+	loadDomElement(docElem, filePath);
 	
 	/*
 	// old code: list all the files beginning with the same name
@@ -104,28 +119,27 @@ bool Object::read(QString filePath) {
 	QDir dir(fileInfo.absolutePath());
 	QStringList entries = dir.entryList(filtername,QDir::Files,QDir::Type);
 	*/
+	return true;
 }
 
 bool Object::write(QString filePath) {
 	QFile* file = new QFile(filePath);
 	if (!file->open(QFile::WriteOnly | QFile::Text)) {
 		//QMessageBox::warning(this, "Warning", "Cannot write file");
+		qDebug() << "Object - Cannot write file" << filePath;
 		return false;
 	}
 	QTextStream out(file);
 	
 	QDomDocument doc("PencilDocument");
-	QDomElement root = doc.createElement("object");
+	QDomElement root = createDomElement(doc);
 	doc.appendChild(root);
 	
-	for(int i=0; i < getLayerCount(); i++) {
-		Layer* layer = getLayer(i);
-		QDomElement layerTag = layer->createDomElement(doc);
-		root.appendChild(layerTag);
-	}
-	
 	int IndentSize = 2;
+	qDebug() << "--- Starting to write XML file...";
 	doc.save(out, IndentSize);
+	file->close();
+	qDebug() << "--- Writing XML file done.";
 	return true;
 }
 

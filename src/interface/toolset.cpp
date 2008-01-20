@@ -73,7 +73,8 @@ void SpinSlider::setValue(qreal value) {
 }
 
 void SpinSlider::sliderReleased() {
-	//emit valueChanged(value);
+	//qDebug() << "sliderReleased";
+	emit valueChanged(this->value);
 }
 
 void SpinSlider::sliderMoved(int value) {
@@ -180,12 +181,15 @@ ToolSet::ToolSet() {
 	polylineButton->setWhatsThis("Polyline");
 	bucketButton->setWhatsThis("Paint bucket");
 	colouringButton->setWhatsThis("Brush");
-	usePressureBox = new QCheckBox("Pressure");
+	usePressureBox = new QCheckBox("Size with pressure");
 	usePressureBox->setFont( QFont("Helvetica", 10) );
   usePressureBox->setChecked(true);
 	makeInvisibleBox = new QCheckBox("Invisible");
 	makeInvisibleBox->setFont( QFont("Helvetica", 10) );
   makeInvisibleBox->setChecked(false);
+	preserveAlphaBox = new QCheckBox("Preserve Alpha");
+	preserveAlphaBox->setFont( QFont("Helvetica", 10) );
+  preserveAlphaBox->setChecked(false);
 	onionPrevBox = new QCheckBox("Previous");
 	onionNextBox = new QCheckBox("Next");
 	onionPrevBox->setFont( QFont("Helvetica", 10) );
@@ -350,8 +354,9 @@ ToolSet::ToolSet() {
 	//optionLay->addWidget(opacitySlider,10,0,1,2);
 
 	optionLay->addWidget(usePressureBox,11,0,1,2);
-	optionLay->addWidget(makeInvisibleBox,12,0,1,2);
-        optionLay->setRowStretch(13,1);
+	optionLay->addWidget(preserveAlphaBox,12,0,1,2);
+	optionLay->addWidget(makeInvisibleBox,13,0,1,2);
+        optionLay->setRowStretch(14,1);
 
 	displayLay->setMargin(4);
 	displayLay->setSpacing(0);
@@ -433,6 +438,7 @@ ToolSet::ToolSet() {
 
 	connect(usePressureBox, SIGNAL(clicked(bool)), this, SLOT(pressureClick(bool)));
 	connect(makeInvisibleBox, SIGNAL(clicked(bool)), this, SLOT(invisibleClick(bool)));
+	connect(preserveAlphaBox, SIGNAL(clicked(bool)), this, SLOT(preserveAlphaClick(bool)));
 	connect(sizeSlider, SIGNAL(valueChanged(qreal)), this, SIGNAL(widthClick(qreal)));
 	connect(featherSlider, SIGNAL(valueChanged(qreal)), this, SIGNAL(featherClick(qreal)));
 	connect(opacitySlider, SIGNAL(valueChanged(qreal)), this, SIGNAL(opacityClick(qreal)));
@@ -531,6 +537,21 @@ void ToolSet::invisibleClick(bool x) {
 	int y = 0;
 	if(x) y = 1;
 	emit invisibleClick(y);
+}
+
+void ToolSet::setPreserveAlpha(int x) { // x = -1, 0, 1
+	if(x<0) {
+		preserveAlphaBox->setEnabled(false);
+	} else {
+		preserveAlphaBox->setEnabled(true);
+		preserveAlphaBox->setChecked(x>0);
+	}
+}
+
+void ToolSet::preserveAlphaClick(bool x) {
+	int y = 0;
+	if(x) y = 1;
+	emit preserveAlphaClick(y);
 }
 
 void ToolSet::setColour(QColor x) {
