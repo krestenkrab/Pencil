@@ -33,6 +33,7 @@ install_name_tool -change $qtlib"QtCore.framework/Versions/4/QtCore" @executable
 install_name_tool -change $qtlib"QtCore.framework/Versions/4/QtCore" @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore $pencil/Contents/Frameworks/QtXml.framework/Versions/4/QtXml
 install_name_tool -change $qtlib"QtCore.framework/Versions/4/QtCore" @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore $pencil/Contents/Frameworks/QtOpenGL.framework/Versions/4/QtOpenGL
 install_name_tool -change $qtlib"QtGui.framework/Versions/4/QtGui" @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui $pencil/Contents/Frameworks/QtOpenGL.framework/Versions/4/QtOpenGL
+
 install_name_tool -change $qtlib"QtCore.framework/Versions/4/QtCore" @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore $pencil/Contents/plugins/imageformats/libqjpeg.dylib
 install_name_tool -change $qtlib"QtGui.framework/Versions/4/QtGui" @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui $pencil/Contents/plugins/imageformats/libqjpeg.dylib
 

@@ -145,6 +145,7 @@ public slots:
 	void setPressure(const bool);
 	void setInvisibility(const bool);
 	void setPreserveAlpha(const bool);
+	void setFollowContour(const bool);
 	
 	void setCurveOpacity(int);
 	void setCurveSmoothing(int);
@@ -184,8 +185,8 @@ protected:
 private:
 	void paintBitmapBuffer();
 	void updateCanvas(int frame, QRect rect);
-	void setGaussianGradient(QGradient &gradient, QColor coulour, qreal opacity);
-	void drawBrush(QPointF thePoint, qreal brushWidth, QColor fillColour, qreal opacity);
+	void setGaussianGradient(QGradient &gradient, QColor coulour, qreal opacity, qreal offset);
+	void drawBrush(QPointF thePoint, qreal brushWidth, qreal offset, QColor fillColour, qreal opacity);
 	void drawLineTo(const QPointF &endPixel, const QPointF &endPoint);
 	void drawEyedropperPreview(const QColor colour);
 	void drawPolyline();
@@ -232,6 +233,7 @@ private:
 	qreal myBrushWidth, currentBrushWidth;*/
 	//QColor myPenColour, myFillColour;
 	//int penColourNumber, fillColourNumber;
+	bool followContour;
 	
 	QBrush backgroundBrush;
 	BitmapImage* bufferImg; // used to pre-draw vector modifications

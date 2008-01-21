@@ -190,6 +190,9 @@ ToolSet::ToolSet() {
 	preserveAlphaBox = new QCheckBox("Preserve Alpha");
 	preserveAlphaBox->setFont( QFont("Helvetica", 10) );
   preserveAlphaBox->setChecked(false);
+	followContourBox = new QCheckBox("Stop at contours");
+	followContourBox->setFont( QFont("Helvetica", 10) );
+  followContourBox->setChecked(false);
 	onionPrevBox = new QCheckBox("Previous");
 	onionNextBox = new QCheckBox("Next");
 	onionPrevBox->setFont( QFont("Helvetica", 10) );
@@ -355,8 +358,9 @@ ToolSet::ToolSet() {
 
 	optionLay->addWidget(usePressureBox,11,0,1,2);
 	optionLay->addWidget(preserveAlphaBox,12,0,1,2);
-	optionLay->addWidget(makeInvisibleBox,13,0,1,2);
-        optionLay->setRowStretch(14,1);
+	optionLay->addWidget(followContourBox,13,0,1,2);
+	optionLay->addWidget(makeInvisibleBox,14,0,1,2);
+        optionLay->setRowStretch(15,1);
 
 	displayLay->setMargin(4);
 	displayLay->setSpacing(0);
@@ -439,6 +443,7 @@ ToolSet::ToolSet() {
 	connect(usePressureBox, SIGNAL(clicked(bool)), this, SLOT(pressureClick(bool)));
 	connect(makeInvisibleBox, SIGNAL(clicked(bool)), this, SLOT(invisibleClick(bool)));
 	connect(preserveAlphaBox, SIGNAL(clicked(bool)), this, SLOT(preserveAlphaClick(bool)));
+	connect(followContourBox, SIGNAL(clicked(bool)), this, SLOT(followContourClick(bool)));
 	connect(sizeSlider, SIGNAL(valueChanged(qreal)), this, SIGNAL(widthClick(qreal)));
 	connect(featherSlider, SIGNAL(valueChanged(qreal)), this, SIGNAL(featherClick(qreal)));
 	connect(opacitySlider, SIGNAL(valueChanged(qreal)), this, SIGNAL(opacityClick(qreal)));
@@ -552,6 +557,21 @@ void ToolSet::preserveAlphaClick(bool x) {
 	int y = 0;
 	if(x) y = 1;
 	emit preserveAlphaClick(y);
+}
+
+void ToolSet::setFollowContour(int x) { // x = -1, 0, 1
+	if(x<0) {
+		followContourBox->setEnabled(false);
+	} else {
+		followContourBox->setEnabled(true);
+		followContourBox->setChecked(x>0);
+	}
+}
+
+void ToolSet::followContourClick(bool x) {
+	int y = 0;
+	if(x) y = 1;
+	emit followContourClick(y);
 }
 
 void ToolSet::setColour(QColor x) {

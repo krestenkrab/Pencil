@@ -21,13 +21,14 @@ GNU General Public License for more details.
 
 BitmapImage::BitmapImage() {
 	// nothing
-	image = NULL;
+	image = NULL; extendable = true;
 }
 
 BitmapImage::BitmapImage(Object *parent) {
 	myParent = parent;
 	image = new QImage(0, 0, QImage::Format_ARGB32_Premultiplied);
 	boundaries = QRect(0,0,0,0);
+	extendable = true;
 }
 
 BitmapImage::BitmapImage(Object *parent, QRect rectangle, QColor colour) {
@@ -35,11 +36,13 @@ BitmapImage::BitmapImage(Object *parent, QRect rectangle, QColor colour) {
 	boundaries = rectangle;
 	image = new QImage( boundaries.size(), QImage::Format_ARGB32_Premultiplied);
 	image->fill(colour.rgba());
+	extendable = true;
 }
 
 BitmapImage::BitmapImage(Object *parent, QRect rectangle, QImage image) {
 	myParent = parent;
 	boundaries = rectangle.normalized();
+	extendable = true;
 	this->image = new QImage(image);
 	if(this->image->width() != rectangle.width() || this->image->height() != rectangle.height()) qDebug() << "Error instancing bitmapImage.";
 }
@@ -54,12 +57,14 @@ BitmapImage::BitmapImage(const BitmapImage &a) {
   myParent=a.myParent;
   boundaries=a.boundaries;
   image=new QImage(*a.image);
+	extendable = true;
 }
 
 BitmapImage::BitmapImage(Object *parent, QString path, QPoint topLeft) {
 	myParent = parent;
 	image = new QImage(path);
 	boundaries = QRect( topLeft, image->size() );
+	extendable = true;
 }
 
 BitmapImage::~BitmapImage() {
@@ -292,6 +297,7 @@ void BitmapImage::extend(QPoint P) {
 }
 
 void BitmapImage::extend(QRect rectangle) {
+	if(!extendable) return;
 	if(rectangle.width() <= 0) rectangle.setWidth(1);
 	if(rectangle.height() <= 0) rectangle.setHeight(1);
 	if(boundaries.contains( rectangle )) {
@@ -327,7 +333,7 @@ void BitmapImage::setPixel(int x, int y, QRgb colour) {
 
 void BitmapImage::setPixel(QPoint P, QRgb colour) {
 	extend( P );
-	image->setPixel(P-topLeft(), colour);
+	if( boundaries.contains(P) ) image->setPixel(P-topLeft(), colour);
 	//drawLine( QPointF(P), QPointF(P), QPen(QColor(colour)), QPainter::CompositionMode_SourceOver, false);
 }
 
@@ -435,10 +441,17 @@ int BitmapImage::rgbDistance(QRgb rgba1, QRgb rgba2) {
 	return result;
 }
 
-void BitmapImage::floodFill(BitmapImage* targetImage, BitmapImage* fillImage, QPoint point, QRgb targetColour, QRgb replacementColour, int tolerance) {
+void BitmapImage::floodFill(BitmapImage* targetImage, BitmapImage* fillImage, QPoint point, QRgb targetColour, QRgb replacementColour, int tolerance, bool extendFillImage) {
 	QList<QPoint> queue; // queue all the pixels of the filled area (as they are found)
 	int j, k; bool condition;
-	BitmapImage* replaceImage = new BitmapImage(NULL, targetImage->boundaries.united(fillImage->boundaries), QColor(0,0,0,0));
+	BitmapImage* replaceImage;
+	if(extendFillImage) {
+		replaceImage = new BitmapImage(NULL, targetImage->boundaries.united(fillImage->boundaries), QColor(0,0,0,0));
+	} else {
+		targetImage->extend(fillImage->boundaries); // not necessary - here just to prevent some bug when we draw outside the targetImage - to be fixed
+		replaceImage = new BitmapImage(NULL, fillImage->boundaries, QColor(0,0,0,0));
+		replaceImage->extendable = false;
+	}
 	//QPainter painter1(replaceImage->image);
 	//QPainter painter2(fillImage->image);
 	//painter1.setPen( QColor(replacementColour) );
@@ -456,15 +469,19 @@ void BitmapImage::floodFill(BitmapImage* targetImage, BitmapImage* fillImage, QP
 		point = queue.at(i);
 		if(  replaceImage->pixel(point.x(), point.y()) != replacementColour  && rgbDistance(targetImage->pixel(point.x(), point.y()), targetColour) < tolerance ) {
 			j = -1; condition =  (point.x() + j > targetImage->left());
+			if(!extendFillImage) condition = condition && (point.x() + j > replaceImage->left());
 			while( replaceImage->pixel(point.x()+j, point.y()) != replacementColour  && rgbDistance(targetImage->pixel( point.x()+j, point.y() ), targetColour) < tolerance && condition) {
 				j = j - 1;
 				condition =  (point.x() + j > targetImage->left());
+				if(!extendFillImage) condition = condition && (point.x() + j > replaceImage->left());
 			}
 
 			k = 1; condition = ( point.x() + k < targetImage->right()-1);
+			if(!extendFillImage) condition = condition && (point.x() + k < replaceImage->right()-1);
 			while( replaceImage->pixel(point.x()+k, point.y()) != replacementColour  && rgbDistance(targetImage->pixel( point.x()+k, point.y() ), targetColour) < tolerance && condition) {
 				k = k + 1;
 				condition = ( point.x() + k < targetImage->right()-1);
+				if(!extendFillImage) condition = condition && (point.x() + k < replaceImage->right()-1);
 			}
 
 			//painter1.drawLine( point.x()+j, point.y(), point.x()+k+1, point.y() );
@@ -476,7 +493,9 @@ void BitmapImage::floodFill(BitmapImage* targetImage, BitmapImage* fillImage, QP
 
 			for(int x = j+1; x < k; x++) {
 				//replaceImage->setPixel( point.x()+x, point.y(), replacementColour);
-				if(point.y() - 1 > targetImage->top() && queue.size() < targetImage->height() * targetImage->width() ) {
+				condition = point.y() - 1 > targetImage->top();
+				if(!extendFillImage) condition = condition && (point.y() - 1 > replaceImage->top());
+				if( condition && queue.size() < targetImage->height() * targetImage->width() ) {
 					if( replaceImage->pixel(point.x()+x, point.y()-1) != replacementColour) {
 						if(rgbDistance(targetImage->pixel( point.x()+x, point.y() - 1), targetColour) < tolerance) {
 							queue.append( point + QPoint(x,-1) );
@@ -485,7 +504,9 @@ void BitmapImage::floodFill(BitmapImage* targetImage, BitmapImage* fillImage, QP
 						}
 					}
 				}
-				if(point.y() + 1 < targetImage->bottom() && queue.size() < targetImage->height() * targetImage->width() ) {
+				condition = point.y() + 1 < targetImage->bottom();
+				if(!extendFillImage) condition = condition && (point.y() + 1 < replaceImage->bottom());
+				if( condition && queue.size() < targetImage->height() * targetImage->width() ) {
 					if( replaceImage->pixel(point.x()+x, point.y()+1) != replacementColour) {
 						if(rgbDistance(targetImage->pixel( point.x()+x, point.y() + 1), targetColour) < tolerance) {
 							queue.append( point + QPoint(x, 1) );
@@ -496,9 +517,12 @@ void BitmapImage::floodFill(BitmapImage* targetImage, BitmapImage* fillImage, QP
 				}
 			}
 		}
-	}
+	}		
 	//painter2.drawImage( QPoint(0,0), *replaceImage );
+	//bool memo = fillImage->extendable;
+	//fillImage->extendable = false;
 	fillImage->paste(replaceImage);
+	//fillImage->extendable = memo;
 	//replaceImage->fill(qRgba(0,0,0,0));
 	//painter1.end();
 	//painter2.end();

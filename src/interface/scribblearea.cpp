@@ -81,7 +81,8 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	
 	pencil.feather = 0;
 	pen.feather = 0;
-	brush.feather = 0.5;
+	brush.feather = settings.value("brushFeather").toDouble();
+	if (brush.feather == 0) { brush.feather = 70; settings.setValue("brushFeather", brush.feather); }
 	eraser.feather = 0;
 	
 	pencil.opacity = 0.8;
@@ -103,6 +104,8 @@ ScribbleArea::ScribbleArea(QWidget *parent, Editor* editor)
 	pen.preserveAlpha = 0;
 	brush.preserveAlpha = 0;
 	eraser.preserveAlpha = 0;
+	
+	followContour = 0;
 	
 	curveOpacity = (100-settings.value("curveOpacity").toInt())/100.0; // default value is 1.0
 	int curveSmoothingLevel = settings.value("curveSmoothing").toInt();
@@ -325,6 +328,11 @@ void ScribbleArea::setPreserveAlpha(const bool preserveAlpha)
 	//updateAllFrames();
 }
 
+void ScribbleArea::setFollowContour(const bool followContour)
+{
+	this->followContour = followContour;
+}
+ 
 void ScribbleArea::setCurveOpacity(int newOpacity)
 {
 	curveOpacity = newOpacity/100.0;
@@ -669,10 +677,11 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 		if(toolMode == COLOURING) {
 			if(layer->type == Layer::BITMAP) {
 				qreal opacity = 1.0;
-				qreal brushWidth = brush.width;
+				qreal brushWidth = brush.width +  0.5*brush.feather;
+				qreal offset = qMax(0.0,brush.width-0.5*brush.feather)/brushWidth;
 				if(tabletInUse) opacity = tabletPressure;
-				if(usePressure) brushWidth = brush.width*tabletPressure;
-				drawBrush( lastPoint, brushWidth, brush.colour, opacity);
+				if(usePressure) brushWidth = brushWidth*tabletPressure;
+				drawBrush( lastPoint, brushWidth, offset, brush.colour, opacity);
 				int rad = qRound(brushWidth / 2) + 3;
 				update(myTempView.mapRect(QRect(lastPoint.toPoint(), lastPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
 			}
@@ -994,7 +1003,7 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 					}
 				}
 				BitmapImage* targetImage = ((LayerBitmap*)targetLayer)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
-				BitmapImage::floodFill( sourceImage, targetImage, lastPoint.toPoint(), qRgba(0,0,0,0), brush.colour.rgba(), 10*10);
+				BitmapImage::floodFill( sourceImage, targetImage, lastPoint.toPoint(), qRgba(0,0,0,0), brush.colour.rgba(), 10*10, true);
 				setModified(layerNumber, editor->currentFrame);
 			}
 			// ----------------------------------------------------------------------
@@ -1185,6 +1194,15 @@ void ScribbleArea::paintBitmapBuffer() {
 							break;
 						case COLOURING:
 							if(brush.preserveAlpha) cm = QPainter::CompositionMode_SourceAtop;
+							if(followContour) {
+								// writes on the layer below
+								if( editor->currentLayer > 0) {
+									Layer* layer2 = editor->getCurrentLayer(-1);
+									if(layer2->type == Layer::BITMAP) {
+										targetImage = ((LayerBitmap*)layer2)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
+									}
+								}
+							}
 							break;
 						case PEN:
 							if(pen.preserveAlpha) cm = QPainter::CompositionMode_SourceAtop;
@@ -1204,7 +1222,7 @@ void ScribbleArea::paintBitmapBuffer() {
 				emit modification();
 				QPixmapCache::remove("frame"+QString::number(editor->currentFrame));
 				readCanvasFromCache = false;
-				updateCanvas(editor->currentFrame, rect);
+				updateCanvas(editor->currentFrame, rect.adjusted(-1,-1,1,1) );
 				update(rect);
 }
 
@@ -1394,7 +1412,7 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
 		int radius1 = 12;
 		int radius2 = 8;
 		QLinearGradient shadow = QLinearGradient( 0, 0, 0, radius1);
-		setGaussianGradient(shadow, Qt::black, 0.15);
+		setGaussianGradient(shadow, Qt::black, 0.15, 0.0);
 		painter.setPen(Qt::NoPen);
 		painter.setBrush(shadow);
 		painter.drawRect(QRect(0,0, width(), radius1));
@@ -1531,34 +1549,51 @@ void ScribbleArea::updateCanvas(int frame, QRect rect)
 	painter.end();
 }
 
-void ScribbleArea::setGaussianGradient(QGradient &gradient, QColor colour, qreal opacity) {
+void ScribbleArea::setGaussianGradient(QGradient &gradient, QColor colour, qreal opacity, qreal offset) {
 	int r = colour.red();
 	int g = colour.green();
 	int b = colour.blue();
 	qreal a = colour.alphaF();
 			gradient.setColorAt(0.0, QColor(r, g, b, qRound(a*255*opacity)) );
-			gradient.setColorAt(0.1, QColor(r, g, b, qRound(a*245*opacity)) );
-			gradient.setColorAt(0.2, QColor(r, g, b, qRound(a*217*opacity)) );
-			gradient.setColorAt(0.3, QColor(r, g, b, qRound(a*178*opacity)) );
-			gradient.setColorAt(0.4, QColor(r, g, b, qRound(a*134*opacity)) );
-			gradient.setColorAt(0.5, QColor(r, g, b, qRound(a*94*opacity)) );
-			gradient.setColorAt(0.6, QColor(r, g, b, qRound(a*60*opacity)) );
-			gradient.setColorAt(0.7, QColor(r, g, b, qRound(a*36*opacity)) );
-			gradient.setColorAt(0.8, QColor(r, g, b, qRound(a*20*opacity)) );
-			gradient.setColorAt(0.9, QColor(r, g, b, qRound(a*10*opacity)) );
-			gradient.setColorAt(1.0, QColor(r, g, b, 0) );
+			gradient.setColorAt(offset+0.0*(1.0-offset), QColor(r, g, b, qRound(a*255*opacity)) );
+			gradient.setColorAt(offset+0.1*(1.0-offset), QColor(r, g, b, qRound(a*245*opacity)) );
+			gradient.setColorAt(offset+0.2*(1.0-offset), QColor(r, g, b, qRound(a*217*opacity)) );
+			gradient.setColorAt(offset+0.3*(1.0-offset), QColor(r, g, b, qRound(a*178*opacity)) );
+			gradient.setColorAt(offset+0.4*(1.0-offset), QColor(r, g, b, qRound(a*134*opacity)) );
+			gradient.setColorAt(offset+0.5*(1.0-offset), QColor(r, g, b, qRound(a*94*opacity)) );
+			gradient.setColorAt(offset+0.6*(1.0-offset), QColor(r, g, b, qRound(a*60*opacity)) );
+			gradient.setColorAt(offset+0.7*(1.0-offset), QColor(r, g, b, qRound(a*36*opacity)) );
+			gradient.setColorAt(offset+0.8*(1.0-offset), QColor(r, g, b, qRound(a*20*opacity)) );
+			gradient.setColorAt(offset+0.9*(1.0-offset), QColor(r, g, b, qRound(a*10*opacity)) );
+			gradient.setColorAt(offset+1.0*(1.0-offset), QColor(r, g, b, 0) );
 }
 
-void ScribbleArea::drawBrush(QPointF thePoint, qreal brushWidth, QColor fillColour, qreal opacity) {
+void ScribbleArea::drawBrush(QPointF thePoint, qreal brushWidth, qreal offset, QColor fillColour, qreal opacity) {
 	QRadialGradient radialGrad(thePoint, 0.5*brushWidth);
-	setGaussianGradient(radialGrad, fillColour, opacity);
+	setGaussianGradient(radialGrad, fillColour, opacity, offset);
 	
 	//radialGrad.setCenter( thePoint );
 	//radialGrad.setFocalPoint( thePoint );
 				
 	QRectF rectangle(thePoint.x()-0.5*brushWidth, thePoint.y()-0.5*brushWidth, brushWidth, brushWidth);
+	
 	BitmapImage* tempBitmapImage = new BitmapImage(NULL);
-	tempBitmapImage->drawRect( rectangle, Qt::NoPen, radialGrad, QPainter::CompositionMode_Source, antialiasing);
+	if(followContour) {
+		tempBitmapImage = new BitmapImage(NULL, rectangle.toRect(), QColor(0,0,0,0));
+		//tempBitmapImage->drawRect( rectangle, Qt::NoPen, QColor(0,0,0,0), QPainter::CompositionMode_Source, antialiasing);
+			Layer* layer = editor->getCurrentLayer();
+			if(layer == NULL) return;
+			int index = ((LayerImage*)layer)->getLastIndexAtFrame(editor->currentFrame);
+			if(index == -1) return;
+			BitmapImage* bitmapImage = ((LayerBitmap*)layer)->getLastBitmapImageAtFrame(editor->currentFrame, 0);
+			if(bitmapImage == NULL) { qDebug() << "NULL image pointer!" << editor->currentLayer << editor->currentFrame;  return; }
+		BitmapImage::floodFill(bitmapImage, tempBitmapImage, thePoint.toPoint(), qRgba(255,255,255,0), fillColour.rgb(), 20*20, false);
+		tempBitmapImage->drawRect( rectangle.toRect(), Qt::NoPen, radialGrad, QPainter::CompositionMode_SourceIn, antialiasing);
+	} else {
+		tempBitmapImage = new BitmapImage(NULL);
+		tempBitmapImage->drawRect( rectangle, Qt::NoPen, radialGrad, QPainter::CompositionMode_Source, antialiasing);
+	}
+	
 	bufferImg->paste(tempBitmapImage);
 	delete tempBitmapImage;
 }
@@ -1594,16 +1629,20 @@ void ScribbleArea::drawLineTo(const QPointF &endPixel, const QPointF &endPoint)
 		}
 		if(toolMode == ScribbleArea::COLOURING) {
 			qreal opacity = 1.0;
-			qreal brushWidth = brush.width;
+			qreal brushWidth = brush.width +  0.5*brush.feather;
+			qreal offset = qMax(0.0,brush.width-0.5*brush.feather)/brushWidth;
 			if(tabletInUse) opacity = tabletPressure;
-			if(usePressure) brushWidth = brush.width*tabletPressure;
+			if(usePressure) brushWidth = brushWidth*tabletPressure;
 			
 			qreal distance = 4*QLineF(endPoint, lastBrushPoint).length();
-			int steps = qRound( distance )/brushWidth;
+			qreal brushStep = 0.5*brush.width + 0.5*brush.feather;
+			if(usePressure) brushStep = brushStep*tabletPressure;
+			brushStep = qMax(1.0, brushStep);
+			int steps = qRound( distance)/brushStep ;
 			
 			for(int i=0; i<steps; i++) {
-				QPointF thePoint = lastBrushPoint + (i+1)*(brushWidth)*(endPoint -lastBrushPoint)/distance;
-				drawBrush( thePoint, brushWidth, brush.colour, opacity);
+				QPointF thePoint = lastBrushPoint + (i+1)*(brushStep)*(endPoint -lastBrushPoint)/distance;
+				drawBrush( thePoint, brushWidth, offset, brush.colour, opacity);
 				if(i==steps-1) lastBrushPoint = thePoint;
 			}
 			
@@ -2277,7 +2316,8 @@ void ScribbleArea::updateCursor() {
 			setCursor(Qt::CrossCursor);
 		}
 		if(layer->type == Layer::BITMAP) {
-			qreal width = brush.width*0.66;
+			//qreal width = brush.width*0.66;
+			qreal width = brush.width + 0.5*brush.feather;
 			QPixmap pixmap(width,width);
 			if(!pixmap.isNull()) {
 				pixmap.fill( QColor(255,255,255,0) );
@@ -2288,7 +2328,9 @@ void ScribbleArea::updateCursor() {
 				painter.drawLine( QPointF(width/2,width/2-2), QPointF(width/2,width/2+2) );
 				painter.setRenderHints(QPainter::Antialiasing, true);
 				painter.setPen( QColor(0,0,0,100) );
-				painter.drawEllipse( QRectF(1,1,width-2,width-2) );
+				painter.drawEllipse( QRectF(1+brush.feather/2,1+brush.feather/2,qMax(0.0,brush.width-brush.feather/2-2),qMax(0.0,brush.width-brush.feather/2-2)) );
+				painter.setPen( QColor(0,0,0,50) );
+				painter.drawEllipse( QRectF(1+brush.feather/8,1+brush.feather/8,qMax(0.0,width-brush.feather/4-2),qMax(0.0,width-brush.feather/4-2)) );
 				painter.end();
 			}
 			setCursor(pixmap);
@@ -2315,6 +2357,7 @@ void ScribbleArea::pencilOn() {
 	editor->setPressure(pencil.pressure);
 	editor->setInvisibility(pencil.invisibility);
 	editor->setPreserveAlpha(pencil.preserveAlpha);
+	editor->setFollowContour(-1);
 	editor->setInvisibility(-1); // by definition the pencil is invisible in vector mode
 	// --- change cursor ---
 	updateCursor();
@@ -2329,11 +2372,12 @@ void ScribbleArea::penOn() {
 	if(layer->type == Layer::VECTOR) editor->selectColour(pen.colourNumber);
 	if(layer->type == Layer::BITMAP) editor->setColour(pen.colour);
 	if(pen.width<0) pen.width = 1.0; editor->setWidth(pen.width);
-	if(pen.feather<0) pen.feather = 0.0; editor->setFeather(pen.feather);
+	if(pen.feather<0) pen.feather = 0.0; editor->setFeather(pen.feather); editor->setFeather(-1);
 	if(pen.opacity<0) pen.opacity = 1.0; editor->setOpacity(pen.opacity);
 	editor->setPressure(pen.pressure);
 	editor->setInvisibility(pen.invisibility);
 	editor->setPreserveAlpha(pen.preserveAlpha);
+	editor->setFollowContour(-1);
 	editor->setInvisibility(-1); // by definition the pen is visible in vector mode
 	// --- change cursor ---
 	updateCursor();
@@ -2344,12 +2388,13 @@ void ScribbleArea::eraserOn() {
 	toolMode = ScribbleArea::ERASER;
 	// --- change properties ---
 	editor->setWidth(eraser.width);
-	editor->setFeather(eraser.feather);
+	editor->setFeather(eraser.feather); editor->setFeather(-1);
 	editor->setOpacity(eraser.opacity);
 	editor->setPressure(eraser.pressure);
 	editor->setPreserveAlpha(0);
 	editor->setPreserveAlpha(-1);
-	editor->setInvisibility(1);
+	editor->setFollowContour(-1);
+	editor->setInvisibility(0);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
 	updateCursor();
@@ -2367,6 +2412,7 @@ void ScribbleArea::selectOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	editor->setPreserveAlpha(-1);
+	editor->setFollowContour(-1);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2380,6 +2426,7 @@ void ScribbleArea::moveOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	editor->setPreserveAlpha(-1);
+	editor->setFollowContour(-1);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2394,6 +2441,7 @@ void ScribbleArea::handOn() {
 	editor->setPressure(-1);
 	editor->setInvisibility(-1);
 	editor->setPreserveAlpha(-1);
+	editor->setFollowContour(-1);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2407,11 +2455,12 @@ void ScribbleArea::polylineOn() {
 	if(layer->type == Layer::VECTOR) editor->selectColour(pen.colourNumber);
 	if(layer->type == Layer::BITMAP) editor->setColour(pen.colour);
 	editor->setWidth(pen.width);
-	editor->setFeather(pen.feather);
+	editor->setFeather(pen.feather); editor->setFeather(-1);
 	editor->setOpacity(pen.opacity);
 	editor->setPressure(pen.pressure);
 	editor->setInvisibility(pen.invisibility);
 	editor->setPreserveAlpha(pen.preserveAlpha);
+	editor->setFollowContour(-1);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2425,7 +2474,7 @@ void ScribbleArea::bucketOn() {
 	if(layer->type == Layer::VECTOR) editor->selectColour(brush.colourNumber);
 	if(layer->type == Layer::BITMAP) editor->setColour(brush.colour);
 	editor->setWidth(-1);
-	editor->setFeather(brush.feather);
+	editor->setFeather(brush.feather); editor->setFeather(-1);
 	editor->setOpacity(1); // the bucket has full opacity (but one should be able to use it with translucent colours)
 	editor->setOpacity(-1); // disable the button
 	editor->setPressure(0);	
@@ -2434,6 +2483,7 @@ void ScribbleArea::bucketOn() {
 	editor->setInvisibility(-1); // disable the button
 	editor->setPreserveAlpha(0);
 	editor->setPreserveAlpha(-1); // disable the button
+	editor->setFollowContour(-1);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2446,8 +2496,11 @@ void ScribbleArea::eyedropperOn() {
 	editor->setFeather(-1);
 	editor->setOpacity(-1);
 	editor->setPressure(-1);
+	editor->setInvisibility(0);
 	editor->setInvisibility(-1);
+	editor->setPreserveAlpha(0);
 	editor->setPreserveAlpha(-1);
+	editor->setFollowContour(-1);
 	// --- change cursor ---
 	updateCursor();
 }
@@ -2465,6 +2518,8 @@ void ScribbleArea::colouringOn() {
 	editor->setOpacity(brush.opacity);
 	editor->setPressure(brush.pressure);
 	editor->setPreserveAlpha(brush.preserveAlpha);
+	editor->setFollowContour(followContour);
+	editor->setInvisibility(0);
 	editor->setInvisibility(-1);
 	// --- change cursor ---
 	updateCursor();
@@ -2478,8 +2533,11 @@ void ScribbleArea::smudgeOn() {
 	editor->setFeather(-1);
 	editor->setOpacity(-1);
 	editor->setPressure(-1);
+	editor->setInvisibility(0);
 	editor->setInvisibility(-1);
+	editor->setPreserveAlpha(0);
 	editor->setPreserveAlpha(-1);
+	editor->setFollowContour(-1);
 	// --- change cursor ---
 	updateCursor();
 }

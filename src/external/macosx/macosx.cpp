@@ -33,7 +33,7 @@ void Object::exportMovie(int startFrame, int endFrame, QMatrix view, Layer* curr
 	if(!filePath.endsWith(".mov", Qt::CaseInsensitive)) {
 		filePath = filePath + ".mov";
 	}
-	
+	qDebug() << "-------QuickTime------" << filePath << QDir::temp().absolutePath();
 	// --------- Export all the temporary frames ----------
 	
 	QDir::temp().mkdir("pencil");
@@ -43,6 +43,7 @@ void Object::exportMovie(int startFrame, int endFrame, QMatrix view, Layer* curr
 	progress.show();
 	
   exportFrames(startFrame, endFrame, view, currentLayer, exportSize, tempPath+"tmp", "jpg", 100, true, true, 2);
+	qDebug() << "frames exported in temp directory";
 	
 	// --------- Quicktime assemble call ----------
 	
@@ -61,9 +62,14 @@ void Object::exportMovie(int startFrame, int endFrame, QMatrix view, Layer* curr
 	QStringList args;
 	args << QString::number(endFrame+1) << tempPath+"tmp%03d.jpg" << QString::number(fps) << filePath;
 	assemble.start(appPath+"/Contents/Resources/assembler2",args);
+	assemble.waitForStarted();
 	assemble.waitForFinished();
+	qDebug() << "exit status " << assemble.exitStatus();
+	qDebug() << assemble.readAllStandardOutput();
+	qDebug() << assemble.readAllStandardError();
 	
 	progress.setValue(100);
+	qDebug() << "QuickTime export done";
 	
 	// --------- Clean up temp directory ---------
 	

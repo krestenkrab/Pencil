@@ -167,6 +167,8 @@ public slots:
 	void applyPressure(int);
 	void setPreserveAlpha(int);
 	void applyPreserveAlpha(int);
+	void setFollowContour(int);
+	void applyFollowContour(int);
 	void selectColour(int);
 	void selectAndApplyColour(int);
 	void setColour(QColor);

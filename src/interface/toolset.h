@@ -61,6 +61,7 @@ public slots:
 	void setInvisibility(int);
 	void setPressure(int);
 	void setPreserveAlpha(int);
+	void setFollowContour(int);
 	void setColour(QColor);
 	//void playStart();
 	void changePencilButton();
@@ -81,6 +82,7 @@ public slots:
 	void pressureClick(bool);
 	void invisibleClick(bool);
 	void preserveAlphaClick(bool);
+	void followContourClick(bool);
 	
 signals:
 	void rmClick();
@@ -95,6 +97,7 @@ signals:
 	void pressureClick(int);
 	void invisibleClick(int);
 	void preserveAlphaClick(int);
+	void followContourClick(int);
 	void polylineClick();
 	void bucketClick();
 	void eyedropperClick();
@@ -155,6 +158,7 @@ private:
 	QCheckBox *usePressureBox;
 	QCheckBox *makeInvisibleBox;
 	QCheckBox *preserveAlphaBox;
+	QCheckBox *followContourBox;
 	
 	QCheckBox *onionPrevBox;
 	QCheckBox *onionNextBox;

@@ -112,6 +112,7 @@ Editor::Editor(QMainWindow* parent)
 	connect(toolSet, SIGNAL(pressureClick(int)), this, SLOT(applyPressure(int)));
 	connect(toolSet, SIGNAL(invisibleClick(int)), this, SLOT(applyInvisibility(int)));
 	connect(toolSet, SIGNAL(preserveAlphaClick(int)), this, SLOT(applyPreserveAlpha(int)));
+	connect(toolSet, SIGNAL(followContourClick(int)), this, SLOT(applyFollowContour(int)));
 	
 	connect(toolSet, SIGNAL(widthClick(qreal)), this, SLOT(applyWidth(qreal)));
 	connect(toolSet, SIGNAL(featherClick(qreal)), this, SLOT(applyFeather(qreal)));
@@ -340,6 +341,17 @@ void Editor::setPreserveAlpha(int preserveAlpha)
 void Editor::applyPreserveAlpha(int preserveAlpha)
 {
 	setPreserveAlpha(preserveAlpha);
+}
+
+void Editor::setFollowContour(int followContour)
+{
+	if(followContour>=0) scribbleArea->setFollowContour(followContour>0);
+	toolSet->setFollowContour(followContour);
+}
+
+void Editor::applyFollowContour(int followContour)
+{
+	setFollowContour(followContour);
 }
 
 void Editor::setPressure(int pressure)
@@ -746,12 +758,12 @@ void Editor::saveLength(QString x) {
 
 void Editor::about()
 {
-			QMessageBox::about(this, tr("Pencil 0.4.3b"),
+			QMessageBox::about(this, tr("Pencil 0.4.4b"),
             tr("<div style='background-color: #DDDDDD; text-align: center'>"
 							 "<img src=':icons/logo.png' width='100%'><br>"
 							 "<table style='background-color: #DDDDDD'><tr><td width='160px'>"
 							 "Developed by: <i>Pascal Naidon</i> &  <i>Patrick Corrieri</i><br>"
-							 "Version: <b>0.4.3b</b> (21st July, 2007)<br><br>"
+							 "Version: <b>0.4.4b</b> (21st January, 2008)<br><br>"
                "<b>Thanks to:</b><br>"
                "Trolltech for the Qt libraries<br>"
                "Roland for the Movie export functions<br>"
@@ -860,7 +872,7 @@ void Editor::newObject() {
 	setObject(newObject);
 	updateObject();
 	savedName = "";
-	mainWindow->setWindowTitle(tr("Pencil v0.4.3b"));
+	mainWindow->setWindowTitle(tr("Pencil v0.4.4b"));
 }
 
 void Editor::setObject(Object *object) {

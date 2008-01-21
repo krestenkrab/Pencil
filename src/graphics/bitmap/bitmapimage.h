@@ -74,7 +74,7 @@ class BitmapImage
 	
 	static int sqr(int);
 	static int rgbDistance(QRgb rgba1, QRgb rgba2);
-	static void floodFill(BitmapImage* targetImage, BitmapImage* fillImage, QPoint point, QRgb targetColour, QRgb replacementColour, int tolerance);
+	static void floodFill(BitmapImage* targetImage, BitmapImage* fillImage, QPoint point, QRgb targetColour, QRgb replacementColour, int tolerance, bool extendFillImage);
 	
 	void drawLine(QPointF P1, QPointF P2, QPen pen, QPainter::CompositionMode cm, bool antialiasing);
 	void drawRect( QRectF rectangle, QPen pen, QBrush brush, QPainter::CompositionMode cm, bool antialiasing);
@@ -97,6 +97,7 @@ class BitmapImage
 	public:
 	QImage* image;
 	QRect boundaries;
+	bool extendable;
 	
 	protected:
 	Object* myParent;
