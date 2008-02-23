@@ -525,6 +525,7 @@ void TimeLineCells::drawContent() {
 
 void TimeLineCells::paintEvent(QPaintEvent *event) {
 	Object* object = editor->object;
+	if(object == NULL) return;
 	Layer* layer = object->getLayer(editor->currentLayer);
 	if(layer == NULL) return;
 
