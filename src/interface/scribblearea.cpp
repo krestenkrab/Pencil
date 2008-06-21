@@ -580,25 +580,12 @@ void ScribbleArea::keyReleaseEvent( QKeyEvent *event ) {
 void ScribbleArea::tabletEvent(QTabletEvent *event)
 {
 	//qDebug() << "Device" << event->device() << "Pointer type" << event->pointerType();
-	tabletInUse = true;
+	if(event->type() == QEvent::TabletPress) tabletInUse = true;
+	if(event->type() == QEvent::TabletRelease) tabletInUse = false;
 	tabletPosition = event->hiResGlobalPos();
 	tabletPressure = event->pressure();
-	if(event->pointerType() == QTabletEvent::Cursor) tabletPressure = 0.5*tabletPressure; // "normal" pressure is chosen to be 0.5 instead of 1.0
 	mousePressure.append(tabletPressure);
-	if(toolMode==ScribbleArea::ERASER) {
-		//myPenWidth = static_cast<int>(10.0*tabletPressure);
-		currentWidth = (eraser.width*tabletPressure);
-	}
-	if(toolMode==ScribbleArea::PENCIL) {
-		currentColour = pencil.colour;
-		if(usePressure) {currentColour.setAlphaF(pencil.colour.alphaF()*tabletPressure); } else { currentColour.setAlphaF(pencil.colour.alphaF()); }
-		currentWidth = pencil.width;
-	}
-	if(toolMode==ScribbleArea::PEN) {
-		currentColour = pen.colour;
-		currentColour.setAlphaF(pen.colour.alphaF());
-		if(usePressure) { currentWidth = 2.0*pen.width*tabletPressure; } else { currentWidth = pen.width; }
-	}
+	adjustPressureSensitiveProperties(tabletPressure, event->pointerType() == QTabletEvent::Cursor);
 	if(event->pointerType() == QTabletEvent::Eraser) {
 		//if(tabletEraser == false) eraserOn();
 		//tabletEraser = true;
@@ -626,9 +613,31 @@ void ScribbleArea::tabletEvent(QTabletEvent *event)
 	event->ignore(); // indicates that the tablet event is not accepted yet, so that it is propagated as a mouse event)
 }
 
+void ScribbleArea::adjustPressureSensitiveProperties(qreal pressure, bool mouseDevice)
+{
+	if(toolMode==ScribbleArea::ERASER) {
+		//myPenWidth = static_cast<int>(10.0*tabletPressure);
+		if(mouseDevice) { currentWidth =  eraser.width; } else { currentWidth = (eraser.width*pressure); }
+	}
+	if(toolMode==ScribbleArea::PENCIL) {
+		currentColour = pencil.colour;
+		if(usePressure && !mouseDevice) {currentColour.setAlphaF(pencil.colour.alphaF()*pressure); } else { currentColour.setAlphaF(pencil.colour.alphaF()); }
+		currentWidth = pencil.width;
+	}
+	if(toolMode==ScribbleArea::PEN) {
+		currentColour = pen.colour;
+		currentColour.setAlphaF(pen.colour.alphaF());
+		if(usePressure && !mouseDevice) { currentWidth = 2.0*pen.width*pressure; } else { currentWidth = pen.width; } // we choose the "normal" width to correspond to a pressure 0.5
+	}
+}
+
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
 {
 	mouseInUse = true;
+	if(!tabletInUse) { // a mouse is used instead of a tablet
+		tabletPressure = 1.0;
+		adjustPressureSensitiveProperties(1.0, true);
+	}
 	
 	Layer* layer = editor->getCurrentLayer();
 	// ---- checks ------
@@ -1164,7 +1173,6 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 	}
 	// ----------------------------------------------------------------------
 	//update();
-	tabletInUse = false;
 }
 
 void ScribbleArea::mouseDoubleClickEvent(QMouseEvent *event)
@@ -1209,6 +1217,8 @@ void ScribbleArea::paintBitmapBuffer() {
 							break;
 						case PENCIL:
 							if(pencil.preserveAlpha) cm = QPainter::CompositionMode_SourceAtop;
+							break;
+						default: //nothing
 							break;
 					}
 					targetImage->paste(bufferImg, cm);
@@ -1617,7 +1627,7 @@ void ScribbleArea::drawLineTo(const QPointF &endPixel, const QPointF &endPoint)
 		}
 		if(toolMode == ScribbleArea::PENCIL) {
 			QPen pen2 = QPen ( QBrush(currentColour), currentWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin );
-			bufferImg->drawLine(lastPoint, endPoint, pen2, QPainter::CompositionMode_SourceOver, antialiasing);
+			bufferImg->drawLine(lastPoint, endPoint, pen2, QPainter::CompositionMode_Source, antialiasing);
 			int rad = qRound(currentWidth / 2) + 3;
 			update(myTempView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
 		}

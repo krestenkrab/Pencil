@@ -185,13 +185,14 @@ protected:
 private:
 	void paintBitmapBuffer();
 	void updateCanvas(int frame, QRect rect);
-	void setGaussianGradient(QGradient &gradient, QColor coulour, qreal opacity, qreal offset);
+	void setGaussianGradient(QGradient &gradient, QColor colour, qreal opacity, qreal offset);
 	void drawBrush(QPointF thePoint, qreal brushWidth, qreal offset, QColor fillColour, qreal opacity);
 	void drawLineTo(const QPointF &endPixel, const QPointF &endPoint);
 	void drawEyedropperPreview(const QColor colour);
 	void drawPolyline();
 	void endPolyline();
 	void updateCursor();
+	void adjustPressureSensitiveProperties(qreal pressure, bool mouseDevice);
 	
 	void floodFill(VectorImage* vectorImage, QPoint point, QRgb targetColour, QRgb replacementColour, int tolerance);
 	void floodFillError(int errorType);
