@@ -339,7 +339,7 @@ void BitmapImage::setPixel(QPoint P, QRgb colour) {
 
 
 void BitmapImage::drawLine( QPointF P1, QPointF P2, QPen pen, QPainter::CompositionMode cm, bool antialiasing) {
-	int width = pen.width();
+	int width = 2+pen.width();
 	extend( QRect(P1.toPoint(), P2.toPoint()).normalized().adjusted(-width,-width,width,width) );
 	if(image != NULL && !image->isNull() ) {
 		QPainter painter(image);
