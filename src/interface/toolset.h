@@ -1,7 +1,8 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2005 Patrick Corrieri
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -49,8 +50,6 @@ public:
 	QDockWidget *drawPalette;
 	QDockWidget *optionPalette;
 	QDockWidget *displayPalette;
-	QDockWidget *keyPalette;
-	QDockWidget *onionPalette;
 	QDockWidget *timePalette;
 	
 public slots:
@@ -85,9 +84,6 @@ public slots:
 	void followContourClick(bool);
 	
 signals:
-	void rmClick();
-	void playClick();
-	void addClick();
 	void pencilClick();
 	void eraserClick();
 	void selectClick();
@@ -105,7 +101,6 @@ signals:
 	void smudgeClick();
 	
 	void lengthClick(QString);
-	void fpsClick(int);
 	void clearClick();
 	void thinLinesClick();
 	void outlinesClick();
@@ -116,11 +111,9 @@ signals:
 	void featherClick(qreal);
 	void opacityClick(qreal);
 	void colourClick();
-	void loopClick();
-	void soundClick();
 	
 private:
-	void newToolButton(QToolButton* &toolButton);
+	void newToolButton(QToolButton* &toolButton,QWidget* widget);
 	
 	QToolButton *choseColour;
 	QPixmap *colourSwatch;
@@ -143,28 +136,14 @@ private:
 	QToolButton *mirrorButton;
 	QToolButton *clearButton;
 	
-	QToolButton *add;
-	QToolButton *rm;
-	
-	QSpinBox *fpsBox;
-	//QDoubleSpinBox *sizeSlider;
 	SpinSlider *sizeSlider;
 	SpinSlider *featherSlider;
 	SpinSlider *opacitySlider;
-	//QSlider *featherSlider;
-	QLabel *framecounter;
-	QPushButton *play;
 	
 	QCheckBox *usePressureBox;
 	QCheckBox *makeInvisibleBox;
 	QCheckBox *preserveAlphaBox;
 	QCheckBox *followContourBox;
-	
-	QCheckBox *onionPrevBox;
-	QCheckBox *onionNextBox;
-	QCheckBox *loopBox;
-	QCheckBox *soundBox;
-	int fps;
 	
 	void deselectAllTools();
 	

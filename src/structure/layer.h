@@ -1,7 +1,7 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -23,7 +23,6 @@ GNU General Public License for more details.
 #include <QtXml>
 
 class Object;
-class TimeLineCells;
 
 class Layer : public QObject
 {
@@ -51,15 +50,6 @@ class Layer : public QObject
 		
 		virtual QDomElement createDomElement(QDomDocument &doc); // constructs an dom/xml representation of the layer for the document doc
 		virtual void loadDomElement(QDomElement element); // construct a layer from a dom/xml representation
-		
-		// graphic representation -- could be put in another class
-		virtual void paintTrack(QPainter &painter, TimeLineCells *cells, int x, int y, int height, int width, bool selected, int frameSize);
-		virtual void paintLabel(QPainter &painter, TimeLineCells *cells, int x, int y, int height, int width, bool selected, int allLayers);
-		virtual void paintSelection(QPainter &painter, int x, int y, int height, int width);
-		virtual void mousePress(QMouseEvent *event, int frameNumber);
-		virtual void mouseMove(QMouseEvent *event, int frameNumber);
-		virtual void mouseRelease(QMouseEvent *event, int frameNumber);
-		virtual void mouseDoubleClick(QMouseEvent *event, int frameNumber);
 		
 		virtual void editProperties();
 		

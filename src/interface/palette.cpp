@@ -1,7 +1,7 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -114,6 +114,10 @@ Palette::Palette(Editor* editor) : QDockWidget(editor, Qt::Tool)
 	paletteContent->setLayout(layout);
 	setWidget(paletteContent);
 	
+	#ifndef Q_WS_MAC
+		setStyleSheet ("QToolBar { border: 0px none black; }");
+	#endif
+
 	//setFrameStyle(QFrame::Panel);
 	//setWindowFlags(Qt::Tool);
 	setWindowFlags(Qt::WindowStaysOnTopHint);

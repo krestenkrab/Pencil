@@ -1,7 +1,7 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@ GNU General Public License for more details.
 #include "layersound.h"
 #include "layercamera.h"
 
-#include "editor.h"
+//#include "editor.h"
 #include "bitmapimage.h"
 
 // ******* Mac-specific: ******** (please comment (or reimplement) the lines below to compile on Windows or Linux
@@ -411,89 +411,21 @@ void Object::paintImage(QPainter &painter, int frameNumber, bool background, qre
 	}
 }
 
-void Object::exportFrames(int frameStart, int frameEnd, QMatrix view, Layer* currentLayer, QSize exportSize, QString filePath, const char* format, int quality, bool background, bool antialiasing, int gradients) {
-	
-	QSettings settings("Pencil","Pencil");
-	qreal curveOpacity = (100-settings.value("curveOpacity").toInt())/100.0; // default value is 1.0
-	
-	QString extension = "";
-	QString formatStr = format;
-	if( formatStr == "PNG" || formatStr == "png") {
-		format = "PNG";  extension = ".png";
-	}
-	if( formatStr == "JPG" || formatStr == "jpg" || formatStr == "JPEG") {
-		format = "JPG";  extension = ".jpg";
-		background = true; // JPG doesn't support transparency so we have to include the background
-	}
-	if(filePath.endsWith(extension, Qt::CaseInsensitive)) {
-		filePath = filePath.remove(extension, Qt::CaseInsensitive);
-	}
-	//qDebug() << "format =" << format << "extension = " << extension;
-		
-	qDebug() << "Exporting frames from " << frameStart << "to" << frameEnd << "at size " << exportSize;
-	for(int currentFrame = frameStart; currentFrame <= frameEnd ; currentFrame++) {
-		QImage tempImage(exportSize, QImage::Format_ARGB32_Premultiplied);
-		QPainter painter(&tempImage);
-		
-		if(currentLayer->type == Layer::CAMERA) {
-			QRect viewRect = ((LayerCamera*)currentLayer)->getViewRect();
-			QMatrix mapView = Editor::map( viewRect, QRectF(QPointF(0,0), exportSize) );
-			mapView = ((LayerCamera*)currentLayer)->getViewAtFrame(currentFrame) * mapView;
-			painter.setWorldMatrix(mapView);
+QMatrix Object::map(QRectF source, QRectF target) { // this method should be put somewhere else...
+		qreal x1 = source.left(); qreal y1 = source.top(); qreal x2 = source.right(); qreal y2 = source.bottom();
+		qreal x1P = target.left(); qreal y1P = target.top(); qreal x2P = target.right(); qreal y2P = target.bottom();
+		QMatrix matrix;
+		bool mirror = false;
+		if( (x1 != x2) && (y1 != y2) ) {
+			if( !mirror) {
+				matrix = QMatrix ( (x2P-x1P)/(x2-x1), 0, 0, (y2P-y1P)/(y2-y1), (x1P*x2-x2P*x1)/(x2-x1), (y1P*y2-y2P*y1)/(y2-y1) );
+			} else {
+				matrix = QMatrix ( (x2P-x1P)/(x1-x2), 0, 0, (y2P-y1P)/(y2-y1), (x1P*x1-x2P*x2)/(x1-x2), (y1P*y2-y2P*y1)/(y2-y1) );
+			}
 		} else {
-			painter.setWorldMatrix(view);
+			matrix.reset();
 		}
-		paintImage(painter, currentFrame, background, curveOpacity, antialiasing, gradients);
-		
-		QString frameNumberString = QString::number(currentFrame);
-		while( frameNumberString.length() < 3) frameNumberString.prepend("0");
-		
-		tempImage.save(filePath+frameNumberString+extension, format, quality);
-	}
-}
-
-void Object::exportX(int frameStart, int frameEnd, QMatrix view, QSize exportSize, QString filePath, bool antialiasing, int gradients) {
-	QSettings settings("Pencil","Pencil");
-	qreal curveOpacity = (100-settings.value("curveOpacity").toInt())/100.0; // default value is 1.0
-	
-	int page;
-	page=0;
-	for(int j = frameStart; j <= frameEnd; j=j+15) {
-		QImage xImg(QSize(2300,3400), QImage::Format_ARGB32_Premultiplied);
-		QPainter xPainter(&xImg);
-		xPainter.fillRect(0,0,2300,3400,Qt::white);
-		int y = j-1;
-		for(int i=j;i<15+page*15 && i<=frameEnd;i++) {
-			QRect source = QRect(  QPoint(0,0)  , exportSize );
-			QRect target = QRect (  QPoint((y%3)*800+30, (y/3)*680+50-page*3400)  , QSize(640,480) );
-			QMatrix thumbView = view * Editor::map(source, target);
-			xPainter.setWorldMatrix( thumbView );
-			xPainter.setClipRegion( thumbView.inverted().map( QRegion(target) ) );
-			paintImage(xPainter, i, false, curveOpacity, antialiasing, gradients);
-			xPainter.resetMatrix();
-			xPainter.setClipping(false);
-			xPainter.setPen( Qt::black );
-			xPainter.setFont(QFont("helvetica",50));
-			xPainter.drawRect( target );
-			xPainter.drawText(QPoint((y%3)*800+35, (y/3)*680+65-page*3400), QString::number(i));
-			y++;
-		}
-		
-		if(filePath.endsWith(".jpg", Qt::CaseInsensitive)) {
-			filePath = filePath.remove(".jpg", Qt::CaseInsensitive);
-		}
-		xImg.save(filePath+QString::number(page)+".jpg", "JPG", 60);
-		page++;
-	}	
-}
-
-void Object::exportFlash(int startFrame, int endFrame, QMatrix view, QSize exportSize, QString filePath, int fps, int compression) {
-	if(!filePath.endsWith(".swf", Qt::CaseInsensitive)) {
-		filePath = filePath + ".swf";
-	}
-	// ************* Requires the MING Library ***************
-	Flash::exportFlash(this, startFrame, endFrame, view, exportSize, filePath, fps, compression);
-	// **********************************************
+	return matrix;
 }
 
 void Object::imageCheck(int frameNumber) {

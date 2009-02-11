@@ -1,7 +1,8 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2005 Patrick Corrieri
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -683,7 +684,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 			mousePath.append(lastPoint);
 		}
 		// ----------------------------------------------------------------------
-		if(toolMode == COLOURING) {
+		/*if(toolMode == COLOURING) {
 			if(layer->type == Layer::BITMAP) {
 				qreal opacity = 1.0;
 				qreal brushWidth = brush.width +  0.5*brush.feather;
@@ -694,7 +695,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 				int rad = qRound(brushWidth / 2) + 3;
 				update(myTempView.mapRect(QRect(lastPoint.toPoint(), lastPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
 			}
-		}		
+		}	*/	
 		// ----------------------------------------------------------------------
 		if(toolMode == POLYLINE && (layer->type == Layer::BITMAP || layer->type == Layer::VECTOR) ) {
 			if(mousePoints.size() == 0) editor->backup();
@@ -1629,7 +1630,7 @@ void ScribbleArea::drawLineTo(const QPointF &endPixel, const QPointF &endPoint)
 			QPen pen2 = QPen ( QBrush(currentColour), currentWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin );
 			bufferImg->drawLine(lastPoint, endPoint, pen2, QPainter::CompositionMode_Source, antialiasing);
 			int rad = qRound(currentWidth / 2) + 3;
-			update(myTempView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, +rad, +rad)));
+			update(myTempView.mapRect(QRect(lastPoint.toPoint(), endPoint.toPoint()).normalized().adjusted(-rad, -rad, rad, rad)));
 		}
 		if(toolMode == ScribbleArea::PEN) {
 			QPen pen2 = QPen ( QBrush(pen.colour), currentWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin );

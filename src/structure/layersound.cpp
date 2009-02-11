@@ -1,7 +1,7 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,29 +28,6 @@ LayerSound::~LayerSound() {
     delete sound.takeFirst();
 }
 
-void LayerSound::paintImages(QPainter &painter, TimeLineCells *cells, int x, int y, int width, int height, bool selected, int frameSize) {
-
-		for(int i=0; i < sound.size(); i++) {
-			qreal h = x + (framesPosition.at(i)-1)*frameSize+2;
-			if(framesSelected.at(i)) {
-				painter.setBrush(QColor(60,60,60));
-				h = h + frameOffset*frameSize;
-				//	painter.drawRect((framesPosition.at(i)+frameOffset-1)*frameSize+2, verticalPosition+1, frameSize-2, layerHeight-4);
-			}
-			else {
-			//	if(framesModified.at(i))
-			//		painter.setBrush(QColor(255,125,125));
-			//	else
-			//painter.setPen(QPen(QBrush(QColor(40,40,40)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
-				painter.setBrush(QColor(125,125,125));
-			}
-			QPointF points[3] = { QPointF(h, y+4), QPointF(h, y+height-4), QPointF(h+15, y+0.5*height) };
-			painter.drawPolygon( points, 3 );
-			//painter.drawRect((startingFrame.at(i)-1)*frameSize+2, verticalPosition+1, frameSize-2, layerHeight-4);
-			painter.drawText(QPoint( h + 20, y+(2*height)/3), framesFilename.at(i) );
-			//}
-		}
-}
 
 bool LayerSound::addImageAtFrame(int frameNumber) {
 	int index = getIndexAtFrame(frameNumber);

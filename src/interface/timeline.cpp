@@ -1,7 +1,8 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2005 Patrick Corrieri
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,6 +19,9 @@ GNU General Public License for more details.
 #include "editor.h"
 #include "toolset.h"
 #include "timecontrols.h"
+
+#include "layer.h"
+#include "layerimage.h"
 
 TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::Tool) // DockPalette("")
 {
@@ -128,19 +132,19 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	QToolBar* onionButtons = new QToolBar(this);
 	//onionButtons->setFixedWidth(90);
 	//QHBoxLayout* onionButtonsLayout = new QHBoxLayout();
-		QLabel* onionLabel = new QLabel(tr("Onion skin:"));
+		QLabel* onionLabel = new QLabel(tr("Onion skin: "));
 		onionLabel->setFont( QFont("Helvetica", 10) );
 		onionLabel->setIndent(5);
 		QToolButton* onionPrevButton = new QToolButton(this);
 		onionPrevButton->setIcon(QIcon(":icons/onionPrev.png"));
 		onionPrevButton->setToolTip("Show previous frame");
-		onionPrevButton->setFixedSize(24,24);
+		onionPrevButton->setFixedSize(29,29);
 		onionPrevButton->setCheckable(true);
 		onionPrevButton->setChecked(true);
 		QToolButton* onionNextButton = new QToolButton(this);
 		onionNextButton->setIcon(QIcon(":icons/onionNext.png"));
 		onionNextButton->setToolTip("Show next frame");
-		onionNextButton->setFixedSize(24,24);
+		onionNextButton->setFixedSize(29,29);
 		onionNextButton->setCheckable(true);
 		/*onionButtonsLayout->addWidget(onionLabel);
 		onionButtonsLayout->addWidget(onionPrevButton);
@@ -157,6 +161,7 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	
 	// --------- Time controls ---------
 	TimeControls* timeControls = new TimeControls(this);
+
 	
 	QHBoxLayout* rightToolBarLayout = new QHBoxLayout();
 	//rightToolBarLayout->setAlignment(Qt::AlignLeft);
@@ -196,6 +201,10 @@ TimeLine::TimeLine(QWidget *parent, Editor *editor) : QDockWidget(parent, Qt::To
 	//timeLineContent->setBackgroundRole(QPalette::Dark);
 	//timeLineContent->setForegroundRole(QPalette::Dark);
 	setWidget(timeLineContent);
+
+	#ifndef Q_WS_MAC
+		setStyleSheet ("QToolBar { border: 0px none black; }");
+	#endif
 
 	setWindowFlags(Qt::WindowStaysOnTopHint);
 	setWindowTitle("Time Line");
@@ -374,7 +383,9 @@ TimeLineCells::TimeLineCells(TimeLine *parent, Editor *editor, QString type) : Q
 	offsetX = 0;
 	offsetY = 20;
 	frameOffset = 0;
+	selectionOffset = 0;
 	layerOffset = 0;
+	frameClicked = -1;
 
 	frameSize = (settings.value("frameSize").toInt());
 	if (frameSize==0) { frameSize=12; settings.setValue("frameSize", frameSize); }
@@ -454,20 +465,20 @@ void TimeLineCells::drawContent() {
 		if(i != editor->currentLayer) {
 			Layer* layeri = object->getLayer(i);
 			if(layeri != NULL) {
-				if(type == "tracks") layeri->paintTrack(painter, this, offsetX, getLayerY(i), width()-offsetX, getLayerHeight(), false, frameSize);
-				if(type == "layers") layeri->paintLabel(painter, this, 0, getLayerY(i), width()-1, getLayerHeight(), false, editor->allLayers());
+				if(type == "tracks") paintTrack(painter, layeri, offsetX, getLayerY(i), width()-offsetX, getLayerHeight(), false, frameSize);
+				if(type == "layers") paintLabel(painter, layeri, 0, getLayerY(i), width()-1, getLayerHeight(), false, editor->allLayers());
 			}
 		}
 	}
 	//if(timeLine->scrubbing == false && abs(getMouseMoveY()) > 5) {
 	if( abs(getMouseMoveY()) > 5 ) {
-		if(type == "tracks") layer->paintTrack(painter, this, offsetX, getLayerY(editor->currentLayer)+getMouseMoveY(), width()-offsetX, getLayerHeight(), true, frameSize);
-		if(type == "layers") layer->paintLabel(painter, this, 0, getLayerY(editor->currentLayer)+getMouseMoveY(), width()-1, getLayerHeight(), true, editor->allLayers());
+		if(type == "tracks") paintTrack(painter, layer, offsetX, getLayerY(editor->currentLayer)+getMouseMoveY(), width()-offsetX, getLayerHeight(), true, frameSize);
+		if(type == "layers") paintLabel(painter, layer, 0, getLayerY(editor->currentLayer)+getMouseMoveY(), width()-1, getLayerHeight(), true, editor->allLayers());
 		painter.setPen( Qt::black );
 		painter.drawRect(0, getLayerY( getLayerNumber(endY) ) -1, width(), 2);
 	} else {
-		if(type == "tracks") layer->paintTrack(painter, this, offsetX, getLayerY(editor->currentLayer), width()-offsetX, getLayerHeight(), true, frameSize);
-		if(type == "layers") layer->paintLabel(painter, this, 0, getLayerY(editor->currentLayer), width()-1, getLayerHeight(), true, editor->allLayers());
+		if(type == "tracks") paintTrack(painter, layer, offsetX, getLayerY(editor->currentLayer), width()-offsetX, getLayerHeight(), true, frameSize);
+		if(type == "layers") paintLabel(painter, layer, 0, getLayerY(editor->currentLayer), width()-1, getLayerHeight(), true, editor->allLayers());
 	}
 	// --- draw top
 	painter.setPen(Qt::NoPen);
@@ -522,6 +533,251 @@ void TimeLineCells::drawContent() {
 		painter.drawLine(0,0, 0, height());
 	}
 }
+
+
+
+
+void TimeLineCells::paintLabel(QPainter &painter, Layer *layer, int x, int y, int width, int height, bool selected, int allLayers) {
+	painter.setBrush(Qt::lightGray);
+	painter.setPen(QPen(QBrush(QColor(100,100,100)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
+	painter.drawRect(x, y-1, width, height); // empty rectangle  by default
+	
+	if(layer->visible) {
+		if(allLayers==0)  painter.setBrush(Qt::NoBrush);
+		if(allLayers==1)   painter.setBrush(Qt::darkGray);
+		if((allLayers==2) || selected)  painter.setBrush(Qt::black);
+	} else {
+		painter.setBrush(Qt::NoBrush);
+	}
+	painter.setPen(Qt::black);
+	painter.setRenderHint(QPainter::Antialiasing, true);
+	painter.drawEllipse(x+6, y+4, 9, 9);
+	painter.setRenderHint(QPainter::Antialiasing, false);
+	/*if(selected) {
+		painter.setPen(Qt::NoPen);
+		painter.setBrush(QColor(0,0,0,80));
+		painter.drawRect(x, y-1, width, height);
+	}*/
+	if(selected) {
+		paintSelection(painter, x, y, width, height);
+	}
+	
+	if(layer->type == Layer::BITMAP) painter.drawPixmap( QPoint(20, y+2), QPixmap(":/icons/layer-bitmap.png") );
+	if(layer->type == Layer::VECTOR) painter.drawPixmap( QPoint(20, y+2), QPixmap(":/icons/layer-vector.png") );
+	if(layer->type == Layer::SOUND) painter.drawPixmap( QPoint(21, y+2), QPixmap(":/icons/layer-sound.png") );
+	if(layer->type == Layer::CAMERA) painter.drawPixmap( QPoint(21, y+2), QPixmap(":/icons/layer-camera.png") );
+	
+	painter.setFont(QFont("helvetica", height/2));
+	painter.setPen(Qt::black);
+	painter.drawText(QPoint(45, y+(2*height)/3), layer->name);
+
+}
+
+
+void TimeLineCells::paintTrack(QPainter &painter, Layer *layer, int x, int y, int width, int height, bool selected, int frameSize) {
+	LayerImage* layerImage = static_cast<LayerImage*>(layer);
+	//if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR || layer->type == Layer::CAMERA || layer->type == Layer::SOUND) // should do a static cast
+	if(layerImage)
+	{
+		painter.setFont(QFont("helvetica", height/2));
+		if(layer->visible) {
+			QColor col;
+			if(layer->type == Layer::BITMAP) col = QColor(130,130,245);
+			if(layer->type == Layer::VECTOR) col = QColor(100,205,150);
+			if(layer->type == Layer::SOUND) col = QColor(245,130,130);
+			if(layer->type == Layer::CAMERA) col = QColor(100,128,140);
+			if(!selected) col = QColor( (1*col.red() + 2*200)/3, (1*col.green()+2*200)/3, (1*col.blue()+2*200)/3 );
+			painter.setBrush( col );
+			painter.setPen(QPen(QBrush(QColor(100,100,100)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
+			painter.drawRect(x, y-1, width, height);
+			//painter.setFont(QFont("helvetica", height/2));
+			paintImages(painter, layerImage, x, y, width, height, selected, frameSize);
+			//painter.drawText(QPoint(10, y+(2*height)/3), name);
+			
+			// changes the apparence if selected
+			if(selected) {
+				paintSelection(painter, x, y, width, height);
+			}
+		} else {
+			painter.setBrush(Qt::gray);
+			painter.setPen(QPen(QBrush(QColor(100,100,100)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
+			painter.drawRect(x, y-1, width, height); // empty rectangle  by default
+		}
+	}
+	if(false) {
+		painter.setBrush(Qt::lightGray);
+		painter.setPen(QPen(QBrush(QColor(100,100,100)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
+		painter.drawRect(x, y, width, height); // empty rectangle  by default
+		if(selected) {
+			QLinearGradient linearGrad(QPointF(0, y), QPointF(0, y + height));
+			linearGrad.setColorAt(0, QColor(255,255,255,128) );
+			linearGrad.setColorAt(0.40, QColor(255,255,255,0) );
+			linearGrad.setColorAt(0.60, QColor(0,0,0,0) );
+			linearGrad.setColorAt(1, QColor(0,0,0,64) );
+			painter.setBrush( linearGrad );
+			painter.setPen(QPen(QBrush(QColor(70,70,70)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
+			painter.drawRect(x, y-1, width, height);
+		}
+	}
+}
+
+void TimeLineCells::paintImages(QPainter &painter, LayerImage *layer, int x, int y, int width, int height, bool selected, int frameSize) {
+	if(layer->type == Layer::BITMAP || layer->type == Layer::VECTOR || layer->type == Layer::CAMERA ) \
+	{
+		painter.setPen(QPen(QBrush(QColor(40,40,40)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
+		if(layer->visible) {
+			for(int i=0; i < layer->framesPosition.size(); i++) {
+				if(layer->framesSelected.at(i)) {
+					painter.setBrush(QColor(60,60,60));
+					//painter.drawRect(x+(framesPosition.at(i)+frameOffset-1)*frameSize+2, y+1, frameSize-2, height-4);
+					painter.drawRect( getFrameX(layer->framesPosition.at(i)+selectionOffset)-frameSize+2, y+1, frameSize-2, height-4);
+				}
+				else {
+					if(selected)
+						painter.setBrush(QColor(125,125,125));
+					else
+						painter.setBrush(QColor(125,125,125,125));
+						if(layer->framesModified.at(i)) painter.setBrush(QColor(255,125,125,125));
+						painter.drawRect( getFrameX(layer->framesPosition.at(i))-frameSize+2, y+1, frameSize-2, height-4 );
+						//painter.drawRect(x+(framesPosition.at(i)-1)*frameSize+2, y+1, frameSize-2, height-4);
+					//painter.drawText(QPoint( (framesPosition.at(i)-1)*frameSize+5, y+(2*height)/3), QString::number(i) );
+				}
+			}
+		}
+	}
+	if(layer->type == Layer::SOUND)
+	{
+		for(int i=0; i < layer->framesSelected.size(); i++) {
+			qreal h = x + (layer->framesPosition.at(i)-1)*frameSize+2;
+			if(layer->framesSelected.at(i)) {
+				painter.setBrush(QColor(60,60,60));
+				h = h + frameOffset*frameSize;
+				//	painter.drawRect((framesPosition.at(i)+frameOffset-1)*frameSize+2, verticalPosition+1, frameSize-2, layerHeight-4);
+			}
+			else {
+			//	if(framesModified.at(i))
+			//		painter.setBrush(QColor(255,125,125));
+			//	else
+			//painter.setPen(QPen(QBrush(QColor(40,40,40)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
+				painter.setBrush(QColor(125,125,125));
+			}
+			QPointF points[3] = { QPointF(h, y+4), QPointF(h, y+height-4), QPointF(h+15, y+0.5*height) };
+			painter.drawPolygon( points, 3 );
+			//painter.drawRect((startingFrame.at(i)-1)*frameSize+2, verticalPosition+1, frameSize-2, layerHeight-4);
+			painter.drawText(QPoint( h + 20, y+(2*height)/3), layer->framesFilename.at(i) );
+			//}
+		}
+	}
+}
+
+void TimeLineCells::paintSelection(QPainter &painter, int x, int y, int width, int height) {
+			QLinearGradient linearGrad(QPointF(0, y), QPointF(0, y + height));
+			QSettings settings("Pencil","Pencil");
+			QString style = settings.value("style").toString();
+			if(style == "aqua") {
+				linearGrad.setColorAt(0, QColor(225,225,255,100) );
+				linearGrad.setColorAt(0.10, QColor(225,225,255,80) );
+				linearGrad.setColorAt(0.20, QColor(225,225,255,64) );
+				linearGrad.setColorAt(0.35, QColor(225,225,255,20) );
+				linearGrad.setColorAt(0.351, QColor(0,0,0,32) );
+				linearGrad.setColorAt(0.66, QColor(245,255,235,32) );
+				linearGrad.setColorAt(1, QColor(245,255,235,128) );
+			} else {
+				linearGrad.setColorAt(0, QColor(255,255,255,128) );
+				linearGrad.setColorAt(0.49, QColor(255,255,255,0) );
+				linearGrad.setColorAt(0.50, QColor(0,0,0,0) );
+				linearGrad.setColorAt(1, QColor(0,0,0,48) );
+				
+				/*linearGrad.setColorAt(0, QColor(255,255,255,128) );
+				linearGrad.setColorAt(0.10, QColor(255,255,255,64) );
+				linearGrad.setColorAt(0.49, QColor(0,0,0,32) );
+				linearGrad.setColorAt(0.50, QColor(0,0,0,32) );
+				linearGrad.setColorAt(0.70, QColor(245,255,245,32) );
+				linearGrad.setColorAt(1, QColor(245,255,245,128) );*/
+				
+				/*linearGrad.setColorAt(0, QColor(255,255,255,128) );
+				linearGrad.setColorAt(0.10, QColor(255,255,255,64) );
+				linearGrad.setColorAt(0.20, QColor(0,0,0,32) );
+				linearGrad.setColorAt(0.40, QColor(0,0,0,0) );
+				linearGrad.setColorAt(0.41, QColor(255,255,255,0) );
+				linearGrad.setColorAt(1, QColor(255,255,255,128) );*/
+			}
+			painter.setBrush( linearGrad );
+			painter.setPen( Qt::NoPen );
+			painter.drawRect(x, y, width, height-1);
+			//painter.setBrush( Qt::NoBrush );
+			//painter.setPen(QPen(QBrush(QColor(0,0,0,100)), 1, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
+			//painter.drawRect(x, y-1, width, height);
+			/*if(style == "aqua") {
+				QColor col;
+				if(type == BITMAP) col = QColor(65,65,122);
+				if(type == VECTOR) col = QColor(50,102,75);
+				if(type == SOUND) col = QColor(122,65,65);
+				painter.setPen(col);
+				painter.drawLine(x,y-1, x+width, y-1);
+			}*/
+}
+
+
+
+
+void TimeLineCells::mousePress(QMouseEvent *event, int frameNumber, Layer* layer) {
+	LayerImage* layerImage = static_cast<LayerImage*>(layer);
+	frameClicked = frameNumber;
+	int index = layerImage->getIndexAtFrame(frameNumber);
+	if(index == -1) {
+		layerImage->deselectAllFrames();
+	} else {
+		if( (event->modifiers() != Qt::ShiftModifier) && (!layerImage->framesSelected.at(index)) && (event->buttons() != Qt::RightButton) ) {
+			layerImage->deselectAllFrames();
+		}
+		layerImage->framesSelected[index] = true;
+	}
+	if(event->modifiers() == Qt::AltModifier) {
+		for(int i=index; i < layerImage->framesPosition.size(); i++) {
+			layerImage->framesSelected[i] = true;
+		}
+	}
+}
+
+void TimeLineCells::mouseDoubleClick(QMouseEvent *event, int frameNumber, Layer* layer) {
+	LayerImage* layerImage = static_cast<LayerImage*>(layer);
+	int index = layerImage->getIndexAtFrame(frameNumber);
+	if(index != -1) {
+		for(int i=index; i < layerImage->framesPosition.size(); i++) {
+			layerImage->framesSelected[i] = true;
+		}
+	}
+}
+
+
+void TimeLineCells::mouseMove(QMouseEvent *event, int frameNumber, Layer* layer) {
+	LayerImage* layerImage = static_cast<LayerImage*>(layer);
+	selectionOffset = frameNumber - frameClicked;
+	bool ok = true;
+	for(int i=0; i < layerImage->framesPosition.size(); i++) {
+		if(layerImage->framesSelected.at(i)) {
+			if(layerImage->framesPosition.at(i) + selectionOffset < 1) ok = false;
+			for(int j=0; j < layerImage->framesPosition.size(); j++) {
+				if(!layerImage->framesSelected.at(j)) {
+					if(layerImage->framesPosition.at(i) + selectionOffset == layerImage->framesPosition.at(j)) {
+						ok = false;
+					}
+				}
+			}
+		}
+	}
+	if(ok == false) selectionOffset = 0;
+}
+
+void TimeLineCells::mouseRelease(QMouseEvent *event, int frameNumber, Layer* layer) {
+	LayerImage* layerImage = static_cast<LayerImage*>(layer);
+	layerImage->moveSelectedFrames(selectionOffset);
+	selectionOffset = 0;
+}
+
+
+
 
 void TimeLineCells::paintEvent(QPaintEvent *event) {
 	Object* object = editor->object;
@@ -590,7 +846,7 @@ void TimeLineCells::mousePressEvent(QMouseEvent *event) {
 			timeLine->scrubbing = true;
 		} else {
 			if( (layerNumber != -1) && layerNumber < editor->object->getLayerCount()) {
-				editor->object->getLayer(layerNumber)->mousePress(event, frameNumber);
+				mousePress(event, frameNumber, editor->object->getLayer(layerNumber));
 				//if(event->pos().x() > 15) editor->setCurrentLayer(layerNumber);
 				editor->setCurrentLayer(layerNumber);
 				update();
@@ -617,7 +873,7 @@ void TimeLineCells::mouseMoveEvent(QMouseEvent *event) {
 		editor->scrubTo(frameNumber);
 	} else {
 		if(layerNumber != -1 && layerNumber < editor->object->getLayerCount()) {
-			editor->object->getLayer(layerNumber)->mouseMove(event, frameNumber);
+			mouseMove(event, frameNumber, editor->object->getLayer(layerNumber));
 		}
 	}
 	timeLine->update();
@@ -631,7 +887,7 @@ void TimeLineCells::mouseReleaseEvent(QMouseEvent *event) {
 	if(frameNumber < 1) frameNumber = -1;
 	int layerNumber = getLayerNumber(event->pos().y());
 	if(type == "tracks" && layerNumber != -1 && layerNumber < editor->object->getLayerCount() ) {
-		editor->object->getLayer(layerNumber)->mouseRelease(event, frameNumber);
+		mouseRelease(event, frameNumber, editor->object->getLayer(layerNumber));
 	}
 	//if(event->pos().x() < offsetX && layerNumber != startLayerNumber && startLayerNumber != -1 && layerNumber != -1) {
 	if(type == "layers" && layerNumber != startLayerNumber && startLayerNumber != -1 && layerNumber != -1) {
@@ -654,7 +910,7 @@ void TimeLineCells::mouseDoubleClickEvent(QMouseEvent *event) {
 	//if(layerNumber != -1 && layerNumber < editor->object->getLayerCount() ) {
 	if(layer) {
 		if(type == "tracks" && (layerNumber != -1) && (frameNumber > 0) && layerNumber < editor->object->getLayerCount()) {
-			editor->object->getLayer(layerNumber)->mouseDoubleClick(event, frameNumber);
+			mouseDoubleClick(event, frameNumber, editor->object->getLayer(layerNumber));
 		}
 		if(type == "layers") {
 			layer->editProperties();

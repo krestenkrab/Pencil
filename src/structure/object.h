@@ -1,7 +1,7 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@ GNU General Public License for more details.
 #include "layervector.h"
 #include "colourref.h"
 
-#include "flash.h"
+//#include "flash.h"
 
 class Object : public QObject
 {
@@ -84,15 +84,13 @@ class Object : public QObject
 		void moveLayer(int i, int j);
 		void deleteLayer(int i);
 		
+		void defaultInitialisation();
+		
+		// ----- out of place -----
 		void playSoundIfAny(int frame);
 		void stopSoundIfAny();
 		
-		void defaultInitialisation();
-		
-		void exportFrames(int frameStart, int frameEnd, QMatrix view, Layer* currentLayer, QSize exportSize, QString filePath, const char* format, int quality, bool background, bool antialiasing, int gradients);
-		void exportMovie(int startFrame, int endFrame, QMatrix view, Layer* currentLayer, QSize exportSize, QString filePath, int fps);
-		void exportX(int frameStart, int frameEnd, QMatrix view, QSize exportSize, QString filePath,  bool antialiasing, int gradients);
-		void exportFlash(int startFrame, int endFrame, QMatrix view, QSize exportSize, QString filePath, int fps, int compression);
+		static QMatrix map(QRectF, QRectF);
 };
 
 #endif

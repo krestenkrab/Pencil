@@ -1,7 +1,7 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -43,25 +43,18 @@ class LayerImage : public Layer
 		virtual void removeImageAtFrame(int frameNumber);
 		virtual void setModified(int frameNumber, bool trueOrFalse);
 		void deselectAllFrames();
+		void moveSelectedFrames(int frameOffset);
 		
 		bool saveImages(QString path, int layerNumber);
 		virtual bool saveImage(int index, QString path, int layerNumber);
 		virtual QString fileName(int index, int layerNumber);
-		
-		// graphic representation -- could be put in another class
-		void paintTrack(QPainter &painter, TimeLineCells *cells, int x, int y, int width, int height, bool selected, int frameSize);
-		virtual void paintImages(QPainter &painter, TimeLineCells *cells, int x, int y, int width, int height, bool selected, int frameSize);
-		void mousePress(QMouseEvent *event, int frameNumber);
-		void mouseMove(QMouseEvent *event, int frameNumber);
-		void mouseRelease(QMouseEvent *event, int frameNumber);
-		void mouseDoubleClick(QMouseEvent *event, int frameNumber);
 	
 	signals:
 		void imageAdded(int);
 		void imageAdded(int,int);
 		void imageRemoved(int);
 		
-	protected:
+	public:
 		//QSize imageSize;
 		//QList<QImage*> framesImage;
 		//QList<QImage> framesAlpha;
@@ -71,8 +64,6 @@ class LayerImage : public Layer
 		QList<bool> framesModified;
 		// graphic representation -- could be put in another class
 		QList<bool> framesSelected;
-		int frameClicked;
-		int frameOffset;
 	
 	void bubbleSort();
 	virtual void swap(int i, int j);

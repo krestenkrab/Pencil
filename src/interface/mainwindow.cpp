@@ -1,7 +1,8 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2005 Patrick Corrieri
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -14,22 +15,14 @@ GNU General Public License for more details.
 
 */
 #include <QtGui>
-#include "editor.h"
 #include "mainwindow.h"
 #include "object.h"
-#include <interfaces.h>
 
 MainWindow::MainWindow() {
 	editor = new Editor(this);
-	//Object* object = new Object();
-	//object->defaultInitialisation();
-	//editor->setObject( object );
 	editor->newObject();
 
-	arrangePalettes();
-	
-	//editor->getTimeLine()->close();
-	
+	arrangePalettes();	
 	createMenus();
 	loadPlugins();
 	readSettings();
@@ -50,12 +43,7 @@ void MainWindow::arrangePalettes() {
 
 	editor->getToolSet()->drawPalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	editor->getToolSet()->optionPalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
-	//editor->getToolSet()->keyPalette->setFeatures(QDockWidget::NoDockWidgetFeatures);
-	//editor->getToolSet()->onionPalette->setFeatures(QDockWidget::NoDockWidgetFeatures);
 	editor->getToolSet()->displayPalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
-	editor->getToolSet()->keyPalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
-	editor->getToolSet()->onionPalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
-	editor->getToolSet()->timePalette->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	editor->getTimeLine()->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 }
 
@@ -80,29 +68,11 @@ void MainWindow::createMenus() {
 	savAct = new QAction(tr("&Save"), this);
 	savAct->setShortcut(tr("Ctrl+S"));
 	connect(savAct, SIGNAL(triggered()), editor, SLOT(saveForce()));
-
-	exportXAct = new QAction(tr("&X-Sheet..."), this);
-	exportXAct->setShortcut(tr("Ctrl+Alt+X"));
-	connect(exportXAct, SIGNAL(triggered()), editor, SLOT(exportX()));
-
-	exportAct = new QAction(tr("&Image Sequence..."), this);
-	exportAct->setShortcut(tr("Ctrl+Alt+S"));
-	connect(exportAct, SIGNAL(triggered()), editor, SLOT(exportSeq()));
-
-	exportMovAct = new QAction(tr("&Movie..."), this);
-	exportMovAct->setShortcut(tr("Ctrl+Alt+M"));
-	connect(exportMovAct, SIGNAL(triggered()), editor, SLOT(exportMov()));
-
-	exportFlashAct = new QAction(tr("&Flash/SWF..."), this);
-	exportFlashAct->setShortcut(tr("Ctrl+Alt+F"));
-	connect(exportFlashAct, SIGNAL(triggered()), editor, SLOT(exportFlash()));
-
-	exportFlashAct = new QAction(tr("&Flash/SWF..."), this);
-	exportFlashAct->setShortcut(tr("Ctrl+Alt+F"));
-	connect(exportFlashAct, SIGNAL(triggered()), editor, SLOT(exportFlash()));
 	
 	exportPaletteAct = new QAction(tr("Palette..."), this);
 	connect(exportPaletteAct, SIGNAL(triggered()), editor, SLOT(exportPalette()));
+	
+	connect(this, SIGNAL(exportFile(ExportInterface*)), editor, SLOT(exportFile(ExportInterface*)));
 	
 	importPaletteAct = new QAction(tr("Palette..."), this);
 	connect(importPaletteAct, SIGNAL(triggered()), editor, SLOT(importPalette()));
@@ -112,7 +82,6 @@ void MainWindow::createMenus() {
     connect(importAct, SIGNAL(triggered()), editor, SLOT(importImage()));
 
     importSndAct = new QAction(tr("&Import sound..."), this);
-//    importAct->setShortcut(tr("Ctrl+I"));
     connect(importSndAct, SIGNAL(triggered()), editor, SLOT(importSound()));
 
     aboutAct = new QAction(tr("&About"), this);
@@ -177,13 +146,9 @@ void MainWindow::createMenus() {
 	importMenu->addAction(importPaletteAct);
 
 	exportMenu = new QMenu(tr("Export"), this);
-	exportMenu->addAction(exportXAct);
-	exportMenu->addAction(exportAct);
-	exportMenu->addAction(exportMovAct);
-	exportMenu->addAction(exportFlashAct);
-	exportMenu->addSeparator();
 	exportMenu->addAction(exportPaletteAct);
-
+	exportMenu->addSeparator();
+	
 	openRecentMenu = new QMenu(tr("Open recent..."), this);
 
 	fileMenu = new QMenu(tr("&File"), this);
@@ -239,8 +204,8 @@ void MainWindow::loadPlugins() {
 	// foreach (QObject *plugin, QPluginLoader::staticInstances()) populateMenus(plugin); // static plugins
 	QDir pluginsDir = QDir(qApp->applicationDirPath());
  #if defined(Q_OS_WIN)
-     if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
-         pluginsDir.cdUp();
+     //if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
+     //    pluginsDir.cdUp();
  #elif defined(Q_OS_MAC)
      if (pluginsDir.dirName() == "MacOS") {
          pluginsDir.cdUp();
@@ -249,7 +214,7 @@ void MainWindow::loadPlugins() {
 	pluginsDir.cd("plugins");
 
 	qDebug() << "Plugin dir = " << pluginsDir.dirName();
-	/*foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
+	foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
 		QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
 		QObject *plugin = loader.instance();
 		qDebug() << "loader " << loader.thread();
@@ -259,7 +224,7 @@ void MainWindow::loadPlugins() {
 			populateMenus(plugin);
 			//pluginFileNames += fileName;
 		}
-	}*/
+	}
 
 	//brushMenu->setEnabled(!brushActionGroup->actions().isEmpty());
 	//shapesMenu->setEnabled(!shapesMenu->actions().isEmpty());
@@ -267,17 +232,8 @@ void MainWindow::loadPlugins() {
 }
 
 void MainWindow::populateMenus(QObject *plugin) {
-	qDebug() << "MainWindow populateMenus" << this << this->thread();
-	qDebug() << "MainWindow populateMenus" << plugin << plugin->thread();
-	/*BrushInterface *iBrush = qobject_cast<BrushInterface *>(plugin);
-	if (iBrush) addToMenu(plugin, iBrush->brushes(), brushMenu, SLOT(changeBrush()), brushActionGroup);
-
-	ShapeInterface *iShape = qobject_cast<ShapeInterface *>(plugin);
-	if (iShape) addToMenu(plugin, iShape->shapes(), shapesMenu, SLOT(insertShape()));
-
-	FilterInterface *iFilter = qobject_cast<FilterInterface *>(plugin);
-	if (iFilter) addToMenu(plugin, iFilter->filters(), filterMenu, SLOT(applyFilter()));*/
-	
+	//qDebug() << "MainWindow populateMenus" << this << this->thread();
+	//qDebug() << "MainWindow populateMenus" << plugin << plugin->thread();
 	ExportInterface *exportPlugin = qobject_cast<ExportInterface *>(plugin);
 	if (exportPlugin) addToMenu(plugin, exportPlugin->name(), exportMenu, SLOT(exportFile()));
 }
@@ -300,12 +256,10 @@ void MainWindow::exportFile() {
 	QAction *action = qobject_cast<QAction *>(sender());
 	ExportInterface *exportPlugin = qobject_cast<ExportInterface *>(action->parent());
 	if(exportPlugin) {
-		//exportPlugin->exportFile();
+		emit exportFile(exportPlugin);
 	} else {
 		qDebug() << "exportPlugin is null";
 	}
-	//const QImage image = iFilter->filterImage(action->text(), paintArea->image(), this);
-	//paintArea->setImage(image);
 }
 
 void MainWindow::setOpacity(int opacity) {

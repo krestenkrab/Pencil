@@ -1,7 +1,8 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2005 Patrick Corrieri
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -26,7 +27,8 @@ GNU General Public License for more details.
 #include "toolset.h"
 
 class Editor;
-
+class Layer;
+class LayerImage;
 class TimeLine;
 
 class TimeLineCells : public QWidget
@@ -63,6 +65,18 @@ public slots:
 
 protected:
 	void drawContent();
+	
+		// graphic representation and interface reaction -- was originallly in the layer classes
+		
+		void paintSelection(QPainter &painter, int x, int y, int height, int width);
+		void paintLabel(QPainter &painter, Layer *layer, int x, int y, int height, int width, bool selected, int allLayers);
+		void paintTrack(QPainter &painter, Layer *layer, int x, int y, int width, int height, bool selected, int frameSize);
+		void paintImages(QPainter &painter, LayerImage *layer, int x, int y, int width, int height, bool selected, int frameSize);
+		void mousePress(QMouseEvent *event, int frameNumber, Layer* layer);
+		void mouseMove(QMouseEvent *event, int frameNumber, Layer* layer);
+		void mouseRelease(QMouseEvent *event, int frameNumber, Layer* layer);
+		void mouseDoubleClick(QMouseEvent *event, int frameNumber, Layer* layer);
+		
 	void paintEvent(QPaintEvent *event);
 	void resizeEvent(QResizeEvent *event);
 	void mousePressEvent(QMouseEvent *event);
@@ -88,6 +102,7 @@ private:
 	int startY, endY, startLayerNumber;
 	int mouseMoveY;
 	int frameOffset, layerOffset;
+	int frameClicked, selectionOffset;
 };
 
 class TimeLine : public QDockWidget //DockPalette

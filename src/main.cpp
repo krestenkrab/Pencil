@@ -1,7 +1,6 @@
 /*
-
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -11,7 +10,6 @@ This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
-
 */
 #include <QApplication>
 #include <QDir>
@@ -26,11 +24,6 @@ int main(int argc, char *argv[])
 	app.setWindowIcon(QIcon(":/icons/icon.png"));
 #endif
 	initialise();
-	/*QDir dir(QApplication::applicationDirPath());
-	dir.cdUp();
-	if(dir.cd("plugins")) {
-		QApplication::setLibraryPaths(QStringList(dir.absolutePath()));
-	}*/
 	MainWindow mainWindow;
 	mainWindow.show();
 	qDebug() << "MainWindow thread" << mainWindow.thread();

@@ -1,7 +1,7 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -29,6 +29,7 @@ GNU General Public License for more details.
 #include "object.h"
 #include "vectorimage.h"
 #include "bitmapimage.h"
+#include "interfaces.h"
 
 class Editor;
 
@@ -116,6 +117,7 @@ public slots:
 	void exportPalette();
 	void updateFrame(int frameNumber);
 	void updateFrameAndVector(int frameNumber);
+	
 	void scrubTo(int frameNumber);	
 	void scrubForward();
 	void scrubBackward();
@@ -127,10 +129,6 @@ public slots:
 	void setLoop();
 	void setSound();
 	
-	//void scrubKF();
-	//void scrubKB();
-	void previousLayer();
-	void nextLayer();
 	
 	void addKey();
 	void addKey(int layerNumber, int &frameNumber);
@@ -142,14 +140,19 @@ public slots:
 	int getLastIndexAtFrame(int frameNumber);
 	int getLastFrameAtFrame(int frameNumber);
 	
-	//void altPress();
-	//void altRelease();
 	void showPreferences();
 	
 	void newObject();
 	void setObject(Object *object);
 	void updateObject();
 	
+	void newBitmapLayer();
+	void newVectorLayer();
+	void newSoundLayer();
+	void newCameraLayer();
+	void deleteCurrentLayer();
+	void previousLayer();
+	void nextLayer();
 	void setCurrentLayer(int layerNumber);
 	void switchVisibilityOfLayer(int layerNumber);
 	void moveLayer(int i, int j);
@@ -192,12 +195,6 @@ public slots:
 	void paste();
 	void clipboardChanged();
 	
-	void newBitmapLayer();
-	void newVectorLayer();
-	void newSoundLayer();
-	void newCameraLayer();
-	void deleteCurrentLayer();
-	
 	void toggleMirror();
 	void toggleShowAllLayers();
 	void resetMirror();
@@ -213,11 +210,8 @@ private slots:
 	void openDocument();
 	bool saveDocument();
 	void saveForce();
-	bool exportX();
-	bool exportSeq();
-	bool exportMov();
-	bool exportFlash();
-	
+
+	bool exportFile(ExportInterface* plugin);
  	void showPalette();
 	void about();
 	void helpBox();
@@ -254,23 +248,8 @@ private:
 	VectorImage clipboardVectorImage;
 	
 	// dialogs
-	void createExportFramesSizeBox();
-	void createExportMovieSizeBox();
-	void createExportFramesDialog();
-	void createExportMovieDialog();
-	void createExportFlashDialog();
 	void createNewDocumentDialog();
 	QDialog *newDocumentDialog;
-	QDialog *exportFramesDialog;
-	QDialog *exportMovieDialog;
-	QDialog *exportFlashDialog;
-	QSpinBox *exportFramesDialog_hBox;
-	QSpinBox *exportFramesDialog_vBox;
-	QSpinBox *exportMovieDialog_hBox;
-	QSpinBox *exportMovieDialog_vBox;
-	QComboBox *exportFramesDialog_format;
-	QComboBox *exportMovieDialog_format;
-	QSlider* exportFlashDialog_compression;
 	
 	// saving (XML)
 	QDomElement createDomElement(QDomDocument &doc);

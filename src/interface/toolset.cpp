@@ -1,7 +1,8 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copryight (C) 2005 Patrick Corrieri
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -73,7 +74,6 @@ void SpinSlider::setValue(qreal value) {
 }
 
 void SpinSlider::sliderReleased() {
-	//qDebug() << "sliderReleased";
 	emit valueChanged(this->value);
 }
 
@@ -89,92 +89,40 @@ ToolSet::ToolSet() {
 	drawPalette = new QDockWidget(tr("Tools"));
 	optionPalette = new QDockWidget(tr("Options"));
 	displayPalette = new QDockWidget(tr("Display"));
-	keyPalette = new QDockWidget(tr("Keys"));
-	onionPalette = new QDockWidget(tr("Onion skin"));
-	timePalette = new QDockWidget(tr("Controls"));
 
-#ifdef Q_WS_MAC
-	//drawPalette->setTitleBarWidget(new TitleBar(drawPalette));
-#endif
-	//drawPalette->setAutoFillBackground(false);
-	//drawPalette->setAttribute(Qt::WA_NoSystemBackground, true);
-
-	/*QPalette optionPalettePalette(optionPalette->palette());
-	optionPalettePalette.setColor(QPalette::Light, Qt::red);
-	optionPalettePalette.setColor(QPalette::Midlight, Qt::red);
-	optionPalettePalette.setColor(QPalette::Dark, Qt::red);
-	optionPalettePalette.setColor(QPalette::Shadow, Qt::red);
-	optionPalette->setPalette(optionPalettePalette);*/
-
-	//optionPalette->setWindowFlags(Qt::Tool);
-	//optionPalette->setWindowIconText(tr("Coucou"));
-	//optionPalette->setFont( QFont("Helvetica", 14, QFont::Bold) );
-
-	//QGroupBox *drawGroup = new QGroupBox(tr("Draw"));
 	QFrame *drawGroup = new QFrame();
 	QFrame *optionGroup = new QFrame();
 	QFrame *displayGroup = new QFrame();
-	QFrame *keyGroup = new QFrame();
-	QFrame *onionGroup = new QFrame();
-	QFrame * timeGroup = new QFrame();
-
-	//QFrame *line = new QFrame();
-	//line->setFrameStyle(QFrame::HLine | QFrame::Raised);
-
-	//drawGroup->setMaximumHeight( 100 );
-	//optionGroup->setFrameStyle(QFrame::Panel | QFrame::Raised);
-	//keyGroup->setFrameStyle(QFrame::Panel | QFrame::Raised);
-	//onionGroup->setFrameStyle(QFrame::Panel | QFrame::Raised);
-	//timeGroup->setFrameStyle(QFrame::Panel | QFrame::Raised);
-
-	//optionGroup->setLineWidth(2);
-	//keyGroup->setLineWidth(2);
-	//displayGroup->setLineWidth(2);
-	//onionGroup->setLineWidth(2);
-	//timeGroup->setLineWidth(2);
 
 	drawPalette->setWidget(drawGroup);
 	optionPalette->setWidget(optionGroup);
 	displayPalette->setWidget(displayGroup);
-	keyPalette->setWidget(keyGroup);
-	onionPalette->setWidget(onionGroup);
-	timePalette->setWidget(timeGroup);
 
-	QVBoxLayout *framelay = new QVBoxLayout();
 	QGridLayout *drawLay = new QGridLayout();
 	QGridLayout *optionLay = new QGridLayout();
 	QGridLayout *displayLay = new QGridLayout();
-	QGridLayout *keyLay = new QGridLayout();
-	QGridLayout *onionLay = new QGridLayout();
-	QGridLayout *timeLay = new QGridLayout();
-	QVBoxLayout *butlay = new QVBoxLayout();
 
 	QSettings settings("Pencil","Pencil");
 
-	newToolButton(pencilButton); // = new QToolButton(this);
-	newToolButton(selectButton); //  = new QToolButton(this);
-	newToolButton(moveButton); //  = new QToolButton(this);
-	newToolButton(handButton); //  = new QToolButton(this);
-	newToolButton(penButton); //  = new QToolButton(this);
-	newToolButton(eraserButton); //  = new QToolButton(this);
-	newToolButton(polylineButton); //  = new QToolButton(this);
-	newToolButton(bucketButton); //  = new QToolButton(this);
-	newToolButton(colouringButton); //  = new QToolButton(this);
-	newToolButton(eyedropperButton); //  = new QToolButton(this);
-	newToolButton(clearButton); //  = new QToolButton(this);
-	newToolButton(magnifyButton);
-	newToolButton(smudgeButton);
+	newToolButton(pencilButton, drawPalette); // = new QToolButton(this);
+	newToolButton(selectButton, drawPalette); //  = new QToolButton(this);
+	newToolButton(moveButton, drawPalette); //  = new QToolButton(this);
+	newToolButton(handButton, drawPalette); //  = new QToolButton(this);
+	newToolButton(penButton, drawPalette); //  = new QToolButton(this);
+	newToolButton(eraserButton, drawPalette); //  = new QToolButton(this);
+	newToolButton(polylineButton, drawPalette); //  = new QToolButton(this);
+	newToolButton(bucketButton, drawPalette); //  = new QToolButton(this);
+	newToolButton(colouringButton, drawPalette); //  = new QToolButton(this);
+	newToolButton(eyedropperButton, drawPalette); //  = new QToolButton(this);
+	newToolButton(clearButton, drawPalette); //  = new QToolButton(this);
+	//newToolButton(magnifyButton, drawPalette);
+	newToolButton(smudgeButton, drawPalette);
 
-	add = new QToolButton(this);
-	rm = new QToolButton(this);
-	thinLinesButton = new QToolButton(this);
-	outlinesButton = new QToolButton(this);
-	mirrorButton = new QToolButton(this); //  = new QToolButton(this);
+	thinLinesButton = new QToolButton(displayPalette);
+	outlinesButton = new QToolButton(displayPalette);
+	mirrorButton = new QToolButton(displayPalette); //  = new QToolButton(this);
 
-	choseColour = new QToolButton(this);
-	play = new QPushButton(tr("Play"),this);
-
-	play->setFixedWidth(80);
+	choseColour = new QToolButton(optionPalette);
 
 	pencilButton->setWhatsThis("Draw");
 	penButton->setWhatsThis("Pen");
@@ -183,21 +131,16 @@ ToolSet::ToolSet() {
 	colouringButton->setWhatsThis("Brush");
 	usePressureBox = new QCheckBox("Size with pressure");
 	usePressureBox->setFont( QFont("Helvetica", 10) );
-  usePressureBox->setChecked(true);
+	usePressureBox->setChecked(true);
 	makeInvisibleBox = new QCheckBox("Invisible");
 	makeInvisibleBox->setFont( QFont("Helvetica", 10) );
-  makeInvisibleBox->setChecked(false);
+	makeInvisibleBox->setChecked(false);
 	preserveAlphaBox = new QCheckBox("Preserve Alpha");
 	preserveAlphaBox->setFont( QFont("Helvetica", 10) );
-  preserveAlphaBox->setChecked(false);
+	preserveAlphaBox->setChecked(false);
 	followContourBox = new QCheckBox("Stop at contours");
 	followContourBox->setFont( QFont("Helvetica", 10) );
-  followContourBox->setChecked(false);
-	onionPrevBox = new QCheckBox("Previous");
-	onionNextBox = new QCheckBox("Next");
-	onionPrevBox->setFont( QFont("Helvetica", 10) );
-  onionNextBox->setFont( QFont("Helvetica", 10) );
-	onionPrevBox->setChecked(true);
+	followContourBox->setChecked(false);
 
 	/*sizeSlider = new QDoubleSpinBox(this);
 	sizeSlider->setFocusPolicy(Qt::NoFocus);
@@ -209,43 +152,20 @@ ToolSet::ToolSet() {
 	sizeSlider->setFixedWidth(50);
 	sizeSlider->setFixedHeight(22);*/
 
-	sizeSlider = new SpinSlider("Size", "log", "real", 0.2, 200.0, this);
+	sizeSlider = new SpinSlider("Size", "log", "real", 0.2, 200.0, optionPalette);
 	sizeSlider->setValue(settings.value("pencilWidth").toDouble());
 
-	featherSlider = new SpinSlider("Feather", "log", "real", 0.2, 200.0, this);
+	featherSlider = new SpinSlider("Feather", "log", "real", 0.2, 200.0, optionPalette);
 	featherSlider->setValue(settings.value("pencilFeather").toDouble());
 
-	opacitySlider = new SpinSlider("Opacity", "linear", "real", 0.0, 1.0, this);
-	opacitySlider->setValue(settings.value("pencilOpacity").toDouble());
+	//opacitySlider = new SpinSlider("Opacity", "linear", "real", 0.0, 1.0, optionPalette);
+	//opacitySlider->setValue(settings.value("pencilOpacity").toDouble());
 
 	/*featherSlider = new QSlider(Qt::Horizontal, this);
 	featherSlider->setMinimum(0);
 	featherSlider->setMaximum(100);
 	featherSlider->setFixedHeight(22);*/
 
-	soundBox = new QCheckBox("Sound");
-	soundBox->setFont( QFont("Helvetica", 10) );
-	loopBox = new QCheckBox(tr("Loop"), this);
-	loopBox->setFont( QFont("Helvetica", 10) );
-
-	fpsBox = new QSpinBox(this);
-	//fpsBox->setFixedWidth(50);
-	fpsBox->setFont( QFont("Helvetica", 10) );
-	fpsBox->setFixedHeight(22);
-	fpsBox->setValue(settings.value("fps").toInt());
-	fpsBox->setMinimum(1);
-	fpsBox->setMaximum(50);
-	fpsBox->setToolTip("FPS");
-	fpsBox->setFocusPolicy(Qt::NoFocus);
-
-	/*framecounter = new QLabel;
-	framecounter->setText("1");
-	framecounter->setAlignment(Qt::AlignCenter);
-	framecounter->setToolTip("Frame Counter!");
-	framecounter->setFont( QFont("Helvetica", 40, QFont::Bold) );*/
-
-	onionNextBox->setToolTip("Onion skin next frame");
-	onionPrevBox->setToolTip("Onion skin previous frame");
 	sizeSlider->setToolTip("Set Pen Width");
 	pencilButton->setIcon(QIcon(":icons/pencil2.png"));
 	pencilButton->setToolTip("Sketch");
@@ -265,18 +185,15 @@ ToolSet::ToolSet() {
 	moveButton->setToolTip("Select/Move object");
 	handButton->setIcon(QIcon(":icons/hand.png"));
 	handButton->setToolTip("Move/Zoom canvas");
-	magnifyButton->setIcon(QIcon(":icons/magnify.png"));
-	magnifyButton->setToolTip("Magnify canvas");
-	magnifyButton->setEnabled(false);
+	//magnifyButton->setIcon(QIcon(":icons/magnify.png"));
+	//magnifyButton->setToolTip("Magnify canvas");
+	//magnifyButton->setEnabled(false);
 	smudgeButton->setIcon(QIcon(":icons/smudge.png"));
 	smudgeButton->setToolTip("Modify curve");
 	smudgeButton->setEnabled(true);
 	eraserButton->setIcon(QIcon(":icons/eraser.png"));
 	eraserButton->setToolTip("Erase");
-	add->setIcon(QIcon(":icons/add.png"));
-	add->setToolTip("Add Frame");
-	rm->setIcon(QIcon(":icons/remove.png"));
-	rm->setToolTip("Remove Frame");
+
 
 	QPixmap colourSwatch(30,30);
 	colourSwatch.fill(Qt::black);
@@ -320,27 +237,27 @@ ToolSet::ToolSet() {
 	drawLay->addWidget(pencilButton,0,0); drawLay->setAlignment(pencilButton, Qt::AlignRight);
 	drawLay->addWidget(colouringButton,0,1); drawLay->setAlignment(colouringButton, Qt::AlignLeft);
 
-	drawLay->addWidget(penButton,1,0); drawLay->setAlignment(penButton, Qt::AlignRight);
-	drawLay->addWidget(polylineButton,1,1); drawLay->setAlignment(polylineButton, Qt::AlignLeft);
+	drawLay->addWidget(penButton,0,2); drawLay->setAlignment(penButton, Qt::AlignRight);
+	drawLay->addWidget(polylineButton,0,3); drawLay->setAlignment(polylineButton, Qt::AlignLeft);
 
-	drawLay->addWidget(eraserButton,2,0); drawLay->setAlignment(eraserButton, Qt::AlignRight);
-	drawLay->addWidget(clearButton,2,1); drawLay->setAlignment(clearButton, Qt::AlignLeft);
+	drawLay->addWidget(eraserButton,1,0); drawLay->setAlignment(eraserButton, Qt::AlignRight);
+	drawLay->addWidget(clearButton,1,1); drawLay->setAlignment(clearButton, Qt::AlignLeft);
 
-	drawLay->addWidget(bucketButton,3,0); drawLay->setAlignment(bucketButton, Qt::AlignRight);
-	drawLay->addWidget(eyedropperButton,3,1); drawLay->setAlignment(eyedropperButton, Qt::AlignLeft);
+	drawLay->addWidget(bucketButton,1,2); drawLay->setAlignment(bucketButton, Qt::AlignRight);
+	drawLay->addWidget(eyedropperButton,1,3); drawLay->setAlignment(eyedropperButton, Qt::AlignLeft);
 
-	drawLay->addWidget(selectButton,4,0); drawLay->setAlignment(selectButton, Qt::AlignRight);
-	drawLay->addWidget(moveButton,4,1); drawLay->setAlignment(moveButton, Qt::AlignLeft);
+	drawLay->addWidget(selectButton,2,0); drawLay->setAlignment(selectButton, Qt::AlignRight);
+	drawLay->addWidget(moveButton,2,1); drawLay->setAlignment(moveButton, Qt::AlignLeft);
 
-	drawLay->addWidget(handButton,5,0); drawLay->setAlignment(handButton, Qt::AlignRight);
-	drawLay->addWidget(smudgeButton,5,1); drawLay->setAlignment(smudgeButton, Qt::AlignLeft);
+	drawLay->addWidget(handButton,2,3); drawLay->setAlignment(handButton, Qt::AlignRight);
+	drawLay->addWidget(smudgeButton,2,2); drawLay->setAlignment(smudgeButton, Qt::AlignLeft);
 	//drawLay->addWidget(mirrorButton,5,1); drawLay->setAlignment(mirrorButton, Qt::AlignLeft);
 
 	optionLay->setMargin(8);
 	optionLay->setSpacing(8);
 	optionLay->addWidget(colourLabel,6,0);
 	optionLay->addWidget(choseColour,6,1);
- //optionLay->addWidget(thinLinesButton,6,2);
+	//optionLay->addWidget(thinLinesButton,6,2);
 
 	//optionLay->addWidget(sizeSlider,7,0,1,2);
 
@@ -368,35 +285,10 @@ ToolSet::ToolSet() {
 	displayLay->addWidget(thinLinesButton,0,1);
 	displayLay->addWidget(outlinesButton,0,2);
 
-	keyLay->setMargin(4);
-	keyLay->setSpacing(0);
-	keyLay->addWidget(add,0,0);
-	keyLay->addWidget(rm,0,1);
-
-	onionLay->setMargin(4);
-	onionLay->setSpacing(0);
-	onionLay->addWidget(onionPrevBox, 0,0);
-	onionLay->addWidget(onionNextBox, 1,0);
-
-	timeLay->setMargin(4);
-	timeLay->setSpacing(0);
-	timeLay->addWidget(play,0,0);
-	timeLay->addWidget(fpsBox,1,0);
-	timeLay->addWidget(loopBox,2,0,1,-1);
-	timeLay->addWidget(soundBox,3,0,1,-1);
-
 	drawGroup->setLayout(drawLay);
 	optionGroup->setLayout(optionLay);
 	displayGroup->setLayout(displayLay);
-	keyGroup->setLayout(keyLay);
-	onionGroup->setLayout(onionLay);
-	timeGroup->setLayout(timeLay);
 
-	//keyGroup->setFlat(true);
-	//onionGroup->setFlat(true);
-	//timeGroup->setFlat(true);
-
-	//drawGroup->setMaximumSize( QSize(3*32,6*32+1) );
 	drawGroup->setMaximumHeight(6*32+1);
 	
 	drawPalette->setMaximumHeight(200);
@@ -404,24 +296,6 @@ ToolSet::ToolSet() {
         //optionPalette->setMaximumHeight(300);
         //optionGroup->setMaximumHeight(160);
 	displayPalette->setMaximumHeight(60);
-	keyGroup->setMaximumHeight(60);
-	onionGroup->setMaximumHeight(60);
-
-	/*butlay->setMargin(0);
-	butlay->setSpacing(2);
-    butlay->addWidget(drawGroup);
-		butlay->addWidget(optionGroup);
-    butlay->addWidget(keyGroup);
-    butlay->addWidget(onionGroup);
-    butlay->addWidget(timeGroup);
-
-    framelay->addLayout(butlay);
-    //framelay->addWidget(framecounter);
-
-    setLayout(framelay);*/
-
-	connect(add, SIGNAL(clicked()), this, SIGNAL(addClick()));
-	connect(rm, SIGNAL(clicked()), this, SIGNAL(rmClick()));
 
 	connect(pencilButton, SIGNAL(clicked()), this, SIGNAL(pencilClick()));
 	connect(selectButton, SIGNAL(clicked()), this, SIGNAL(selectClick()));
@@ -446,20 +320,11 @@ ToolSet::ToolSet() {
 	connect(followContourBox, SIGNAL(clicked(bool)), this, SLOT(followContourClick(bool)));
 	connect(sizeSlider, SIGNAL(valueChanged(qreal)), this, SIGNAL(widthClick(qreal)));
 	connect(featherSlider, SIGNAL(valueChanged(qreal)), this, SIGNAL(featherClick(qreal)));
-	connect(opacitySlider, SIGNAL(valueChanged(qreal)), this, SIGNAL(opacityClick(qreal)));
-
-	connect(onionPrevBox, SIGNAL(stateChanged(int)), this, SIGNAL(prevClick()));
-	connect(onionNextBox, SIGNAL(stateChanged(int)), this, SIGNAL(nextClick()));
+	//connect(opacitySlider, SIGNAL(valueChanged(qreal)), this, SIGNAL(opacityClick(qreal)));
 
 	connect(choseColour, SIGNAL(clicked()), this, SIGNAL(colourClick()));
 	connect(clearButton, SIGNAL(clicked()), this, SIGNAL(clearClick()));
 	connect(mirrorButton, SIGNAL(clicked()), this, SIGNAL(mirrorClick()));
-
-	connect(play, SIGNAL(clicked()), this, SIGNAL(playClick()));
-	connect(loopBox, SIGNAL(stateChanged(int)), this, SIGNAL(loopClick()));
-	connect(soundBox, SIGNAL(stateChanged(int)), this, SIGNAL(soundClick()));
-
-	connect(fpsBox,SIGNAL(valueChanged(int)), this, SIGNAL(fpsClick(int)));
 
 	connect(pencilButton, SIGNAL(clicked()), this, SLOT(changePencilButton()));
 	connect(selectButton, SIGNAL(clicked()), this, SLOT(changeSelectButton()));
@@ -476,8 +341,8 @@ ToolSet::ToolSet() {
 	//connect(thinLinesButton, SIGNAL(clicked()), this, SLOT(changeThinLinesButton()));
 }
 
-void ToolSet::newToolButton(QToolButton* &toolButton) {
-	toolButton = new QToolButton(this);
+void ToolSet::newToolButton(QToolButton* &toolButton, QWidget* widget) {
+	toolButton = new QToolButton(widget);
 	toolButton->setAutoRaise(true);
 	toolButton->setIconSize( QSize(24,24) );
 	toolButton->setFixedSize(32,32);
@@ -507,10 +372,10 @@ void ToolSet::setFeather(qreal x) {
 
 void ToolSet::setOpacity(qreal x) {
 	if(x < 0) {
-		opacitySlider->setEnabled(false);
+		//opacitySlider->setEnabled(false);
 	} else {
-		opacitySlider->setEnabled(true);
-		opacitySlider->setValue(x);
+		//opacitySlider->setEnabled(true);
+		//opacitySlider->setValue(x);
 	}
 }
 

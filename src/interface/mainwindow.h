@@ -1,7 +1,8 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2005 Patrick Corrieri
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -16,13 +17,17 @@ GNU General Public License for more details.
 #include <QtGui>
 #include <QObject>
 #include "editor.h"
+#include <interfaces.h>
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+signals:
+		void exportFile(ExportInterface*);
+		
 public:
     MainWindow();
-		//void initialiseStyle();
     void addRecentFile(QString filePath);
 
 public slots:
@@ -53,7 +58,7 @@ private:
     QMenu *editMenu;
     QMenu *layerMenu;
     QMenu *helpMenu;
-		QMenu *windowsMenu;
+	QMenu *windowsMenu;
 		
     QAction *newAct;
 	QAction *openAct;
@@ -62,10 +67,7 @@ private:
     QAction *helpMe;
     QAction *aboutAct;
     QAction *aboutQtAct;
-	QAction *exportXAct;
-	QAction *exportAct;
-	QAction *exportMovAct;
-	QAction *exportFlashAct;
+
 	QAction *exportPaletteAct;
 	QAction *importPaletteAct;
 	QAction *savAct;

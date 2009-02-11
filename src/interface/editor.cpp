@@ -1,7 +1,7 @@
 /*
 
 Pencil - Traditional Animation Software
-Copyright (C) 2005-2007 Patrick Corrieri & Pascal Naidon
+Copyright (C) 2006-2009 Pascal Naidon
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -62,8 +62,7 @@ Editor::Editor(QMainWindow* parent)
 	currentFrame = 1;
 	currentLayer = 0;
 	
-	QHBoxLayout *lay = new QHBoxLayout();
-	QVBoxLayout *framelay = new QVBoxLayout();
+	QHBoxLayout *layout = new QHBoxLayout();
 	
 	scribbleArea = new ScribbleArea(this, this);
 	timeLine = new TimeLine(this, this);
@@ -71,23 +70,13 @@ Editor::Editor(QMainWindow* parent)
 	toolSet = new ToolSet();
 	palette = new Palette(this);
 	preferences = new Preferences();
-	exportFramesDialog = NULL; // will be created when needed
-	exportMovieDialog = NULL;
-	exportFlashDialog = NULL;
+
 	newDocumentDialog = NULL;
-	exportFramesDialog_hBox = NULL;
-	exportFramesDialog_vBox = NULL;
-	exportFramesDialog_format = NULL;
-	exportMovieDialog_hBox = NULL;
-	exportMovieDialog_vBox = NULL;
-	exportMovieDialog_format = NULL;
-	
-	exportFlashDialog_compression = NULL;
 	
 	// FOCUS POLICY
 	scribbleArea->setFocusPolicy(Qt::StrongFocus);
 	timeLine->setFocusPolicy(Qt::NoFocus);
-	toolSet->setFocusPolicy(Qt::NoFocus);
+	//toolSet->setFocusPolicy(Qt::NoFocus);
 	palette->setFocusPolicy(Qt::NoFocus);
 
 	// CONNECTIONS
@@ -174,16 +163,10 @@ Editor::Editor(QMainWindow* parent)
 	
 	connect(QApplication::clipboard(), SIGNAL(dataChanged()), this, SLOT(clipboardChanged()) );
 	
-	framelay->addWidget(scribbleArea);
-	lay->addWidget(toolSet);
-	lay->addLayout(framelay);
-	
-	framelay->setMargin(0);
-	framelay->setSpacing(0);
-	lay->setMargin(0);
-	lay->setSpacing(0);
-	
-	setLayout(lay);
+	layout->addWidget(scribbleArea);
+	layout->setMargin(0);
+	layout->setSpacing(0);
+	setLayout(layout);
 	
 	qDebug() << "Hello";
 	qDebug() << QLibraryInfo::location(QLibraryInfo::PluginsPath);
@@ -1004,134 +987,6 @@ void Editor::createNewDocumentDialog() {
 	newDocumentDialog->setModal(true);*/
 }
 
-void Editor::createExportFramesSizeBox() {
-	int defaultWidth = 720; int defaultHeight = 540;
-	exportFramesDialog_hBox = new QSpinBox(this);
-	exportFramesDialog_hBox->setMinimum(1);
-	exportFramesDialog_hBox->setMaximum(10000);
-	exportFramesDialog_hBox->setValue(defaultWidth);
-	exportFramesDialog_hBox->setFixedWidth(80);
-	exportFramesDialog_vBox = new QSpinBox(this);
-	exportFramesDialog_vBox->setMinimum(1);
-	exportFramesDialog_vBox->setMaximum(10000);
-	exportFramesDialog_vBox->setValue(defaultHeight);
-	exportFramesDialog_vBox->setFixedWidth(80);
-}
-
-void Editor::createExportMovieSizeBox() {
-	int defaultWidth = 720; int defaultHeight = 540;	
-	exportMovieDialog_hBox = new QSpinBox(this);
-	exportMovieDialog_hBox->setMinimum(1);
-	exportMovieDialog_hBox->setMaximum(10000);
-	exportMovieDialog_hBox->setValue(defaultWidth);
-	exportMovieDialog_hBox->setFixedWidth(80);
-	exportMovieDialog_vBox = new QSpinBox(this);
-	exportMovieDialog_vBox->setMinimum(1);
-	exportMovieDialog_vBox->setMaximum(10000);
-	exportMovieDialog_vBox->setValue(defaultHeight);
-	exportMovieDialog_vBox->setFixedWidth(80);
-
-}
-
-void Editor::createExportFramesDialog() {
-	exportFramesDialog = new QDialog(this, Qt::Dialog);
-	QGridLayout *mainLayout = new QGridLayout;
-	
-	QGroupBox *resolutionBox = new QGroupBox(tr("Resolution"));
-	if(exportFramesDialog_hBox == NULL || exportFramesDialog_vBox == NULL) {
-		createExportFramesSizeBox();
-	}
-	QGridLayout *resolutionLayout = new QGridLayout;
-	resolutionLayout->addWidget(exportFramesDialog_hBox,0,0);
-	resolutionLayout->addWidget(exportFramesDialog_vBox,0,1);
-	resolutionBox->setLayout(resolutionLayout);
-	
-	QGroupBox *formatBox = new QGroupBox(tr("Format"));
-	exportFramesDialog_format = new QComboBox();
-	exportFramesDialog_format->addItem("PNG");
-	exportFramesDialog_format->addItem("JPEG");
-	QGridLayout *formatLayout = new QGridLayout;
-	formatLayout->addWidget(exportFramesDialog_format,0,0);
-	formatBox->setLayout(formatLayout);
-	
-	QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-	connect(buttonBox, SIGNAL(accepted()), exportFramesDialog, SLOT(accept()));
-	connect(buttonBox, SIGNAL(rejected()), exportFramesDialog, SLOT(reject()));
-	
-	mainLayout->addWidget(resolutionBox, 0, 0);
-	mainLayout->addWidget(formatBox, 1, 0);
-	mainLayout->addWidget(buttonBox, 2, 0);
-	exportFramesDialog->setLayout(mainLayout);
-	exportFramesDialog->setWindowTitle(tr("Options"));
-	exportFramesDialog->setModal(true);
-}
-
-void Editor::createExportMovieDialog() {
-	exportMovieDialog = new QDialog(this, Qt::Dialog);
-	QGridLayout *mainLayout = new QGridLayout;
-	
-	QGroupBox *resolutionBox = new QGroupBox(tr("Resolution"));
-	if(!exportMovieDialog_hBox || !exportMovieDialog_vBox) {
-		createExportMovieSizeBox();
-	}
-	QGridLayout *resolutionLayout = new QGridLayout;
-	resolutionLayout->addWidget(exportMovieDialog_hBox,0,0);
-	resolutionLayout->addWidget(exportMovieDialog_vBox,0,1);
-	resolutionBox->setLayout(resolutionLayout);
-	
-	QGroupBox *formatBox = new QGroupBox(tr("Format"));
-	exportMovieDialog_format = new QComboBox();
-	exportMovieDialog_format->addItem("MOV");
-	//exportFramesDialog_format->addItem("JPEG");
-	QGridLayout *formatLayout = new QGridLayout;
-	formatLayout->addWidget(exportMovieDialog_format,0,0);
-	formatBox->setLayout(formatLayout);
-	
-	QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-	connect(buttonBox, SIGNAL(accepted()), exportMovieDialog, SLOT(accept()));
-	connect(buttonBox, SIGNAL(rejected()), exportMovieDialog, SLOT(reject()));
-	
-	mainLayout->addWidget(resolutionBox, 0, 0);
-	mainLayout->addWidget(formatBox, 1, 0);
-	mainLayout->addWidget(buttonBox, 2, 0);
-	exportMovieDialog->setLayout(mainLayout);
-	exportMovieDialog->setWindowTitle(tr("Options"));
-	exportMovieDialog->setModal(true);
-}
-
-
-void Editor::createExportFlashDialog() {
-	exportFlashDialog = new QDialog(this, Qt::Dialog);
-	QGridLayout *mainLayout = new QGridLayout;
-	
-	QSettings settings("Pencil","Pencil");
-	
-	
-	exportFlashDialog_compression = new QSlider(Qt::Horizontal);
-	exportFlashDialog_compression->setTickPosition(QSlider::TicksBelow);
-	exportFlashDialog_compression->setMinimum(0);
-	exportFlashDialog_compression->setMaximum(10);
-	exportFlashDialog_compression->setValue( 10 - settings.value("flashCompressionLevel").toInt() );
-	QLabel* label1 = new QLabel("Large file");
-	QLabel* label2 = new QLabel("Small file");
-	
-	QGroupBox *compressionBox = new QGroupBox(tr("Compression"));
-	QGridLayout *compressionLayout = new QGridLayout;
-	compressionLayout->addWidget(label1,0,0);
-	compressionLayout->addWidget(exportFlashDialog_compression,0,1);
-	compressionLayout->addWidget(label2,0,2);
-	compressionBox->setLayout(compressionLayout);
-	
-	QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
-	connect(buttonBox, SIGNAL(accepted()), exportFlashDialog, SLOT(accept()));
-	connect(buttonBox, SIGNAL(rejected()), exportFlashDialog, SLOT(reject()));
-	
-	mainLayout->addWidget(compressionBox, 0, 0);
-	mainLayout->addWidget(buttonBox, 1, 0);
-	exportFlashDialog->setLayout(mainLayout);
-	exportFlashDialog->setWindowTitle(tr("Options"));
-	exportFlashDialog->setModal(true);
-}
 
 QMatrix Editor::map(QRectF source, QRectF target) { // this method should be put somewhere else...
 		qreal x1 = source.left(); qreal y1 = source.top(); qreal x2 = source.right(); qreal y2 = source.bottom();
@@ -1150,7 +1005,7 @@ QMatrix Editor::map(QRectF source, QRectF target) { // this method should be put
 	return matrix;
 }
 
-bool Editor::exportSeq() {
+bool Editor::exportFile(ExportInterface* plugin) {
 	QSettings settings("Pencil","Pencil");
 	QString initialPath = settings.value("lastExportPath", QVariant(QDir::homePath())).toString();		
 	if(initialPath.isEmpty()) initialPath = QDir::homePath() + "/untitled";
@@ -1159,93 +1014,13 @@ bool Editor::exportSeq() {
 		return false;
 	} else {
 		settings.setValue("lastExportPath", QVariant(filePath));
-		
-		if (!exportFramesDialog) createExportFramesDialog();
-		exportFramesDialog_hBox->setValue( scribbleArea->getViewRect().toRect().width() );
-		exportFramesDialog_vBox->setValue( scribbleArea->getViewRect().toRect().height() );
-		exportFramesDialog->exec();
-		if(exportFramesDialog->result() == QDialog::Rejected) return false;
-		
-		QSize exportSize = QSize(exportFramesDialog_hBox->value(), exportFramesDialog_vBox->value());
-		//QMatrix view = map( QRectF(QPointF(0,0), scribbleArea->size() ), QRectF(QPointF(0,0), exportSize) );
-		QMatrix view = map( scribbleArea->getViewRect(), QRectF(QPointF(0,0), exportSize) );
-		view = scribbleArea->getView() * view;
-	
-		QByteArray exportFormat(exportFramesDialog_format->currentText().toLatin1());
-		updateMaxFrame();		
-		object->exportFrames(1, maxFrame, view, getCurrentLayer(), exportSize, filePath, exportFormat, -1, false, true, 2);
-		return true; 
-	}
-}
-
-bool Editor::exportX() {
-	QSettings settings("Pencil","Pencil");
-	QString initialPath = settings.value("lastExportPath", QVariant(QDir::homePath())).toString();		
-	if(initialPath.isEmpty()) initialPath = QDir::homePath() + "/untitled";
-	QString filePath = QFileDialog::getSaveFileName(this, tr("Save As"),initialPath);
-	if (filePath.isEmpty()) {
-		qDebug() << "empty file";
-		return false;
-	} else {
-		settings.setValue("lastExportPath", QVariant(filePath));
-		
 		QSize exportSize = scribbleArea->getViewRect().toRect().size();
 		QMatrix view = map( scribbleArea->getViewRect(), QRectF(QPointF(0,0), exportSize) );
 		view = scribbleArea->getView() * view;
-		
 		updateMaxFrame();
-		object->exportX(1, maxFrame, view, exportSize, filePath, true, 2);
-		return true; 
-	}
-}
-
-
-bool Editor::exportMov() {
-	QSettings settings("Pencil","Pencil");
-	QString initialPath = settings.value("lastExportPath", QVariant(QDir::homePath())).toString();		
-	if(initialPath.isEmpty()) initialPath = QDir::homePath() + "/untitled";
-	QString filePath = QFileDialog::getSaveFileName(this, tr("Export As"),initialPath);
-	if (filePath.isEmpty()) {
-		return false;
-	} else {
-		settings.setValue("lastExportPath", QVariant(filePath));
-		if (!exportMovieDialog) createExportMovieDialog();
-		exportMovieDialog_hBox->setValue( scribbleArea->getViewRect().toRect().width() );
-		exportMovieDialog_vBox->setValue( scribbleArea->getViewRect().toRect().height() );
-		exportMovieDialog->exec();
-		if(exportMovieDialog->result() == QDialog::Rejected) return false;
 		
-		QSize exportSize = QSize(exportMovieDialog_hBox->value(), exportMovieDialog_vBox->value());
-		QMatrix view = map( scribbleArea->getViewRect(), QRectF(QPointF(0,0), exportSize) );
-		view = scribbleArea->getView() * view;
+		plugin->exportFile(this->object, 1, maxFrame, view, getCurrentLayer(), exportSize, filePath, fps);
 		
-		updateMaxFrame();
-		object->exportMovie(1, maxFrame, view, getCurrentLayer(), exportSize, filePath, fps);
-		return true; 
-	}
-}
-
-bool Editor::exportFlash() {
-	QSettings settings("Pencil","Pencil");
-	QString initialPath = settings.value("lastExportPath", QVariant(QDir::homePath())).toString();		
-	if(initialPath.isEmpty()) initialPath = QDir::homePath() + "/untitled";
-	QString filePath = QFileDialog::getSaveFileName(this, tr("Export As"),initialPath);
-	if (filePath.isEmpty()) {
-		return false;
-	} else {
-		settings.setValue("lastExportPath", QVariant(filePath));
-		if (!exportFlashDialog) createExportFlashDialog();
-		exportFlashDialog->exec();
-		if(exportFlashDialog->result() == QDialog::Rejected) return false;
-		
-		settings.setValue("flashCompressionLevel", 10-exportFlashDialog_compression->value() );
-	
-		QSize exportSize = scribbleArea->getViewRect().toRect().size();
-		QMatrix view = map( scribbleArea->getViewRect(), QRectF(QPointF(0,0), exportSize) );
-		view = scribbleArea->getView() * view;
-		
-		updateMaxFrame();
-		object->exportFlash(1, maxFrame, view, exportSize, filePath, fps, exportFlashDialog_compression->value());
 		return true; 
 	}
 }
@@ -1405,14 +1180,6 @@ void Editor::scrubForward() {
 void Editor::scrubBackward() {
 	if(currentFrame > 1) scrubTo(currentFrame-1);
 }
-
-/*void Editor::scrubKF() {
-	//timeLine->scrubKF();
-}
-
-void Editor::scrubKB() {
-	//timeLine->scrubKB();
-}*/
 
 void Editor::previousLayer() {
 	currentLayer--;
@@ -1596,7 +1363,6 @@ void Editor::dockAllPalettes() {
 	getToolSet()->drawPalette->setFloating(false);
 	getToolSet()->optionPalette->setFloating(false);
 	getToolSet()->displayPalette->setFloating(false);
-	getToolSet()->onionPalette->setFloating(false);
 	getTimeLine()->setFloating(false);
 	getPalette()->setFloating(false);
 }
@@ -1605,7 +1371,6 @@ void Editor::detachAllPalettes() {
 	getToolSet()->drawPalette->setFloating(true);
 	getToolSet()->optionPalette->setFloating(true);
 	getToolSet()->displayPalette->setFloating(true);
-	getToolSet()->onionPalette->setFloating(true);
 	getTimeLine()->setFloating(true);
 	getPalette()->setFloating(true);
 	restorePalettesSettings(false, true, true);
