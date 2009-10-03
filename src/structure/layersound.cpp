@@ -59,16 +59,21 @@ void LayerSound::removeImageAtFrame(int frameNumber) {
 }
 
 void LayerSound::loadSoundAtFrame(QString filePathString, int frameNumber) {
-	if(getIndexAtFrame(frameNumber) == -1) addImageAtFrame(frameNumber);
 	int index = getIndexAtFrame(frameNumber);
+	if(index == -1)
+        addImageAtFrame(frameNumber);
+	index = getIndexAtFrame(frameNumber);
 	
 	QFileInfo fi(filePathString);
 	if(fi.exists()) {
-		sound[index] = new QSound(filePathString, NULL);
+        Phonon::MediaObject *media = new Phonon::MediaObject();
+        connect(media, SIGNAL(totalTimeChanged(qint64)), this, SLOT(addTimelineKey(qint64)));
+        media->setCurrentSource(filePathString);
+        sound[index] = media;
 		soundFilepath[index] = filePathString;
 		framesFilename[index] = fi.fileName();
 	} else {
-		sound[index] = NULL;
+        sound[index] = NULL;
 		soundFilepath[index] = "Wrong file";
 		framesFilename[index] = "Wrong file" + filePathString;
 	}
@@ -76,7 +81,7 @@ void LayerSound::loadSoundAtFrame(QString filePathString, int frameNumber) {
 
 void LayerSound::swap(int i, int j) {
 	LayerImage::swap(i, j);
-	sound.swap(i,j);
+    sound.swap(i, j);
 	soundFilepath.swap(i,j);
 }
 
@@ -93,14 +98,44 @@ bool LayerSound::saveImage(int index, QString path, int layerNumber) {
 	QFile originalFile( soundFilepath.at(index) );
 	originalFile.copy( path + "/" + framesFilename.at(index) );
 	framesModified[index] = false;
+    
+    return true;
 }
 
 void LayerSound::playSound(int frame) {
-	for(int i=0; i < sound.size(); i++) {
-		if(frame == framesPosition.at(i)) {
-			if(sound.at(i) != NULL && visible) sound[i]->play();
-		}
-	}
+    QSettings settings("Pencil","Pencil");
+    int fps = settings.value("fps").toInt();
+    
+    for (int i = 0; i < sound.size(); ++i) {
+        Phonon::MediaObject *media = sound.at(i);
+        if (media != NULL && visible) {
+            int position = framesPosition.at(i);
+            if (frame < position) {
+                media->stop();
+            } else {
+                Phonon::AudioOutput * audioOutput = NULL;
+                if (outputDevices.size() <= i) {
+                    audioOutput = new Phonon::AudioOutput();
+                    outputDevices.push_back(audioOutput);
+                } else {
+                    audioOutput = outputDevices.at(i);
+                }
+
+                int offsetInMs = (frame - position) * 1000;
+                if (media->state() == Phonon::PlayingState) {
+                    if (fabs(media->currentTime() - offsetInMs) > fabs(float(1000) / fps))
+                        media->seek(offsetInMs);
+                } else {
+                    if (frame > position) {
+                        media->pause();
+                        media->seek(float(offsetInMs) / fps);
+                    }
+                    Phonon::createPath(media, outputDevices.at(i));
+                    media->play();
+               }
+            }
+        }
+    }
 }
 
 void LayerSound::stopSound() {
@@ -146,3 +181,8 @@ void LayerSound::loadDomElement(QDomElement element, QString filePath) {
 	}
 }
 
+void LayerSound::addTimelineKey(qint64 newTotalTime) {
+    QSettings settings("Pencil","Pencil");
+    int fps = settings.value("fps").toInt();
+    addImageAtFrame(fps * ((newTotalTime / 1000) + 2));
+}

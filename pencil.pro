@@ -80,4 +80,4 @@ linux-g++ {
 	LIBS += -Lliblinux
 }
 RESOURCES += pencil.qrc
-QT += xml opengl
+QT += xml opengl phonon
