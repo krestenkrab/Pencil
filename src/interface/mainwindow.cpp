@@ -211,20 +211,22 @@ void MainWindow::loadPlugins() {
          pluginsDir.cdUp();
      }
  #endif
-	pluginsDir.cd("plugins");
+    if (pluginsDir.exists("plugins")) {
+        pluginsDir.cd("plugins");
 
-	qDebug() << "Plugin dir = " << pluginsDir.dirName();
-	foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
-		QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
-		QObject *plugin = loader.instance();
-		qDebug() << "loader " << loader.thread();
-		qDebug() << "plugin " << fileName << plugin << plugin->thread();
-		if (plugin) {
-			plugin->moveToThread(this->thread());
-			populateMenus(plugin);
-			//pluginFileNames += fileName;
-		}
-	}
+        qDebug() << "Plugin dir = " << pluginsDir.dirName();
+        foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
+            QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
+            QObject *plugin = loader.instance();
+            qDebug() << "loader " << loader.thread();
+            qDebug() << "plugin " << fileName << plugin << plugin->thread();
+            if (plugin) {
+                plugin->moveToThread(this->thread());
+                populateMenus(plugin);
+                //pluginFileNames += fileName;
+            }
+        }
+    }
 
 	//brushMenu->setEnabled(!brushActionGroup->actions().isEmpty());
 	//shapesMenu->setEnabled(!shapesMenu->actions().isEmpty());
