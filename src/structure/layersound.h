@@ -21,6 +21,7 @@ GNU General Public License for more details.
 #include <QList>
 #include <QString>
 #include <QPainter>
+#include <phonon>
 #include "layerimage.h"
 
 class LayerSound : public LayerImage
@@ -49,10 +50,13 @@ class LayerSound : public LayerImage
 	//QList<int> startingFrame;
 	//QList<QString> filePath;
 	QList<QString> soundFilepath;
-	QList<QSound*> sound;
-	// graphic representation -- could be put in another class
+    QList<Phonon::MediaObject*> sound;
+    QList<Phonon::AudioOutput*> outputDevices;
+    // graphic representation -- could be put in another class
 	void swap(int i, int j);
-	
+
+  private slots:
+    void addTimelineKey(qint64 newTotalTime);
 };
 
 #endif
