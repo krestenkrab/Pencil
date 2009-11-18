@@ -63,10 +63,10 @@ void LayerSound::loadSoundAtFrame(QString filePathString, int frameNumber) {
 	if(index == -1)
         addImageAtFrame(frameNumber);
 	index = getIndexAtFrame(frameNumber);
-	
+
 	QFileInfo fi(filePathString);
 	if(fi.exists()) {
-        Phonon::MediaObject *media = new Phonon::MediaObject();
+        Phonon::MediaObject *media = new Phonon::MediaObject(this);
         connect(media, SIGNAL(totalTimeChanged(qint64)), this, SLOT(addTimelineKey(qint64)));
         media->setCurrentSource(filePathString);
         sound[index] = media;
@@ -98,14 +98,14 @@ bool LayerSound::saveImage(int index, QString path, int layerNumber) {
 	QFile originalFile( soundFilepath.at(index) );
 	originalFile.copy( path + "/" + framesFilename.at(index) );
 	framesModified[index] = false;
-    
+
     return true;
 }
 
 void LayerSound::playSound(int frame) {
     QSettings settings("Pencil","Pencil");
     int fps = settings.value("fps").toInt();
-    
+
     for (int i = 0; i < sound.size(); ++i) {
         Phonon::MediaObject *media = sound.at(i);
         if (media != NULL && visible) {
@@ -115,15 +115,15 @@ void LayerSound::playSound(int frame) {
             } else {
                 Phonon::AudioOutput * audioOutput = NULL;
                 if (outputDevices.size() <= i) {
-                    audioOutput = new Phonon::AudioOutput();
+                    audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
                     outputDevices.push_back(audioOutput);
                 } else {
                     audioOutput = outputDevices.at(i);
                 }
 
-                int offsetInMs = (frame - position) * 1000;
+                int offsetInMs = floor((frame - position) * float(1000) / fps);
                 if (media->state() == Phonon::PlayingState) {
-                    if (fabs(media->currentTime() - offsetInMs) > fabs(float(1000) / fps))
+                    if (fabs(media->currentTime() - offsetInMs) > float(500))
                         media->seek(offsetInMs);
                 } else {
                     if (frame > position) {
@@ -164,7 +164,7 @@ void LayerSound::loadDomElement(QDomElement element, QString filePath) {
 	name = element.attribute("name");
 	visible = (element.attribute("visibility") == "1");
 	type = element.attribute("type").toInt();
-	
+
 	QDomNode soundTag = element.firstChild();
 	while(!soundTag.isNull()) {
 		QDomElement soundElement = soundTag.toElement();
